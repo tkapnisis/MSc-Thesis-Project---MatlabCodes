@@ -203,15 +203,15 @@ A_s = [zeros(3,3), eye(3); M_3_inv*(C_x + tau_f_x + tau_ap_x + tau_as_x)];
 
 B_s = [zeros(3,3); M_3_inv*[tau_f_u, tau_ap_u, tau_as_u]];
 
-B_d_s = [zeros(3,6); M_3_inv*[tau_f_w, tau_ap_w, tau_as_w]];
+Bd_s = [zeros(3,6); M_3_inv*[tau_f_w, tau_ap_w, tau_as_w]];
 
 C_s = [eye(3), zeros(3,3)];
 
 D_s = zeros(3,3);
 
-D_d_s = zeros(3,6);
+Dd_s = zeros(3,6);
 
-save('Linear_State_Space_3DOF_Sym.mat','A_s','B_s','B_d_s','C_s','D_s','D_d_s')
+save('Linear_State_Space_3DOF_Sym.mat','A_s','B_s','Bd_s','C_s','D_s','Dd_s')
 %}
 %% Linearized dynamical model with numerical values
 

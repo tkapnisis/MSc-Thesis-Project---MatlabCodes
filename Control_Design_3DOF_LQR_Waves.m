@@ -1,7 +1,7 @@
 clc
 clear all
 close all
-
+%%
 load('Linear_State_Space_3DOF.mat')
 load('Parameters_3DOF.mat','param')
 % Simulation time 
@@ -26,21 +26,21 @@ R = diag([1 1 1]);
 % Q = diag([100 100 100 1e-1 1e-1 1e-1]);
 % R = diag([1 1 1]);
 % LQR controller gain
-K = lqr(G.A,G.B,Q,R);
+K_lqr = lqr(G.A,G.B,Q,R);
 % Closed-loop poles of the continuous-time system
-ps = eig(G.A - G.B*K);
+ps = eig(G.A - G.B*K_lqr);
 
 reference_signals = {'z_n_ref'; 'phi_ref'; 'theta_ref'};
 % Closed-loop state stace with the LQR controller and without disturbances
-sys_CL = ss(G.A - G.B*K,G.B,G.C,G.D);
+sys_CL = ss(G.A - G.B*K_lqr,G.B,G.C,G.D);
 Lc = inv(dcgain(sys_CL));
-sys_CL = ss(G.A - G.B*K,G.B*Lc,G.C,G.D,'statename',states,'inputname',...
+sys_CL = ss(G.A - G.B*K_lqr,G.B*Lc,G.C,G.D,'statename',states,'inputname',...
             reference_signals,'outputname',outputs);
 
 % Closed-loop state stace with the LQR controller and with wave disturbances
-sys_CL_w = ss(G.A - G.B*K,[G.B*Lc, Gd.B],G.C,[G.D,Gd.D],'statename',states,...
+sys_CL_w = ss(G.A - G.B*K_lqr,[G.B*Lc, Gd.B],G.C,[G.D,Gd.D],'statename',states,...
               'inputname',[reference_signals;disturbances],'outputname',outputs);
-figure(1)
+figure
 step(sys_CL)
 hold on
 grid minor
@@ -69,44 +69,19 @@ sys_CL_DT_w = ss(G_DT.A - G_DT.B*K_DT,[G_DT.B*Lc_DT, Gd_DT.B],G_DT.C,...
 % Parameters of long-crested regular wave
 wave_param.omega_0 = 1.5;   % Wave frequency [rad/s]
 wave_param.lambda = 1.5;    % Wave length [m]
-wave_param.zeta_0 = 0.5;  % Wave amplitude [m]
-wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad] 
+wave_param.zeta_0 = 0.15;  % Wave amplitude [m]
+wave_param.beta = 0*pi;     % Encounter angle (beta=0 for following waves) [rad] 
 
-wave_param.k = 2*pi/wave_param.lambda; % Wave number
+dw = Wave_Model(t,wave_param,foil_loc,param);
 
-% Encounter frequency
-wave_param.omega_e = wave_param.omega_0 - wave_param.omega_0^2/param.g*...
-                     param.U_0*cos(wave_param.beta);
-
-% Extra parameters to understand the speed and the period of the wave
-wave_param.T = 2*pi/wave_param.omega_0;        % Wave period [s]
-wave_param.c = wave_param.lambda/wave_param.T; % Wave forward speed (called the phase speed) [m/s]
-
-
-% % Inflow velocity in x-axis
-u_w_f = -wave_param.omega_0*wave_param.zeta_0*exp(-wave_param.k*foil_loc.h_f)...
-        *sin(wave_param.k*foil_loc.l_x_f - wave_param.omega_e*t)*cos(wave_param.beta);
-u_w_ap = -wave_param.omega_0*wave_param.zeta_0*exp(-wave_param.k*foil_loc.h_ap)...
-        *sin(wave_param.k*foil_loc.l_x_ap - wave_param.omega_e*t)*cos(wave_param.beta);
-u_w_as = -wave_param.omega_0*wave_param.zeta_0*exp(-wave_param.k*foil_loc.h_as)...
-        *sin(wave_param.k*foil_loc.l_x_as - wave_param.omega_e*t)*cos(wave_param.beta);
-% Inflow velocity in z-axis
-w_w_f = -wave_param.omega_0*wave_param.zeta_0*exp(-wave_param.k*foil_loc.h_f)...
-        *cos(wave_param.k*foil_loc.l_x_f - wave_param.omega_e*t);
-w_w_ap = -wave_param.omega_0*wave_param.zeta_0*exp(-wave_param.k*foil_loc.h_ap)...
-        *cos(wave_param.k*foil_loc.l_x_ap - wave_param.omega_e*t);
-w_w_as = -wave_param.omega_0*wave_param.zeta_0*exp(-wave_param.k*foil_loc.h_as)...
-        *cos(wave_param.k*foil_loc.l_x_as - wave_param.omega_e*t);
 
 %% Continous-time simulations
-ref = [-0.05*square(t);0*ones(size(t));0*ones(size(t))];
+ref = [-0.05*square(t)*0;0*ones(size(t));0*ones(size(t))];
 % ref = [0.1*sin(2*t);0*ones(size(t));0.05*sin(1*t)];
-
-dist = [u_w_f;w_w_f;u_w_ap;w_w_ap;u_w_as;w_w_as];
 
 x0 = [0, 0, 0, 0, 0, 0];
 [y_CT,~,x_CT] = lsim(sys_CL,ref,t,x0);
-[y_CT_w,~,x_CT_w] = lsim(sys_CL_w,[ref;dist],t,x0);
+[y_CT_w,~,x_CT_w] = lsim(sys_CL_w,[ref;dw],t,x0);
 
 figure
 subplot(3,1,1)
@@ -128,7 +103,7 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
-u_CT = Lc*ref - K*x_CT_w';
+u_CT = Lc*ref - K_lqr*x_CT_w';
 figure
 plot(t,rad2deg(u_CT),'LineWidth', 1.5)
 title('Servo motor angles - Control inputs')

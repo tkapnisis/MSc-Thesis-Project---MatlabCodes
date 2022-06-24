@@ -1,4 +1,4 @@
-function [A_u,B_u,B_d_u,C_u,D_u,D_d_u] = Uncertain_Plant(param,A_s,B_s,B_d_s,C_s,D_s,D_d_s)
+function [A_u,B_u,Bd_u,C_u,D_u,Dd_u] = Uncertain_Plant(param,A_s,B_s,Bd_s,C_s,D_s,Dd_s)
 
 m = param.m;    % Mass kg 
 g = param.g;    % Gravity acceleration [m/s^2]
@@ -69,18 +69,18 @@ for i=1:size(B_s,1)
     end
 end
 
-B_d_s = arrayfun(@char, B_d_s, 'UniformOutput', 0);
-B_d_s = string(B_d_s);
-B_d_u = umat([]);
+Bd_s = arrayfun(@char, Bd_s, 'UniformOutput', 0);
+Bd_s = string(Bd_s);
+Bd_u = umat([]);
 
-for i=1:size(B_d_s,1)
-    for j=1:size(B_d_s,2)
-        B_d_u(i,j) = eval(B_d_s(i,j));
+for i=1:size(Bd_s,1)
+    for j=1:size(Bd_s,2)
+        Bd_u(i,j) = eval(Bd_s(i,j));
     end
 end
 
 C_u = C_s;
 D_u = D_s;
-D_d_u =  D_d_s;
+Dd_u =  Dd_s;
 
 end

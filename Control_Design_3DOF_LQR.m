@@ -1,10 +1,10 @@
-clc
-clear all
-close all
+% clc
+% clear all
+% close all
 
 load('Linear_State_Space_3DOF.mat')
 load('Parameters_3DOF.mat','param')
-% load('Linear_State_Space_3DOF_Un.mat','G_p')
+load('Linear_State_Space_3DOF_Un.mat','Gp')
 
 % Simulation of the closed loop system with the LQR controller
 dt = 0.05; % sampling time
@@ -31,7 +31,7 @@ sys_cl = ss(A-B*K,B,C,D,'statename',states,'inputname',inputs,'outputname',outpu
 Lc=inv(dcgain(sys_cl));
 
 sys_cl_Lc = ss(A-B*K,B*Lc,C,D);%,'statename',states,'inputname',inputs,'outputname',outputs);
-% sys_cl_Lc = ss(G_p.A - G_p.B*K,G_p.B*Lc,C,D);
+% sys_cl_Lc = ss(Gp.A - Gp.B*K,Gp.B*Lc,C,D);
 
 % save('LQR_controller','K','Lc')
 
@@ -49,6 +49,9 @@ x0 = [0, 0, 0, 0, 0, 0];
 figure
 step(sys_cl_Lc)
 grid minor
+
+
+%%
 
 figure
 subplot(3,1,1)

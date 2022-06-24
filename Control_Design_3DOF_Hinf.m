@@ -6,14 +6,16 @@ clc
 clear all
 close all
 
-load('Linear_State_Space_3DOF_Un.mat')
+load('Linear_State_Space_3DOF_Un.mat','G','Gd','Gp','Gd_p','Gp_s','Gd_p_s')
 load('Parameters_3DOF.mat','param')
+load('Linear_State_Space_3DOF.mat','foil_loc')
 % load('Linear_State_Space_3DOF.mat')
 
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
+
 %%
 
 % Pole-zero map of the open-loop G(s)
@@ -27,10 +29,18 @@ legend('Nominal plant G(s)','Perturbed plant Gp(s)','Location','best','FontSize'
 % MIMO poles and zeros of G
 ps = pole(Gp);
 zs = tzero(Gp);
-
-
 %%
+figure
+pzplot(G,'b');
+hold on
+grid on
+set(findall(gcf,'Type','line'),'MarkerSize',15)
+pzplot(Gp_s,'r')
+legend('Nominal plant G(s)','Simplified Perturbed plant Gp_s(s)','Location','best','FontSize',11)
+
+% opts = sigmaoptions;
 opts = bodeoptions;
+
 opts.MagScale = 'log';
 opts.MagUnits = 'abs';
 opts.InputLabels.Interpreter = 'none';
@@ -44,14 +54,22 @@ opts.Title.FontSize = 12;
 % opts.Xlim = [1e-3 1e2];
 opts.PhaseVisible = 'off';
 
-% sys_un_ss_SAMPLES = usample(sys_un_ss,10); 
+
 figure
-bodeplot(Gp,'r',G,'b',opts);
-% set(findall(gcf,'Type','line'),'LineWidth',1.2)
+bodeplot(Gp,G,opts)
+set(findall(gcf,'Type','line'),'LineWidth',1.2)
 grid on
 legend('Perturbed plant Gp(s)','Nominal plant G(s)','Location','best','FontSize',11)
+% legend('G(s)','Gd','Location','best','FontSize',11)
 
-%%
+
+figure
+bodeplot(Gp_s,G,opts)
+set(findall(gcf,'Type','line'),'LineWidth',1.2)
+grid on
+legend('Simplified Perturbed plant Gp_s(s)','Nominal plant G(s)','Location','best','FontSize',11)
+
+%% Singular values and gamma analysis
 %{
 % RGA
 omega1 = 0;
@@ -70,7 +88,7 @@ gamma1=sv1(1)/sv1(2)
 [U2,S2,V2]=svd(Gf2);
 sv2=diag(S2);
 gamma2=sv2(1)/sv2(2)
-%}
+%
 
 % opts_sigma = sigmaoptions;
 % opts_sigma.MagScale = 'log';
@@ -98,17 +116,17 @@ for i=1:size(sv,2)
 end    
 % figure 
 % plot(gamma)
-
+%}
 %% Weights design for error signal, inputs and ouputs
 
 s = zpk('s');
 
-M_1 = 1.5;
-M_2 = 1.5;
-M_3 = 1.5;
-w_c1 = 3*2*pi;
-w_c2 = 4*2*pi;
-w_c3 = 4*2*pi;
+M_1 = 1;
+M_2 = 1;
+M_3 = 1;
+w_c1 = 0.5*2*pi;
+w_c2 = 1*2*pi;
+w_c3 = 1*2*pi;
 A_1 = 1e-4;
 A_2 = 1e-4;
 A_3 = 1e-4;
@@ -132,88 +150,113 @@ Wp = [Wp11,   0  ,   0 ;
 % Wu22 = (s + a_2)/(s + w_u2);
 % Wu33 = (s + a_3)/(s + w_u3);
 
-w_u_k = 1;
-w_u1 = w_c1;
-w_u2 = w_c2;
-w_u3 = w_c3;
-Wu11 = w_u_k*s/(s + w_u1);
-Wu22 = w_u_k*s/(s + w_u2);
-Wu33 = w_u_k*s/(s + w_u3);
+% w_u_k = 1;
+% w_u1 = w_c1;
+% w_u2 = w_c2;
+% w_u3 = w_c3;
+% Wu11 = w_u_k*s/(s + w_u1);
+% Wu22 = w_u_k*s/(s + w_u2);
+% Wu33 = w_u_k*s/(s + w_u3);
 
-% Wu11 = 0.5;
-% Wu22 = 0.5;
-% Wu33 = 0.5;
+% Wu11 = 1/2;
+% Wu22 = 1/2;
+% Wu33 = 1/2;
+
+% Wu11 = makeweight(1e-2, [2*2*pi,1e-1], 1e2);
+Wu11 = makeweight(1e-3, [0.5*pi,1e-2], 1e-1);
+% zpk(Wu11);
+Wu22 = Wu11;
+Wu33 = Wu11;
 
 Wu = [Wu11,   0  ,   0 ;
         0 , Wu22 ,   0 ;
         0 ,   0  , Wu33];
+% Wu = zpk(Wu);
 
-% figure
-% bode(1/Wp11,opts)
-%% Generalized Plant
-% N = [ Wp*S  ]
-%     [ Wu*K*S]
+Wd = zpk(10*eye(6));
 
-% w= [r1 r2]
+% Wr11 = 0.1*w_c1/(s + 0.1*w_c1);
+% Wr = [Wr11,   0  ,   0 ;
+%         0 , Wr11 ,   0 ;
+%         0 ,   0  , Wr11];
+Wr = zpk(10*eye(3));
+%%
+figure
+bode(Wu11,opts)
+%% Generalized Plant - Nominal
 
-% z1 = Wp*w + Wp*G*u
-% z2 = Wu*u
-% v = -w - G*u
+Wp.u = 'v';
+Wp.y = 'z1';
+Wu.u = 'u';
+Wu.y = 'z2';
+Wd.u = 'd';
+Wd.y = 'dw';
+Wr.u = 'r';
+Wr.y = 'rw';
+G.u = 'u';
+G.y = 'yG';
+Gd.u = 'dw';
+Gd.y = 'yGd';
 
-% P which represents the transfer function matrix from [ w u ]' to [ z v ]'
-% P = [ Wp*I   Wp*G ]
-%     [  0      Wu*I]
-%     [  -I      -G ]
-
-% Construct a generalized plant for simulation reasons
-
-warning off
-
-% The full hydrodoil craft model
-systemnames ='G Wp Wu';   
-% Input to generalized plant
-inputvar ='[r(3); Theta_s_f; Theta_s_ap; Theta_s_as]';   
-% Output generalized plant
-outputvar= '[Wp; Wu; r-G]';   
-% Input to the plant
-input_to_G= '[Theta_s_f; Theta_s_ap; Theta_s_as]';   
-% Input to the weight of the inputs
-input_to_Wu= '[Theta_s_f; Theta_s_ap; Theta_s_as]';  
-% Input to the weight of the plant output
-input_to_Wp= '[r-G]';  
-
-sysoutname='P';
-% cleanupsysic = 'yes';
-
-sysic;
-
-warning on
+Sum_err = sumblk('v = rw - yG - yGd',3);
+inputs = {'r','d','u'};
+outputs = {'z1','z2','v'};
+P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 
 P = minreal(P);
 
-%% Controller synthesis
+%% Generalized Plant - Perturbed
+
+Wp.u = 'v';
+Wp.y = 'z1';
+Wu.u = 'u';
+Wu.y = 'z2';
+Wd.u = 'd';
+Wd.y = 'dw';
+Gp_s.u = 'u';
+Gp_s.y = 'yG';
+Gd_p_s.u = 'dw';
+Gd_p_s.y = 'yGd';
+
+Sum_err = sumblk('v = r - yG - yGd',3);
+% Sum_err = sumblk('v = r - yG',3);
+inputs = {'r','d','u'};
+% inputs = {'r','u'};
+outputs = {'z1','z2','v'};
+Pun = connect(Gp_s,Gd_p_s,Wp,Wu,Wd,Sum_err,inputs,outputs);
+% Pun = connect(Gp,Wp,Wu,Sum_err,inputs,outputs);
+
+Pun = minreal(Pun);
+
+%% Hinf Controller synthesis - Nominal Plant
 nmeas = 3; % number of outputs 
 ncont = 3; % number of inputs
 
 [K,CL,gamma,info] = hinfsyn(P,nmeas,ncont);
-
-% loops = loopsens(Gp,K);
+gamma
+%% mu-synthesis of Hinf Controller - Perturbed Plant
+% opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[2 2]);
+tic;
+opts = musynOptions('MixedMU','on','FullDG',false);
+[Kunc,CLunc,info_unc] = musyn(Pun,nmeas,ncont,opts); 
+timerun = toc;
+%%
 loops = loopsens(G,K);
+% loops = loopsens(G,Kunc);
 L = loops.Lo;
 T = loops.To;
 S = loops.So;
 
-N = [Wp*S;Wu*K*S];
-% N= minreal(N);
-
-Nmax = hinfnorm(N)
-
-% L=minreal(Gp*K);          % Loop tranfer function
-% Lpoles=pole(L+eye(3));    % Open loop poles 
-% Lzeros=tzero(L+eye(3));   % Closed loop poles
-
-Kpoles=pole(K);        % poles of the controller
-Kzeros=tzero(K);       % invariant zeros of MIMO controller
+%%
+loops_p = loopsens(Gp,Kunc);
+Lp = loops_p.Lo;
+Tp = loops_p.To;
+Sp = loops_p.So;
+%%
+loops_p_r = loopsens(G,Kunc_red);
+Lp_r = loops_p_r.Lo;
+Tp_r = loops_p_r.To;
+Sp_r = loops_p_r.So;
 
 %%
 figure
@@ -241,16 +284,37 @@ Sum = sumblk(formula,signames);
 % Sum = sumblk('e = r - y',3);
 % sys_CL = connect(Gp,K,Sum,'r',{'z', 'phi', 'theta'});
 sys_CL = connect(G,K,Sum,'r',{'z', 'phi', 'theta'});
-%%
-% Simulation of the closed loop system with the LQR controller
-dt = 0.01; % sampling time
+
+% https://nl.mathworks.com/help/robust/ref/uss.musyn.html
+%% Simulation of the closed loop system with the Hinf controller
+dt = 0.05; % sampling time
 tend = 30; % duration of simulation in seconds
 t = 0:dt:tend;
 
 % ref = [0.5*sin(t);0*ones(size(t));0*ones(size(t))];
-ref = [-0.05*square(t);0*ones(size(t));0*ones(size(t))];
+ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
+
+% Low-pass Filter on the reference signal
+%{
+fs = 1/dt;
+fpass = 1;
+s = tf('s');
+womega_c = 2*pi*fpass;
+lpf = zpk(womega_c/(womega_c+s));
+dlpf_zoh = c2d(lpf,1/fs);
+alpha = dlpf_zoh.K;
+ref_filt = [];
+ref_filt(1) = 0;
+for i=2:size(ref,2)
+    ref_filt(i) = alpha*ref(1,i) + (1-alpha)*ref_filt(i-1);
+end 
+%}
+% 
+
 x0 = [0, 0, 0, 0, 0, 0];
-[y,t,x] = lsim(sys_CL,ref,t);
+[y,~,~] = lsim(T,ref,t);
+% figure
+% lsim(Tp,ref,t);
 
 figure
 subplot(3,1,1)
@@ -272,8 +336,63 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
-% inp_val = lsim(K*S,ref,t);
-inp_val = lsim(K,ref'-y,t);
+inp_val = lsim(-K*S,ref,t);
+% inp_val = lsim(K,ref'-y,t);
+
+figure
+plot(t,rad2deg(inp_val),'LineWidth', 1.5)
+title('Servo motor angles - Control inputs')
+grid minor
+ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
+xlabel('\textbf{time [s]}','interpreter','latex')
+legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
+
+%% Simulation of the closed loop system with the Hinf controller for uncertain plant
+figure
+step(usample(Tp,15),1);
+hold on
+step(T,'r-.') 
+legend('Perturbed Plant', 'Nominal Plant')
+
+%% Simulation of the closed loop system with the Hinf controller
+
+%  Calculation of waves velocity profile for each hydrofoil
+
+% Parameters of long-crested regular wave
+wave_param.omega_0 = 2;   % Wave frequency [rad/s]
+wave_param.lambda = 1;    % Wave length [m]
+wave_param.zeta_0 = 0.1;  % Wave amplitude [m]
+wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad] 
+
+[dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
+%%
+% [y,t,x] = lsim(sys_CL,ref,t);
+% figure
+[y,~,x] = lsim(S*Gd,dw,t);
+% lsim(Sp*Gd,dw,t);
+
+figure
+subplot(3,1,1)
+plot(t,y(:,1) + param.z_n0,'LineWidth',1.5)
+title('Heave')
+xlabel('\textbf{time [s]}','interpreter','latex')
+ylabel('\boldmath{$z_n$} \textbf{[m]}','interpreter','latex')
+grid minor
+subplot(3,1,2)
+plot(t,rad2deg(y(:,2)),'LineWidth',1.5)
+title('Roll')
+xlabel('\textbf{time [s]}','interpreter','latex')
+ylabel('\boldmath{$\phi$} \textbf{[deg]}','interpreter','latex')
+grid minor
+subplot(3,1,3)
+plot(t,rad2deg(y(:,3)),'LineWidth',1.5)
+title('Pitch')
+xlabel('\textbf{time [s]}','interpreter','latex')
+ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
+grid minor
+
+% inp_val = lsim(K,-y,t);
+inp_val = lsim(-K*S*Gd,dw,t);
 
 figure
 plot(t,rad2deg(inp_val),'LineWidth', 1.5)
@@ -308,7 +427,8 @@ legend('Sensitivity S33','1/W33','Location','best')
 grid on
 %%
 figure 
-bodeplot(Wu*K*S,inv(Wu),opts)
+bodeplot(K*S,inv(Wu),opts)
+% bodeplot(K*S,opts)
 grid on
 title('Bode plot of controller K*S versus its weight 1/Wu')
 legend('K*S','1/Wu')
@@ -328,20 +448,27 @@ w_B = wout(I_col)
 %%
 figure
 subplot(3,1,1)
-step(sys_CL(1,1))
+step(T(1,1))
+% hold on
+% step(Tp(1,1))
 title('Heave Step Response')
 xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$z_n$} \textbf{[m]}','interpreter','latex')
 grid minor
+legend('Original K','Reduced-order K')
 
 subplot(3,1,2)
-step(sys_CL(2,2))
+step(T(2,2))
+% hold on
+% step(Tp(2,2))
 title('Roll')
 xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$\phi$} \textbf{[rad]}','interpreter','latex')
 grid minor
 subplot(3,1,3)
-step(sys_CL(3,3))
+step(T(3,3))
+% hold on
+% step(Tp(3,3))
 title('Pitch')
 xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$\theta$} \textbf{[rad]}','interpreter','latex')
@@ -349,9 +476,23 @@ grid minor
 
 % figure
 % step(sys_CL)
-Step_info = stepinfo(sys_CL);
+% Step_info = stepinfo(sys_CL);
+%% Save data
+% save('Hinf_Controller_Design2')
+
+% load('Hinf_Controller_Design.mat')
+%%
+figure
+ncfmr(Kunc)
+[~,info] = ncfmr(Kunc);
+% ncfmargin(P,C)
+%%
+Kunc_red = ncfmr(Kunc,20,info);
+%%
+% [marg,freq] = ncfmargin(G,Kunc)
 %% Discrete time step response
 %{
+
 h = 0.05;
 Gp_DT=c2d(Gp,h,'tustin');
 K_DT = c2d(K,h,'tustin');
