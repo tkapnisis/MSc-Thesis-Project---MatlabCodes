@@ -17,6 +17,50 @@ load('Linear_State_Space_3DOF.mat','foil_loc')
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
 
+%% Approximation of the uncertainty
+
+omega = logspace(-4,2,100);
+Gnom_frd = frd(G(1,1),omega);
+Gp_samples = usample(Gp(1,1),20);
+Gp_frd = frd(Gp_samples,omega);
+%%
+order = 3;
+ord1 = 1;%[order,order,order];
+ord2 = ord1;
+[usys,Info] = ucover(Gp_frd,Gnom_frd,ord1,ord2,'Additive');
+% [usys,Info] = ucover(Gp_frd,Gnom_frd,ord1);
+
+W1 = Info.W1;
+W2 = Info.W2;
+W1_frd = frd(W1,omega);
+% W2_frd = frd(W2,omega);
+
+%%
+opts = bodeoptions;
+opts.MagScale = 'log';
+opts.MagUnits = 'abs';
+opts.InputLabels.Interpreter = 'none';
+opts.InputLabels.FontSize = 10;
+opts.OutputLabels.FontSize = 10;
+opts.XLabel.FontSize = 11;
+opts.YLabel.FontSize = 11;
+opts.TickLabel.FontSize = 10;
+opts.Title.FontSize = 12;
+opts.PhaseVisible = 'off';
+diff = Gnom_frd-Gp_frd;
+% reldiff = (Gp_frd - Gnom_frd)/Gnom_frd;
+figure
+bodeplot(diff,'b--',W1_frd*W2,'r',opts)
+title('Relative Gaps (blue) vs. Shaping Filter Magnitude (red)')
+
+%%
+figure
+bodemag(diff)
+%%
+figure
+bodeplot(Gp_frd,Gnom_frd,opts)
+legend('Perturbed','Nominal')
+
 %%
 
 % Pole-zero map of the open-loop G(s)
@@ -122,12 +166,12 @@ end
 
 s = zpk('s');
 
-M_1 = 1;
-M_2 = 1;
-M_3 = 1;
-w_c1 = 0.5*2*pi;
-w_c2 = 1*2*pi;
-w_c3 = 1*2*pi;
+M_1 = 1.5;
+M_2 = 1.5;
+M_3 = 1.5;
+w_c1 = 2*2*pi;
+w_c2 = 3*2*pi;
+w_c3 = 3*2*pi;
 A_1 = 1e-4;
 A_2 = 1e-4;
 A_3 = 1e-4;
@@ -164,23 +208,27 @@ Wp = [Wp11,   0  ,   0 ;
 % Wu33 = 1/2;
 
 % Wu11 = makeweight(1e-2, [2*2*pi,1e-1], 1e2);
-Wu11 = makeweight(1e-3, [0.5*pi,1e-2], 1e-1);
-% zpk(Wu11);
+Wu11 = makeweight(1e-3, [1*2*pi,1e-1], 1e1);
 Wu22 = Wu11;
 Wu33 = Wu11;
 
-Wu = [Wu11,   0  ,   0 ;
+Wu = 1*[Wu11,   0  ,   0 ;
         0 , Wu22 ,   0 ;
         0 ,   0  , Wu33];
 % Wu = zpk(Wu);
 
-Wd = zpk(10*eye(6));
+Wd = zpk(1*eye(6));
 
-% Wr11 = 0.1*w_c1/(s + 0.1*w_c1);
+% zeta_1 = 1;
+% zeta_2 = 1;
+% zeta_3 = 1;
+% Wr11 = w_c1^2/(s^2 + 2*zeta_1*w_c1*s + w_c1^2);
+% Wr22 = w_c2^2/(s^2 + 2*zeta_2*w_c2*s + w_c2^2);
+% Wr33 = w_c3^2/(s^2 + 2*zeta_3*w_c3*s + w_c3^2);
 % Wr = [Wr11,   0  ,   0 ;
-%         0 , Wr11 ,   0 ;
-%         0 ,   0  , Wr11];
-Wr = zpk(10*eye(3));
+%         0 , Wr22 ,   0 ;
+%         0 ,   0  , Wr33];
+Wr = zpk(1*eye(3));
 %%
 figure
 bode(Wu11,opts)
@@ -272,6 +320,7 @@ legend('Sensitivity S(s)','Complementary Sensitivity T(s)','Loop L(s)')
 grid on
 
 %%
+%{
 % K.InputName = {'e_zn','e_roll','e_pitch'};  
 % K.OutputName = {'Theta_s_f','Theta_s_f','Theta_s_as'};
 K.InputName = {'e'};  
@@ -287,30 +336,14 @@ Sum = sumblk(formula,signames);
 sys_CL = connect(G,K,Sum,'r',{'z', 'phi', 'theta'});
 
 % https://nl.mathworks.com/help/robust/ref/uss.musyn.html
+%}
 %% Simulation of the closed loop system with the Hinf controller
-dt = 0.05; % sampling time
+dt = 0.01; % sampling time
 tend = 30; % duration of simulation in seconds
 t = 0:dt:tend;
 
 % ref = [0.5*sin(t);0*ones(size(t));0*ones(size(t))];
 ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
-
-% Low-pass Filter on the reference signal
-%{
-fs = 1/dt;
-fpass = 1;
-s = tf('s');
-womega_c = 2*pi*fpass;
-lpf = zpk(womega_c/(womega_c+s));
-dlpf_zoh = c2d(lpf,1/fs);
-alpha = dlpf_zoh.K;
-ref_filt = [];
-ref_filt(1) = 0;
-for i=2:size(ref,2)
-    ref_filt(i) = alpha*ref(1,i) + (1-alpha)*ref_filt(i-1);
-end 
-%}
-% 
 
 x0 = [0, 0, 0, 0, 0, 0];
 [y,~,~] = lsim(T,ref,t);
@@ -337,8 +370,8 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
-inp_val = lsim(-K*S,ref,t);
-% inp_val = lsim(K,ref'-y,t);
+% inp_val = lsim(-K*S,ref,t);
+inp_val = lsim(K,ref'-y,t);
 
 figure
 plot(t,rad2deg(inp_val),'LineWidth', 1.5)
@@ -395,7 +428,7 @@ grid minor
 % inp_val = lsim(K,-y,t);
 inp_val = lsim(-K*S*Gd,dw,t);
 
-figure
+figure 
 plot(t,rad2deg(inp_val),'LineWidth', 1.5)
 title('Servo motor angles - Control inputs')
 grid minor
@@ -435,7 +468,7 @@ title('Bode plot of controller K*S versus its weight 1/Wu')
 legend('K*S','1/Wu')
 %%
 figure 
-bodeplot(inv(Wu),opts)
+bodeplot(K,opts)
 grid on
 title('Bode plot of controller K(2,1)*S versus its weight 1/Wu12')
 legend('K*S','1/Wu')
