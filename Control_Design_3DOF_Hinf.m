@@ -17,23 +17,25 @@ load('Linear_State_Space_3DOF.mat','foil_loc')
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
 
+%%
+[M,Delta,BlkStruct] = lftdata(Gp);
 %% Approximation of the uncertainty
 
-omega = logspace(-4,2,100);
-Gnom_frd = frd(G(1,1),omega);
-Gp_samples = usample(Gp(1,1),20);
+omega = logspace(-4,3,400);
+Gnom_frd = frd(G,omega);
+Gp_samples = usample(Gp,50);
 Gp_frd = frd(Gp_samples,omega);
 %%
-order = 3;
-ord1 = 1;%[order,order,order];
+order = 4;
+ord1 = [order,order,order];
 ord2 = ord1;
 [usys,Info] = ucover(Gp_frd,Gnom_frd,ord1,ord2,'Additive');
-% [usys,Info] = ucover(Gp_frd,Gnom_frd,ord1);
+% [usys,Info] = ucover(Gp_frd,Gnom_frd,ord1,'InputMult');
 
 W1 = Info.W1;
 W2 = Info.W2;
 W1_frd = frd(W1,omega);
-% W2_frd = frd(W2,omega);
+W2_frd = frd(W2,omega);
 
 %%
 opts = bodeoptions;
@@ -50,12 +52,28 @@ opts.PhaseVisible = 'off';
 diff = Gnom_frd-Gp_frd;
 % reldiff = (Gp_frd - Gnom_frd)/Gnom_frd;
 figure
-bodeplot(diff,'b--',W1_frd*W2,'r',opts)
+bodeplot(diff,'b--',W1_frd*W2_frd,'r',opts)
 title('Relative Gaps (blue) vs. Shaping Filter Magnitude (red)')
 
 %%
+
+% Defining the block diagonal Multiplicative uncertainties
+Delta_o = ultidyn('do1',[3,3],'Bound',1);
+% Delta_o =[ultidyn('do1',[1,1],'Bound',1) 0 0;...
+%           0 ultidyn('do2',[1,1],'Bound',1) 0;...
+%           0  0 ultidyn('do3',[1,1],'Bound',1)];
+
+% Defining the uncertain transfer matrix
+% GpUN = G*(eye(3) + W1*Delta_o);
+GpUN = G + W1*Delta_o*W2;
+GpUN=minreal(GpUN);
+
+GpUN_frd = ufrd(GpUN,omega);
+% Plot of the singular values of the uncertain transfer matrix
 figure
-bodemag(diff)
+bodeplot(usys,Gnom_frd,opts)
+title('Singular values of the uncertain transfer matrix');
+grid on
 %%
 figure
 bodeplot(Gp_frd,Gnom_frd,opts)
@@ -74,7 +92,7 @@ legend('Nominal plant G(s)','Perturbed plant Gp(s)','Location','best','FontSize'
 % MIMO poles and zeros of G
 ps = pole(Gp);
 zs = tzero(Gp);
-%%
+
 figure
 pzplot(G,'b');
 hold on
@@ -115,7 +133,7 @@ grid on
 legend('Simplified Perturbed plant Gp_s(s)','Nominal plant G(s)','Location','best','FontSize',11)
 
 %% Singular values and gamma analysis
-%{
+%
 % RGA
 omega1 = 0;
 Gf1 = freqresp(Gp,omega1);
@@ -256,24 +274,38 @@ P = minreal(P);
 
 %% Generalized Plant - Perturbed
 
+% Wp.u = 'v';
+% Wp.y = 'z1';
+% Wu.u = 'u';
+% Wu.y = 'z2';
+% Wd.u = 'd';
+% Wd.y = 'dw';
+% Gp_s.u = 'u';
+% Gp_s.y = 'yG';
+% Gd_p_s.u = 'dw';
+% Gd_p_s.y = 'yGd';
+% 
+% Sum_err = sumblk('v = r - yG - yGd',3);
+% % Sum_err = sumblk('v = r - yG',3);
+% inputs = {'r','d','u'};
+% % inputs = {'r','u'};
+% outputs = {'z1','z2','v'};
+% Pun = connect(Gp_s,Gd_p_s,Wp,Wu,Wd,Sum_err,inputs,outputs);
+% % Pun = connect(Gp,Wp,Wu,Sum_err,inputs,outputs);
+% 
+% Pun = minreal(Pun);
+
 Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
 Wu.y = 'z2';
-Wd.u = 'd';
-Wd.y = 'dw';
-Gp_s.u = 'u';
-Gp_s.y = 'yG';
-Gd_p_s.u = 'dw';
-Gd_p_s.y = 'yGd';
+GpUN.u = 'u';
+GpUN.y = 'yG';
 
-Sum_err = sumblk('v = r - yG - yGd',3);
-% Sum_err = sumblk('v = r - yG',3);
-inputs = {'r','d','u'};
-% inputs = {'r','u'};
+Sum_err = sumblk('v = r - yG',3);
+inputs = {'r','u'};
 outputs = {'z1','z2','v'};
-Pun = connect(Gp_s,Gd_p_s,Wp,Wu,Wd,Sum_err,inputs,outputs);
-% Pun = connect(Gp,Wp,Wu,Sum_err,inputs,outputs);
+Pun = connect(GpUN,Wp,Wu,Sum_err,inputs,outputs);
 
 Pun = minreal(Pun);
 

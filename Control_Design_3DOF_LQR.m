@@ -7,7 +7,7 @@ load('Parameters_3DOF.mat','param')
 load('Linear_State_Space_3DOF_Un.mat','Gp')
 
 % Simulation of the closed loop system with the LQR controller
-dt = 0.05; % sampling time
+dt = 1/200; % sampling time
 tend = 30; % duration of simulation in seconds
 t = 0:dt:tend;
 
@@ -15,23 +15,32 @@ A = G.A;
 B = G.B;
 C = G.C;
 D = G.D;
+
+% C = eye(6);
+% D = zeros(6,3);
+
+sys_DT = c2d(G,dt);
 %% LQR control design
 
-Q = diag([100 100 100 1e0 1e0 1e0]);
-R = diag([5 2 2]);
+Q = diag([100 100 100 1e-1 1e-1 1e-1]);
+R = diag([1 1 1]);
 K = lqr(A,B,Q,R);
+Kdt = dlqr(sys_DT.A,sys_DT.B,Q,R);
 
-states = {'z', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
-inputs = {'theta_s_f';'theta_s_ap';'theta_s_as'};
-outputs = {'z'; 'phi'; 'theta'};
+% states = {'z', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
+% inputs = {'theta_s_f';'theta_s_ap';'theta_s_as'};
+% outputs = {'z'; 'phi'; 'theta'};
 eig(A-B*K)
 
-sys_cl = ss(A-B*K,B,C,D,'statename',states,'inputname',inputs,'outputname',outputs);
+sys_cl = ss(A-B*K,B,C,D);%,'statename',states,'inputname',inputs,'outputname',outputs);
+sys_cl_dt = ss(sys_DT.A-sys_DT.B*Kdt,sys_DT.B,sys_DT.C,sys_DT.D,dt);%
 
-Lc=inv(dcgain(sys_cl));
+Lc = inv(dcgain(sys_cl));
+Lc_dt = inv(dcgain(sys_cl_dt));
 
 sys_cl_Lc = ss(A-B*K,B*Lc,C,D);%,'statename',states,'inputname',inputs,'outputname',outputs);
-% sys_cl_Lc = ss(Gp.A - Gp.B*K,Gp.B*Lc,C,D);
+sys_cl_Lc_dt = ss(sys_DT.A-sys_DT.B*Kdt,sys_DT.B*Lc_dt,sys_DT.C,sys_DT.D,dt);%,'statename',states,'inputname',inputs,'outputname',outputs);
+
 
 % save('LQR_controller','K','Lc')
 
@@ -48,7 +57,10 @@ x0 = [0, 0, 0, 0, 0, 0];
 
 figure
 step(sys_cl_Lc)
+hold on
+step(sys_cl_Lc_dt)
 grid minor
+legend('Continuous','Discrete')
 
 
 %%

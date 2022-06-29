@@ -1,0 +1,25 @@
+% Define the linearized matrices of the system
+test1 = arrayfun(@char, M_RB3, 'UniformOutput', 0);
+test1 = string(test1);
+test_mat1 = umat([]);
+
+for i=1:size(test1,1)
+    for j=1:size(test1,2)
+        test_mat1(i,j) = eval(test1(i,j));
+    end
+end
+
+test2 = arrayfun(@char, M_3_inv, 'UniformOutput', 0);
+test2 = string(test2);
+test_mat2 = umat([]);
+
+for i=1:size(test2,1)
+    for j=1:size(test2,2)
+        test_mat2(i,j) = eval(test2(i,j));
+    end
+end
+%%
+test_mat2_sim = simplify(test_mat2,'full');
+%%
+test_inv1 = inv(test_mat1);
+

@@ -27,7 +27,8 @@ param.rho = 999.1;     % Water density at 15 Celcius [kg/m^3]
 
 % Hydrofoils parameters (Naca0012 foil)
 param.A_h = 0.0322;         % Projected area of the hydrofoil [m^2]
-param.C_L0 = ureal('C_L0',-3.64e-4,'Percentage',[-10,5]);        % y-intercept of the linear approximation for CL [-]
+% param.C_L0 = ureal('C_L0',-3.64e-4,'Percentage',[-10,5]);        % y-intercept of the linear approximation for CL [-]
+param.C_L0 = -3.64e-4;
 param.C_La = ureal('C_La',3.925,'Percentage',[-10,5]);        % Slope of the linear approximation for CL [-]
 param.C_D0 = ureal('C_D0',0.027,'Percentage',[-20,50]);        % y-intercept of the linear approximation for CD [-]
 param.C_Da = ureal('C_Da',0.155,'Percentage',[-20,50]);        % Slope of the linear approximation for CL [-]
@@ -45,9 +46,9 @@ param.gamma_0 = acos(param.l_a0/param.l_b); % Angle between the joint of connect
 % x distance between the hinge of fore hydrofoil and CG [m]
 param.l_xj_f = ureal('l_xj_f',0.402,'Percentage',[-10,10]); 
 % x distance between the hinge of fore hydrofoil and CG [m]
-param.l_xj_ap = ureal('l_xj_ap',-0.298,'Percentage',[-10,10]);   
+param.l_xj_ap = ureal('l_xj_a',-0.298,'Percentage',[-10,10]);   
 % x distance between the hinge of aft starboard hydrofoil and CG [m]
-param.l_xj_as = ureal('l_xj_as',-0.298,'Percentage',[-10,10]);    
+param.l_xj_as = param.l_xj_ap;    
 
 % y distance between the centre of pressure of fore hydrofoil and CG [m]
 param.l_y_f = ureal('l_y_f',-0.024,'Percentage',[-10,10]);
@@ -57,8 +58,8 @@ param.l_y_ap = ureal('l_y_ap',-0.481,'Percentage',[-10,10]);
 param.l_y_as = ureal('l_y_as',0.433,'Percentage',[-10,10]);              
 
 % z distance between the hinge of fore hydrofoil and CG [m]
-param.l_zj_f = ureal('l_zj_f',0.006,'Percentage',[-10,10]);    
+param.l_zj_f = ureal('l_zj',0.006,'Percentage',[-10,10]);    
 % z distance between the hinge of aft port hydrofoil and CG [m]
-param.l_zj_ap = ureal('l_zj_f',0.006,'Percentage',[-10,10]);   
+param.l_zj_ap = param.l_zj_f;   
 % z distance between the hinge of aft starboard hydrofoil and CG [m]
-param.l_zj_as = ureal('l_zj_f',0.006,'Percentage',[-10,10]);     
+param.l_zj_as = param.l_zj_f;     
