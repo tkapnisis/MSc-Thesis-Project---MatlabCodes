@@ -1,10 +1,13 @@
 clc
 clear all
-close all
+% close all
 
 addpath('HEARP')
 addpath('RacingBoatSR65')
-ulog = ulogreader('log_8_2022-4-29-17-09-36.ulg');
+addpath('HEARP_EKF2_Tuning_Tests')
+addpath('HEARP_Filter_Tests')
+addpath('LQR Control Design')
+ulog = ulogreader('log_12_2022-6-30-12-41-56.ulg');
 params = readParameters(ulog);
 systeminfo = readSystemInformation(ulog);
 loggedoutput = readLoggedOutput(ulog);
@@ -31,11 +34,9 @@ data_angular_velocity = readTopicMsgs(ulog,'TopicNames',{'vehicle_angular_veloci
 attitude_quad = timetable2table(data_attitude.TopicMessages{1,1}(:,1));
 attitude_quad = table2array(attitude_quad(:,2));
 attitude_eul = rad2deg(quat2eul(attitude_quad));
-% attitude_eul = quat2eul(attitude_quad);
 
 angular_velocity = timetable2table(data_angular_velocity.TopicMessages{1,1}(:,2));
 angular_velocity = rad2deg(table2array(angular_velocity(:,2)));
-% angular_velocity = table2array(angular_velocity(:,2));
 
 time_attidute = seconds(data_attitude.TopicMessages{1,1}.timestamp);
 time_attidute = time_attidute - time_attidute(1);
@@ -43,6 +44,7 @@ time_attidute = time_attidute - time_attidute(1);
 time_angular_velocity = seconds(data_angular_velocity.TopicMessages{1,1}.timestamp);
 time_angular_velocity = time_angular_velocity - time_angular_velocity(1);
 
+%
 figure
 subplot(3,2,1)
 plot(time_attidute,attitude_eul(:,3),'LineWidth',1.5)
@@ -99,19 +101,19 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$r$} \textbf{[deg/s]}','interpreter','latex')
 xlim([0, time_angular_velocity(end)])
 grid minor
-
+%}
 %% Vehicle Local Position and Velocity
 data_vehicle_local_position = readTopicMsgs(ulog,'TopicNames',{'vehicle_local_position'}, ... 
 'InstanceID',{0},'Time',[d1 d2]);
 
-vehicle_local_position = timetable2table(data_vehicle_local_position.TopicMessages{1,1}(:,1:19));
+vehicle_local_position = timetable2table(data_vehicle_local_position.TopicMessages{1,1}(:,:));
 
 local_position = table2array(vehicle_local_position(:,5:7));
 local_velocity = table2array(vehicle_local_position(:,10:12));
 
 time_vehicle_local_position = seconds(data_vehicle_local_position.TopicMessages{1,1}.timestamp);
 time_vehicle_local_position = time_vehicle_local_position - time_vehicle_local_position(1);
-
+%
 figure
 subplot(3,2,1)
 plot(time_vehicle_local_position,local_position(:,1),'LineWidth',1.5)
@@ -171,8 +173,20 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$w$} \textbf{[m/s]}','interpreter','latex')
 xlim([0, time_vehicle_local_position(end)])
 grid minor
-
+%}
 %% Distance Sensor
+% data_hf_controllers = readTopicMsgs(ulog,'TopicNames',{'hf_controllers'}, ... 
+% 'InstanceID',{0},'Time',[d1 d2]);
+% 
+% dist_bottom_filter = timetable2table(data_hf_controllers.TopicMessages{1,1}(:,3));
+% dist_bottom_filter = table2array(dist_bottom_filter(:,2));
+% 
+% time_dist_bottom_filter = seconds(data_hf_controllers.TopicMessages{1,1}.timestamp);
+% time_dist_bottom_filter = time_dist_bottom_filter - time_dist_bottom_filter(1);
+% dt_dist = time_dist_bottom_filter(2:end) - time_dist_bottom_filter(1:end-1);
+% 
+
+
 data_distance_sensor = readTopicMsgs(ulog,'TopicNames',{'distance_sensor'}, ... 
 'InstanceID',{0},'Time',[d1 d2]);
 
@@ -180,42 +194,49 @@ data_distance_sensor = readTopicMsgs(ulog,'TopicNames',{'distance_sensor'}, ...
 distance_sensor = timetable2table(data_distance_sensor.TopicMessages{1,1}(:,3));
 distance_sensor = table2array(distance_sensor(:,2));
 
+local_dist_bottom = table2array(vehicle_local_position(:,21));
+local_dist_bottom_rate = table2array(vehicle_local_position(:,22));
+
+time_vehicle_local_position = seconds(data_vehicle_local_position.TopicMessages{1,1}.timestamp);
+time_vehicle_local_position = time_vehicle_local_position - time_vehicle_local_position(1);
+
+
 time_distance_sensor = seconds(data_distance_sensor.TopicMessages{1,1}.timestamp);
 time_distance_sensor = time_distance_sensor - time_distance_sensor(1);
 
-%%
-fs = 20;
-[y_ds,t_ds] = resample(double(distance_sensor),time_distance_sensor,fs);
-[y_at, t_at] = resample(attitude_eul,time_attidute,fs);
-
-fpass = 2;
-y_ds_f=lowpass(y_ds,fpass,fs);
-y_at_f=lowpass(y_at,fpass,fs);
-
-%%
-theta = deg2rad(y_at(:,2));
-theta_f = deg2rad(y_at_f(:,2));
-
-l_z_hs = -0.13;
-l_x_hs = 0.7;
-z_n = -y_ds(1:end-2) - l_z_hs*cos(theta) + l_x_hs*sin(theta);
-z_n_f = -y_ds_f(1:end-2) - l_z_hs*cos(theta_f) + l_x_hs*sin(theta_f);
 figure
 hold on
-plot(t_ds,y_ds,'LineWidth',1.5)
-plot(t_ds,y_ds_f,'LineWidth',1.5)
-plot(t_at,z_n,'LineWidth',1.5)
-plot(t_at,z_n_f,'LineWidth',1.5)
-line([0 time_vehicle_local_position(end)],[0 0],'LineWidth',1,'Color','k')
+plot(time_distance_sensor,distance_sensor(:,1),'LineWidth',1.5)
+plot(time_vehicle_local_position,local_dist_bottom,'LineWidth',1.5)
+% plot(time_dist_bottom_filter,dist_bottom_filter,'LineWidth',1.5)
+% line([0 time_vehicle_local_position(end)],[0 0],'LineWidth',1,'Color','k')
 title('Distance from free-surface of water')
 xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$h$} \textbf{[m]}','interpreter','latex')
+% xlim([0, time_vehicle_local_position(end)])
+% ylim([-0.6, 0.6])
+grid minor
+% legend('Distance sensor current dist','local dist bottom','Custom filter')
+legend('Distance sensor Raw measurement','Local dist bottom with zero location of IMU and Height Sensor (Flying Fish approach)')
+
+%%
+%
+figure
+hold on
+plot(time_vehicle_local_position,local_velocity(:,3),'LineWidth',1.5)
+plot(time_vehicle_local_position,local_dist_bottom_rate,'LineWidth',1.5)
+line([0 time_vehicle_local_position(end)],[0 0],'LineWidth',1,'Color','k')
+title('Vertical velocity')
+xlabel('\textbf{time [s]}','interpreter','latex')
+ylabel('\boldmath{$h$} \textbf{[m/s]}','interpreter','latex')
 xlim([0, time_vehicle_local_position(end)])
 % ylim([-0.6, 0.6])
 grid minor
-legend('Distance sensor','Z_n')
-
+% legend('Distance sensor','Z_n')
+legend('w','local dist bottom rate')
+%}
 %% Actuator outputs
+%
 data_actuator_outputs_0 = readTopicMsgs(ulog,'TopicNames',{'actuator_outputs'}, ... 
 'InstanceID',{0},'Time',[d1 d2]);
 data_actuator_outputs_1 = readTopicMsgs(ulog,'TopicNames',{'actuator_outputs'}, ... 
@@ -265,8 +286,9 @@ ylabel('\textbf{PWM [ms]}','interpreter','latex')
 xlim([0, time_actuator_outputs(end)])
 grid minor
 legend('Propeller','PWM DISARMED')
-
+%}
 %% Actuator controls
+%{
 data_actuator_controls = readTopicMsgs(ulog,'TopicNames',{'actuator_controls_0'}, ... 
 'InstanceID',{0},'Time',[d1 d2]);
 
@@ -326,6 +348,7 @@ ylabel('\textbf{Signal [-]}','interpreter','latex')
 xlim([0, time_actuator_controls(end)])
 ylim([-1, 1])
 grid minor
+%}
 %% Vehicle Acceleration
 %{
 local_acceleration = table2array(vehicle_local_position(:,16:18));
@@ -418,6 +441,29 @@ xlim([0, time_angular_velocity(end)])
 grid minor
 %}
 
-
-%% Save data
+%% HF Full Control
+% data_hf_controllers = readTopicMsgs(ulog,'TopicNames',{'hf_controllers'}, ... 
+% 'InstanceID',{0},'Time',[d1 d2]);
+% 
+% dist_bottom_filter = timetable2table(data_hf_controllers.TopicMessages{1,1}(:,3));
+% dist_bottom_filter = table2array(dist_bottom_filter(:,2));
+% 
+% time_dist_bottom_filter = seconds(data_hf_controllers.TopicMessages{1,1}.timestamp);
+% time_dist_bottom_filter = time_dist_bottom_filter - time_dist_bottom_filter(1);
+% dt_dist = time_dist_bottom_filter(2:end) - time_dist_bottom_filter(1:end-1);
+%%
+% figure
+% plot(time_dist_bottom_filter,dist_bottom_filter,'LineWidth',1.5)
+% hold on
+% plot(time_vehicle_local_position,local_dist_bottom*0.006,'LineWidth',1.5)
+% %
+% title('Dist Bottom Filtered')
+% xlabel('\textbf{time [s]}','interpreter','latex')
+% ylabel('\textbf{Distance [m]}','interpreter','latex')
+% xlim([0, time_actuator_controls(end)])
+% ylim([-1, 1])
+% grid minor
+% 
+% 
+% % Save data
 % save('log_8_2022-4-29-17-09-36.ulg.mat','distance_sensor','time_distance_sensor')

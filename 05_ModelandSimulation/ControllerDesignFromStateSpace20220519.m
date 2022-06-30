@@ -7,10 +7,10 @@ rho=997;        %[kg/m^3]   Water density
 U=4.12;         %[m/s]      Hydrofoil speed in x direction
 mass=29.16;     %[kg]       Hydrofoil mass
 I_yy=7.6;       %[kg/m^2]
-d1=0.5;
-d2=0.23;
-d3=0.45;
-d4=0.45;
+d1=0.4;
+d2=0.5;
+d3=0.4;
+d4=0.5;
 d_f=d1;           %0.5;  %[m]
 d_a=d2;           %0.3;  %[m]
 S_f=0.036;       %[m^2] Area of the fore foil   
@@ -25,11 +25,10 @@ theta_dot=0;    %[rad] initial pitch rate
 
 %Derivatives with respect to various parameters
 
-Dclf_O_Dalpha=4.205;       %From Flyingfish documentation Figure 2-7  Converted to 1/rad
-Dcla_O_Dalpha=4.205;       %From Flyingfish documentation Figure 2-7
-
-Dcdf_O_Dalpha=0.380;    %From Flyingfish documentation Figure 2-7
-Dcda_O_Dalpha=0.380;    %From Flyingfish documentation Figure 2-7
+Dclf_O_Dalpha=0.06*(360/(2*pi));       %From Flyingfish documentation Figure 2-7  Converted to 1/rad
+Dcla_O_Dalpha=0.06*(360/(2*pi));       %From Flyingfish documentation Figure 2-7
+Dcdf_O_Dalpha=0.00375*(360/(2*pi));    %From Flyingfish documentation Figure 2-7
+Dcda_O_Dalpha=0.00375*(360/(2*pi));    %From Flyingfish documentation Figure 2-7
 
 Dalpha_O_Dtheta=1;
 Dalpha_O_Dz_dot=1/U;
@@ -91,7 +90,7 @@ outputs = {'z'; 'theta'};
 sys_ss = ss(A,B,C,D,'statename',states,'inputname',inputs,'outputname',outputs);
 
 poles = eig(A)
-%%
+
 %generate the controllability matrix
 co = ctrb(sys_ss);
 controllability = rank(co)
