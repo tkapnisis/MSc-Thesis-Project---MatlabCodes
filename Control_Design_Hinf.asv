@@ -184,9 +184,9 @@ s = zpk('s');
 M_1 = 1.5;
 M_2 = 1.5;
 M_3 = 1.5;
-w_c1 = 0.5*2*pi;
-w_c2 = 1*2*pi;
-w_c3 = 1*2*pi;
+w_c1 = 2*2*pi;
+w_c2 = 3*2*pi;
+w_c3 = 3*2*pi;
 A_1 = 1e-4;
 A_2 = 1e-4;
 A_3 = 1e-4;
@@ -282,7 +282,7 @@ Sum_err = sumblk('v = r - y',3);
 inputs = {'r','u'};
 outputs = {'z1','z2','v'};
 % Pun = connect(Gp_s,Gd_p_s,Wp,Wu,Wd,Sum_err,inputs,outputs);
-Pun = connect(G,Wp,Wu,W1,Delta_o,W2,Sum_outp,Sum_err,inputs,outputs);
+Pun = connect(G,Wp,Wu,W1,W2,Sum_err,inputs,outputs);
 
 Pun = minreal(Pun);
 
@@ -323,8 +323,7 @@ T = loops.To;
 S = loops.So;
 
 %%
-% loops_p = loopsens(G,(eye(3)-Wi)*Kunc);
-loops_p = loopsens(G,Kunc);
+loops_p = loopsens(G,(eye(3)-Wi)*Kunc);
 Lp = loops_p.Lo;
 Tp = loops_p.To;
 Sp = loops_p.So;
@@ -376,7 +375,7 @@ x0 = [0, 0, 0, 0, 0, 0];
 % [y,~,~] = lsim(T,ref,t);
 
 figure
-lsim(T,ref,t);
+lsim(Tp,ref,t);
 
 %%
 figure

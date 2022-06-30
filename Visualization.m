@@ -1,4 +1,4 @@
-function Visualization_3DOF(x)
+function Visualization(x)
 
 z_n = x(1);
 phi = x(2);

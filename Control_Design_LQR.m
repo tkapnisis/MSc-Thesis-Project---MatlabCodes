@@ -1,67 +1,82 @@
- clc
-% clear all
-% close all
+clc
+clear all
+close all
 
-load('Linear_State_Space_3DOF.mat')
-load('Parameters_3DOF.mat','param')
-% load('Linear_State_Space_3DOF_Un.mat','Gp')
+load('LTI_Nominal_Plant.mat')
+load('Parameters_Nominal.mat','param')
+load('LTI_Perturbed_Plant.mat','Gp')
 
-% Simulation of the closed loop system with the LQR controller
-dt = 1/50; % sampling time
-tend = 30; % duration of simulation in seconds
+% Simulation time 
+dt = 0.05; % sampling time
+tend = 20; % duration of simulation in seconds
 t = 0:dt:tend;
 
-A = G.A;
-B = G.B;
-C = G.C;
-D = G.D;
+% Definitons of the state space
+states = {'z', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
+inputs = {'theta.s.f';'theta.s.ap';'theta.s.as'};
+outputs = {'z'; 'phi'; 'theta'};
+disturbances = {'u.w.f';'w.w.f';'u.w.ap';'w.w.ap';'u.w.as';'w.w.as'};
+ref_signals = {'z.ref'; 'phi.ref'; 'theta.ref'};
 
-% C = eye(6);
-% D = zeros(6,3);
-
-sys_DT = c2d(G,dt);
+G_DT = c2d(G,dt);
+Gd_DT = c2d(Gd,dt);
 %% LQR control design
 
-Q = diag([100 10 100 1e-2 1e-2 1e-2]);
-R = diag([1 1 1]);
-K = lqr(A,B,Q,R)
-Kdt = dlqr(sys_DT.A,sys_DT.B,Q,R);
+Q = diag([100 10 100 1e-2 1e-2 1e-2]); % Weights for the states
+R = diag([1 1 1]);                     % Weights for the inputs
+K = lqr(G.A,G.B,Q,R);                  % LQR Controller gain for continuous-time
+K_DT = dlqr(G_DT.A,G_DT.B,Q,R);         % LQR Controller gain for discrete-time
 
-% states = {'z', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
-% inputs = {'theta_s_f';'theta_s_ap';'theta_s_as'};
-% outputs = {'z'; 'phi'; 'theta'};
-eig(A-B*K);
+% Closed-loop system for continuous-time
+sys_CL = ss(G.A - G.B*K,G.B,G.C,G.D);
+% Closed-loop system for discrete-time
+sys_CL_DT = ss(G_DT.A - G_DT.B*K_DT,G_DT.B,G_DT.C,G_DT.D,dt);
 
-sys_cl = ss(A-B*K,B,C,D);%,'statename',states,'inputname',inputs,'outputname',outputs);
-sys_cl_dt = ss(sys_DT.A-sys_DT.B*Kdt,sys_DT.B,sys_DT.C,sys_DT.D,dt);%
+% DC-gain of the closed-loop system (Zero frequency gain)
+% It affects the steady-state solution but do not affect the stability of
+% the system
+Lc = inv(dcgain(sys_CL));        % DC-gain for continuous-time closed-loop system
+Lc_DT = inv(dcgain(sys_CL_DT));  % DC-gain for discrete-time closed-loop system
 
-Lc = inv(dcgain(sys_cl));
-Lc_dt = inv(dcgain(sys_cl_dt));
+% Closed-loop system for continuous-time including the DC-gain
+sys_CL = ss(G.A - G.B*K,G.B*Lc,G.C,G.D,'statename',states,'inputname',...
+                                       inputs,'outputname',outputs);
+% Closed-loop system for disrete-time including the DC-gain
+sys_CL_DT = ss(G_DT.A - G_DT.B*K_DT,G_DT.B*Lc_DT,G_DT.C,G_DT.D,dt,...
+               'statename',states,'inputname',inputs,'outputname',outputs);
 
-sys_cl_Lc = ss(A-B*K,B*Lc,C,D);%,'statename',states,'inputname',inputs,'outputname',outputs);
-sys_cl_Lc_dt = ss(sys_DT.A-sys_DT.B*Kdt,sys_DT.B*Lc_dt,sys_DT.C,sys_DT.D,dt);%,'statename',states,'inputname',inputs,'outputname',outputs);
+% Closed-loop system for continuous-time including wave disturbances
+sys_CL_w = ss(G.A - G.B*K,[G.B*Lc, Gd.B],G.C,[G.D,Gd.D],'statename',states,...
+              'inputname',[ref_signals;disturbances],'outputname',outputs);
 
+% Closed-loop system of the perturbed-plant in continuous-time
+sys_CL_p = ss(Gp.A - Gp.B*K,Gp.B*Lc,Gp.C,Gp.D,'statename',states,'inputname',...
+                                       inputs,'outputname',outputs);
+%% Simulations in calm water
 
-% save('LQR_controller','K','Lc')
-
-% figure;
-% pzmap(sys_cl_Lc);
-% grid on
-
-%%
-ref = [-0.05*square(t);0*ones(size(t));0*ones(size(t))];
-% ref = [0.1*sin(2*t);0*ones(size(t));0.05*sin(1*t)];
-
-x0 = [0, 0, 0, 0, 0, 0];
-[y,tOut,x]=lsim(sys_cl_Lc,ref,t,x0);
-
+% Step responses of the closed-loop system for continuous and discrete-time
 figure
-step(sys_cl_Lc)
+step(sys_CL)
 hold on
-step(sys_cl_Lc_dt)
+step(sys_CL_DT)
 grid minor
 legend('Continuous','Discrete')
-%%
+
+% Step responses of the nominal and the perturbed closed-loop system
+% figure
+% step(sys_CL_p)
+% hold on
+% step(sys_CL)
+% grid minor
+% legend('Perturbed','Nominal')
+
+% Reference signal
+ref = [-0.05*square(t);0*ones(size(t));0*ones(size(t))];
+% ref = [0.1*sin(2*t);0*ones(size(t));0.05*sin(1*t)];
+% Initial sate of the system
+x0 = [0, 0, 0, 0, 0, 0];
+[y,~,x]=lsim(sys_CL,ref,t,x0);
+
 figure
 subplot(3,1,1)
 plot(t,y(:,1) + param.z_n0,'LineWidth',1.5)
@@ -93,16 +108,65 @@ ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 legend('Response','Reference Signal','Location','best')
 grid minor
 
-inp_val = Lc*ref - K*x' + [param.theta_s0_f;param.theta_s0_ap;param.theta_s0_as];
+eq_input = [param.theta_s_f0;param.theta_s_ap0;param.theta_s_as0];
+u = Lc*ref - K*x' + eq_input;
 figure
-plot(t,rad2deg(inp_val),'LineWidth', 1.5)
+plot(t,rad2deg(u),'LineWidth', 1.5)
 title('Servo motor angles - Control inputs')
 grid minor
 ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
 xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
-Step_info = stepinfo(sys_cl_Lc);
+Step_info = stepinfo(sys_CL);
+
+%% %% Simulations in long-crested regular waves
+
+% Calculation of waves velocity profile for each hydrofoil
+% Parameters of long-crested regular wave
+wave_param.omega_0 = 1.5;   % Wave frequency [rad/s]
+wave_param.lambda = 2;    % Wave length [m]
+wave_param.zeta_0 = 0.10;  % Wave amplitude [m]
+wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad] 
+
+dw = Wave_Model(t,wave_param,foil_loc,param);
+
+ref = [-0.05*square(t)*0;0*ones(size(t));0*ones(size(t))];
+% ref = [0.1*sin(2*t);0*ones(size(t));0.05*sin(1*t)];
+
+x0 = [0, 0, 0, 0, 0, 0];
+[y_w,~,x_w] = lsim(sys_CL_w,[ref;dw],t,x0);
+
+figure
+subplot(3,1,1)
+plot(t,y_w(:,1) + param.z_n0,'LineWidth',1.5)
+title('Heave')
+xlabel('\textbf{time [s]}','interpreter','latex')
+ylabel('\boldmath{$z_n$} \textbf{[m]}','interpreter','latex')
+grid minor
+subplot(3,1,2)
+plot(t,rad2deg(y_w(:,2)),'LineWidth',1.5)
+title('Roll')
+xlabel('\textbf{time [s]}','interpreter','latex')
+ylabel('\boldmath{$\phi$} \textbf{[deg]}','interpreter','latex')
+grid minor
+subplot(3,1,3)
+plot(t,rad2deg(y_w(:,3)),'LineWidth',1.5)
+title('Pitch')
+xlabel('\textbf{time [s]}','interpreter','latex')
+ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
+grid minor
+
+u_waves = Lc*ref - K*x_w' + eq_input;
+
+figure
+plot(t,rad2deg(u_waves),'LineWidth', 1.5)
+title('Servo motor angles - Control inputs')
+grid minor
+ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
+xlabel('\textbf{time [s]}','interpreter','latex')
+legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
+
 %%
 %% Optical simulation
 figure
@@ -111,7 +175,7 @@ set(gcf, 'WindowState', 'maximized');
 tic;
 
 for k=1:length(t)
-    Visualization_3DOF(x(k,:));
+    Visualization(x_w(k,:));
     title(['t= ',num2str(t(k),3),' [s]']);
     xlabel('\boldmath{$x_n$} \textbf{[m]}','interpreter','latex','FontSize',15,'Interpreter','latex')
     ylabel('\boldmath{$y_n$} \textbf{[m]}','interpreter','latex','FontSize',15,'Interpreter','latex')

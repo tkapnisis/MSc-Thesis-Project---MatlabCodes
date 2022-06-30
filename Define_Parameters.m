@@ -25,12 +25,6 @@ C_La = 3.925;          % Slope of the linear approximation for CL [-]
 C_D0 = 0.027;        % y-intercept of the linear approximation for CD [-]
 C_Da = 0.155;        % Slope of the linear approximation for CL [-]
 
-% A_h = 0.036;        % Projected area of the hydrofoil [m^2]
-% C_L0 = 0.211;     % y-intercept of the linear approximation for CL [-]                
-% C_La = 4.205;          % Slope of the linear approximation for CL [-]
-% C_D0 = 0.008;        % y-intercept of the linear approximation for CD [-]
-% C_Da = 0.380;        % Slope of the linear approximation for CL [-]
-
 l_s = 0.06;         % Moment arm of the servo motor [m] 
 h_h = 0.178;         % z distance between the hinge and the joint of
                      % connection rod of the strut of T-foil [m]
@@ -80,6 +74,10 @@ param.C_La = C_La;        % Slope of the linear approximation for CL [-]
 param.C_D0 = C_D0;        % y-intercept of the linear approximation for CD [-]
 param.C_Da = C_Da;        % Slope of the linear approximation for CL [-]
 
+% Operating conditions of HEARP
+param.U_0 = U_0;              % Operating cruise speed [m/s]
+param.z_n0 = z_n0; % Operating height of CG with respect to mean water surface [m]
+
 param.l_s = l_s; % Moment arm of the servo motor [m] 
 param.h_h = h_h; % z distance between the hinge and the joint of connection
                  % rod of the strut of T-foil [m]
@@ -106,4 +104,4 @@ param.l_zj_ap = l_zj_ap; % z distance between the hinge of aft port hydrofoil
 param.l_zj_as = l_zj_as; % z distance between the hinge of aft starboard
                          % hydrofoil and CG [m]      
 
-save('Parameters_Nominal.mat')                         
+save('Parameters_Nominal.mat','param','-append')                         
