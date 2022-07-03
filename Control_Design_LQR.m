@@ -22,7 +22,7 @@ G_DT = c2d(G,dt);
 Gd_DT = c2d(Gd,dt);
 %% LQR control design
 
-Q = diag([100 10 100 1e-2 1e-2 1e-2]); % Weights for the states
+Q = diag([100 10 100 1e-2*0 1e-2*0 1e-2*0]); % Weights for the states
 R = diag([1 1 1]);                     % Weights for the inputs
 K = lqr(G.A,G.B,Q,R);                  % LQR Controller gain for continuous-time
 K_DT = dlqr(G_DT.A,G_DT.B,Q,R);         % LQR Controller gain for discrete-time

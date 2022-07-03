@@ -17,25 +17,9 @@ load('LTI_Nominal_Plant.mat','foil_loc')
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
 %%
 %
-% [M,Delta,BlkStruct] = lftdata(Gp);
-% Approximation of the uncertainty
+% [M,Delta,BlkStruct] = lftdata(GpUN);
 
-omega = logspace(-2,2,200);
-Gnom_frd = frd(G,omega);
-Gp_samples = usample(Gp,15);
-Gp_frd = frd(Gp_samples,omega);
-
-order = 2;
-ord1 = [order,order,order];
-ord2 = ord1;
-[usys,Info] = ucover(Gp_frd,Gnom_frd,ord1,ord2,'Additive');
-% [usys,Info] = ucover(Gp_frd,Gnom_frd,ord1,'InputMult');
-
-W1 = Info.W1;
-W2 = Info.W2;
-W1_frd = frd(W1,omega);
-W2_frd = frd(W2,omega);
-
+%%
 opts = bodeoptions;
 opts.MagScale = 'log';
 opts.MagUnits = 'abs';
@@ -47,34 +31,93 @@ opts.YLabel.FontSize = 11;
 opts.TickLabel.FontSize = 10;
 opts.Title.FontSize = 12;
 opts.PhaseVisible = 'off';
-diff = Gnom_frd-Gp_frd;
-% reldiff = (Gp_frd - Gnom_frd)/Gnom_frd;
+
+% Approximation of the uncertainty
+omega = logspace(-2,2,100);
+order = 4;
+Wa = ss([]);
+k=0;
 figure
-bodeplot(diff,'b--',W1_frd*W2_frd,'r',opts)
+title('Relative Gaps (blue) vs. Shaping Filter Magnitude (red)')
+% reldiff = frd([]);
+for i=1:3
+    for j=1:3
+        Gnom_frd = frd(G(i,j),omega);
+        Gp_samples = usample(Gp(i,j),50);
+        Gp_frd = frd(Gp_samples,omega);
+%         [usys,Info] = ucover(Gp_frd,Gnom_frd,order,order,'Additive');
+        [~,Info] = ucover(Gp_frd,Gnom_frd,order,'InputMult');
+        Wa(i,j) = Info.W1;
+        Wa_frd = frd(Wa(i,j),omega);
+        k=k+1;
+        subplot(3,3,k)
+        bodeplot((Gp_frd - Gnom_frd)/Gnom_frd,'b--',Wa_frd,'r',opts)
+        j
+    end
+    i
+end   
+
+%%
+order = [4,4,4];
+Gnom_frd = frd(G,omega);
+Gp_samples = usample(Gp,20);
+Gp_frd = frd(Gp_samples,omega);
+[usys,Info] = ucover(Gp_frd,Gnom_frd,order,'OutputMult');
+Wa = Info.W1;
+Wa_frd = frd(Wa,omega);
+%%
+Gnom_frd = frd(G,omega);
+Gp_samples = usample(Gp,10);
+Gp_frd = frd(Gp_samples,omega);
+Wa_frd = frd(Wa,omega);
+
+
+% diff = Gnom_frd-Gp_frd;
+
+figure
+bodeplot((Gp_frd - Gnom_frd)*inv(Gnom_frd),'b--',Wa_frd,'r',opts)
+% title('Absolute Gaps (blue) vs. Shaping Filter Magnitude (red)')
 title('Relative Gaps (blue) vs. Shaping Filter Magnitude (red)')
 
 %%
+figure
+bodeplot(usys,'b--', Gp_frd ,'r',opts)
+grid on
+legend('Approximated Gp', 'Actual Gp')
+
+figure
+bodeplot(usys,'b--', Gnom_frd ,'r',opts)
+grid on
+legend('Approximated Gp', 'Nominal G')
+%%
+Gnom_frd = frd(G,omega);
 % Defining the block diagonal Multiplicative uncertainties
-Delta_o = ultidyn('do1',[3,3],'Bound',1);
-% Delta_o =[ultidyn('do1',[1,1],'Bound',1) 0 0;...
+Delta_i = ultidyn('Delta_i',[3,3],'Bound',0.5);
+% Delta_i =[ultidyn('do1',[1,1],'Bound',1) 0 0;...
 %           0 ultidyn('do2',[1,1],'Bound',1) 0;...
 %           0  0 ultidyn('do3',[1,1],'Bound',1)];
 
 % Defining the uncertain transfer matrix
-% GpUN = G*(eye(3) + W1*Delta_o);
-GpUN = G + W1*Delta_o*W2;
-GpUN=minreal(GpUN);
+GpUN = G*(eye(3) + Wa*Delta_i);
+% GpUN = (eye(3) + Delta_i*Wa)*G;
+% GpUN = G +  Wa*Delta_a;    
+GpUN = minreal(GpUN);
 
 GpUN_frd = ufrd(GpUN,omega);
 % Plot of the singular values of the uncertain transfer matrix
-figure
-bodeplot(usys,Gnom_frd,opts)
-title('Singular values of the uncertain transfer matrix');
-grid on
+% figure
+% bodeplot(usys,Gnom_frd,opts)
+% title('Approximation ucover');
+% grid on
 
 figure
-bodeplot(Gp_frd,Gnom_frd,opts)
-legend('Perturbed','Nominal')
+bodeplot(GpUN_frd,Gnom_frd,opts)
+title('Custom Delta');
+grid on
+
+% figure
+% bodeplot(Gp_frd,Gnom_frd,opts)
+% legend('Perturbed','Nominal')
 
 %%
 
@@ -128,26 +171,26 @@ bodeplot(Gp_s,G,opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
 grid on
 legend('Simplified Perturbed plant Gp_s(s)','Nominal plant G(s)','Location','best','FontSize',11)
-
+%%
 % Singular values and gamma analysis
 %
 % RGA
 omega1 = 0;
 Gf1 = freqresp(Gp,omega1);
-RGAw_1(:,:) = Gf1.*inv(Gf1)'
+RGAw_1(:,:) = Gf1.*inv(Gf1)';
 
 % omega2 = 0.4*2*pi;
 omega2 = 3;
 Gf2 = freqresp(Gp,omega2);
-RGAw_2(:,:) = Gf2.*inv(Gf2)'
+RGAw_2(:,:) = Gf2.*inv(Gf2)';
 
 [U1,S1,V1]=svd(Gf1);
 sv1=diag(S1);
-gamma1=sv1(1)/sv1(2)
+gamma1=sv1(1)/sv1(2);
 
 [U2,S2,V2]=svd(Gf2);
 sv2=diag(S2);
-gamma2=sv2(1)/sv2(2)
+gamma2=sv2(1)/sv2(2);
 %
 
 % opts_sigma = sigmaoptions;
@@ -242,19 +285,21 @@ Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
 Wu.y = 'z2';
-Wd.u = 'd';
-Wd.y = 'dw';
-Wr.u = 'r';
-Wr.y = 'rw';
+% Wd.u = 'd';
+% Wd.y = 'dw';
+% Wr.u = 'r';
+% Wr.y = 'rw';
 G.u = 'u';
 G.y = 'yG';
-Gd.u = 'dw';
-Gd.y = 'yGd';
+% Gd.u = 'dw';
+% Gd.y = 'yGd';
 
-Sum_err = sumblk('v = rw - yG - yGd',3);
-inputs = {'r','d','u'};
+% Sum_err = sumblk('v = rw - yG - yGd',3);
+Sum_err = sumblk('v = r - yG',3);
+% inputs = {'r','d','u'};
+inputs = {'r','u'};
 outputs = {'z1','z2','v'};
-P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
+P = connect(G,Wp,Wu,Sum_err,inputs,outputs);
 
 P = minreal(P);
 
@@ -264,25 +309,37 @@ Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
 Wu.y = 'z2';
-% Wd.u = 'd';
-% Wd.y = 'dw';
-G.u = 'u';
-G.y = 'yG';
-W1.u = 'u';
-W1.y = 'yW1';
-Delta_o.u = 'yW1';
-Delta_o.y = 'yDelta';
-W2.u = 'yDelta';
-W2.y = 'yW2';
+% Input multiplicative uncertainty
+GpUN.u = 'u';
+GpUN.y = 'yG';
+% W1.u = 'u';
+% W1.y = 'yW1';
+% Delta_i.u = 'yW1';
+% Delta_i.y = 'yDelta';
+% % Output multiplicative uncertainty
+% G.u = 'u';
+% G.y = 'yG';
+% W1.u = 'yG';
+% W1.y = 'yW1';
+% Delta_o.u = 'yW1';
+% Delta_o.y = 'yDelta';
+Gd.u = 'd';
+Gd.y = 'yGd';
 
-Sum_outp = sumblk('y = yG + yW2',3);
+% W2.u = 'yDelta';        
+% W2.y = 'yW2';
+
+% Sum_in = sumblk('u_un = u + yDelta',3);
+Sum_out = sumblk('y = yG + yGd',3);
 % Sum_err = sumblk('v = r - yG - yGd',3);
 Sum_err = sumblk('v = r - y',3);
-% inputs = {'r','d','u'};
-inputs = {'r','u'};
+
+inputs = {'r','u','d'};
 outputs = {'z1','z2','v'};
 % Pun = connect(Gp_s,Gd_p_s,Wp,Wu,Wd,Sum_err,inputs,outputs);
-Pun = connect(G,Wp,Wu,W1,Delta_o,W2,Sum_outp,Sum_err,inputs,outputs);
+% Pun = connect(G,Wp,Wu,W1,Delta_i,Sum_in,Sum_err,inputs,outputs);
+Pun = connect(GpUN,Gd,Wp,Wu,Sum_err,inputs,outputs);
+% Pun = connect(G,Wp,Wu,W1,Delta_o,Sum_out,Sum_err,inputs,outputs);
 
 Pun = minreal(Pun);
 
@@ -311,20 +368,20 @@ ncont = 3; % number of inputs
 [K,CL,gamma,info] = hinfsyn(P,nmeas,ncont);
 gamma
 %% mu-synthesis of Hinf Controller - Perturbed Plant
-% opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[2 2]);
+opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
 tic;
-% opts = musynOptions('MixedMU','on','FullDG',false);
+% opts = musynOptions('MixedMU','on');
 [Kunc,CLunc,info_unc] = musyn(Pun,nmeas,ncont);%,opts); 
 timerun = toc;
 %%
-loops = loopsens(G,K);
+loops = loopsens(Gp,K);
 L = loops.Lo;
 T = loops.To;
 S = loops.So;
 
 %%
 % loops_p = loopsens(G,(eye(3)-Wi)*Kunc);
-loops_p = loopsens(G,Kunc);
+loops_p = loopsens(Gp,Kunc);
 Lp = loops_p.Lo;
 Tp = loops_p.To;
 Sp = loops_p.So;
@@ -376,7 +433,7 @@ x0 = [0, 0, 0, 0, 0, 0];
 % [y,~,~] = lsim(T,ref,t);
 
 figure
-lsim(T,ref,t);
+lsim(Tp,ref,t);
 
 %%
 figure
