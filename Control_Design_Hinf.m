@@ -7,7 +7,7 @@ clc
 clear all
 close all
 
-load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p','Gp_s','Gd_p_s')
+load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 
@@ -15,120 +15,10 @@ load('LTI_Nominal_Plant.mat','foil_loc')
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
-%%
-%
-% [M,Delta,BlkStruct] = lftdata(GpUN);
-
-%%
-opts = bodeoptions;
-opts.MagScale = 'log';
-opts.MagUnits = 'abs';
-opts.InputLabels.Interpreter = 'none';
-opts.InputLabels.FontSize = 10;
-opts.OutputLabels.FontSize = 10;
-opts.XLabel.FontSize = 11;
-opts.YLabel.FontSize = 11;
-opts.TickLabel.FontSize = 10;
-opts.Title.FontSize = 12;
-opts.PhaseVisible = 'off';
-
-%%
-omega = 
-samples = 5;
-order = 2;
-[Gnom_frd,Gp_frd,Gp_samples,W_I,W_I_frd] = Unc_Approx(omega,order,samples,G,Gp);
-figure
-title('Relative Gaps (blue) vs. Shaping Filter Magnitude (red)')
-%%
-Delta_i = ultidyn('Delta_i',[1,1],'Bound',0.5);
-Gnom_frd = frd(G(3,3),omega);
-GpUN = G(3,3)*(1 + Wa(3,3)*Delta_i);
-GpUN_samp = usample(GpUN,40);
-GpUN_frd = frd(GpUN_samp,omega);
-figure
-bodeplot((GpUN_frd - Gnom_frd)/Gnom_frd,'b--',Wa_frd,'r',opts)
-
-figure
-bodeplot(GpUN_frd,Gnom_frd,opts)
-%%
-
-order = [4,4,4];
-Gnom_frd = frd(G,omega);
-Gp_samples = usample(Gp,20);
-Gp_frd = frd(Gp_samples,omega);
-[usys,Info] = ucover(Gp_frd,Gnom_frd,order,'OutputMult');
-Wa = Info.W1;
-Wa_frd = frd(Wa,omega);
-%%
-Gnom_frd = frd(G,omega);
-Gp_samples = usample(Gp,10);
-Gp_frd = frd(Gp_samples,omega);
-Wa_frd = frd(Wa,omega);
+%% Define the Weighting Functions for the Hinf controller
+[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
 
 
-% diff = Gnom_frd-Gp_frd;
-
-figure
-bodeplot((Gp_frd - Gnom_frd)*inv(Gnom_frd),'b--',Wa_frd,'r',opts)
-% title('Absolute Gaps (blue) vs. Shaping Filter Magnitude (red)')
-title('Relative Gaps (blue) vs. Shaping Filter Magnitude (red)')
-
-%%
-figure
-bodeplot(usys,'b--', Gp_frd ,'r',opts)
-grid on
-legend('Approximated Gp', 'Actual Gp')
-
-figure
-bodeplot(usys,'b--', Gnom_frd ,'r',opts)
-grid on
-legend('Approximated Gp', 'Nominal G')
-%%
-Gnom_frd = frd(G,omega);
-% Defining the block diagonal Multiplicative uncertainties
-% Delta_i = ultidyn('Delta_i',[3,3],'Bound',0.5);
-% Delta_i =[ultidyn('do1',[1,1],'Bound',1) 0 0;...
-%           0 ultidyn('do2',[1,1],'Bound',1) 0;...
-%           0  0 ultidyn('do3',[1,1],'Bound',1)];
-Delta = [ultidyn('d11',[1,1],'Bound',1),ultidyn('d12',[1,1],'Bound',1),ultidyn('d13',[1,1],'Bound',1);...
-         ultidyn('d21',[1,1],'Bound',1),ultidyn('d22',[1,1],'Bound',1),ultidyn('d23',[1,1],'Bound',1);...
-         ultidyn('d31',[1,1],'Bound',1),ultidyn('d32',[1,1],'Bound',1),ultidyn('d33',[1,1],'Bound',1)];
-
-% Delta_12 =ultidyn('d12',[1,1],'Bound',1);
-% Delta_13 =ultidyn('d13',[1,1],'Bound',1);
-% Delta_21 =ultidyn('d21',[1,1],'Bound',1);
-% Delta_22 =ultidyn('d22',[1,1],'Bound',1);
-% Delta_23 =ultidyn('d23',[1,1],'Bound',1);
-% Delta_31 =ultidyn('d31',[1,1],'Bound',1);
-% Delta_32 =ultidyn('d32',[1,1],'Bound',1);
-% Delta_33 =ultidyn('d33',[1,1],'Bound',1);
-GpUN = uss([]);
-for i=1:3
-    for j=1:3
-        GpUN(i,j) = G(i,j)*(1 + Wa(i,j)*Delta(i,j));
-    end
-end
-%%
-
-% Defining the uncertain transfer matrix
-% GpUN = G*(eye(3) + Wa*Delta_i);
-% GpUN = (eye(3) + Delta_i*Wa)*G;
-% GpUN = G +  Wa*Delta_a;    
-GpUN = minreal(GpUN);
-
-GpUN_samples = usample(GpUN,20);
-GpUN_frd = frd(GpUN_samples,omega);
-% GpUN_frd = ufrd(GpUN,omega);
-% Plot of the singular values of the uncertain transfer matrix
-% figure
-% bodeplot(usys,Gnom_frd,opts)
-% title('Approximation ucover');
-% grid on
-
-figure
-bodeplot(GpUN_frd,Gnom_frd,opts)
-title('Custom Delta');
-grid on
 
 % figure
 % bodeplot(Gp_frd,Gnom_frd,opts)

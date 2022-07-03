@@ -15,129 +15,71 @@ load('LTI_Nominal_Plant.mat','foil_loc')
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
-%%
-%
-% [M,Delta,BlkStruct] = lftdata(GpUN);
+%% Define the Weighting Functions for the Hinf controller
+[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
 
-%%
-opts = bodeoptions;
-opts.MagScale = 'log';
-opts.MagUnits = 'abs';
-opts.InputLabels.Interpreter = 'none';
-opts.InputLabels.FontSize = 10;
-opts.OutputLabels.FontSize = 10;
-opts.XLabel.FontSize = 11;
-opts.YLabel.FontSize = 11;
-opts.TickLabel.FontSize = 10;
-opts.Title.FontSize = 12;
-opts.PhaseVisible = 'off';
+%% Defining multiplicative uncertanty transfer function matrix
 
-% Approximation of the uncertainty
+% Approximate the parametric uncertainties as multiplicative uncertainties
+% for each channel of the perturbed plant
 omega = logspace(-2,4,200);
+samples = 100;
 order = 4;
-Wa = ss([]);
-k=0;
-figure
-title('Relative Gaps (blue) vs. Shaping Filter Magnitude (red)')
-% reldiff = frd([]);
+[Gnom_frd,Gp_frd,W_I,W_I_frd] = Unc_Approx(omega,order,samples,G,Gp);
+
+bode_opts = bodeoptions;
+bode_opts.MagScale = 'log';
+bode_opts.MagUnits = 'abs';
+bode_opts.InputLabels.Interpreter = 'none';
+bode_opts.InputLabels.FontSize = 10;
+bode_opts.OutputLabels.FontSize = 10;
+bode_opts.XLabel.FontSize = 11;
+bode_opts.YLabel.FontSize = 11;
+bode_opts.TickLabel.FontSize = 10;
+bode_opts.Title.FontSize = 12;
+bode_opts.PhaseVisible = 'off';
+
 for i=1:3
     for j=1:3
-        Gnom_frd = frd(G(i,j),omega);
-        Gp_samples = usample(Gp(i,j),200);
-        Gp_frd = frd(Gp_samples,omega);
-%         [usys,Info] = ucover(Gp_frd,Gnom_frd,order,order,'Additive');
-        [~,Info] = ucover(Gp_frd,Gnom_frd,order,'InputMult');
-        Wa(i,j) = Info.W1;
-        Wa_frd = frd(Wa(i,j),omega);
-        k=k+1;
-        subplot(3,3,k)
-        bodeplot((Gp_frd - Gnom_frd)/Gnom_frd,'b--',Wa_frd,'r',opts)
-        j
+        rel_diff(i,j,:,:) = (Gp_frd(i,j) - Gnom_frd(i,j))/Gnom_frd(i,j);
+        rel_diff.u(j) = Gnom_frd.u(j);
+        rel_diff.y(i) = Gnom_frd.y(i);
     end
-    i
-end   
-
-%%
-Delta_i = ultidyn('Delta_i',[1,1],'Bound',0.5);
-Gnom_frd = frd(G(3,3),omega);
-GpUN = G(3,3)*(1 + Wa(3,3)*Delta_i);
-GpUN_samp = usample(GpUN,40);
-GpUN_frd = frd(GpUN_samp,omega);
-figure
-bodeplot((GpUN_frd - Gnom_frd)/Gnom_frd,'b--',Wa_frd,'r',opts)
-
-figure
-bodeplot(GpUN_frd,Gnom_frd,opts)
-%%
-
-order = [4,4,4];
-Gnom_frd = frd(G,omega);
-Gp_samples = usample(Gp,20);
-Gp_frd = frd(Gp_samples,omega);
-[usys,Info] = ucover(Gp_frd,Gnom_frd,order,'OutputMult');
-Wa = Info.W1;
-Wa_frd = frd(Wa,omega);
-%%
-Gnom_frd = frd(G,omega);
-Gp_samples = usample(Gp,10);
-Gp_frd = frd(Gp_samples,omega);
-Wa_frd = frd(Wa,omega);
-
-
-% diff = Gnom_frd-Gp_frd;
-
-figure
-bodeplot((Gp_frd - Gnom_frd)*inv(Gnom_frd),'b--',Wa_frd,'r',opts)
-% title('Absolute Gaps (blue) vs. Shaping Filter Magnitude (red)')
-title('Relative Gaps (blue) vs. Shaping Filter Magnitude (red)')
-
+end 
 %%
 figure
-bodeplot(usys,'b--', Gp_frd ,'r',opts)
+title('Approximation of parametric uncertainties by multiplicative input uncertainties')
+bodeplot(rel_diff,'b--',W_I_frd,'r',bode_opts);
 grid on
-legend('Approximated Gp', 'Actual Gp')
-
-figure
-bodeplot(usys,'b--', Gnom_frd ,'r',opts)
-grid on
-legend('Approximated Gp', 'Nominal G')
+legend('\boldmath{$|(G_p(j\omega)-G(j\omega))/G(j\omega)|$}','\boldmath{$|W_I(j\omega)|$}',...
+  ...
+  'interpreter','latex','Location','best','FontSize',12)
 %%
-Gnom_frd = frd(G,omega);
-% Defining the block diagonal Multiplicative uncertainties
-% Delta_i = ultidyn('Delta_i',[3,3],'Bound',0.5);
-% Delta_i =[ultidyn('do1',[1,1],'Bound',1) 0 0;...
-%           0 ultidyn('do2',[1,1],'Bound',1) 0;...
-%           0  0 ultidyn('do3',[1,1],'Bound',1)];
-Delta_11 =ultidyn('d11',[1,1],'Bound',1);
-Delta_12 =ultidyn('d11',[1,1],'Bound',1);
-Delta_12 =ultidyn('d11',[1,1],'Bound',1);
-Delta_21 =ultidyn('d11',[1,1],'Bound',1);
-Delta_22 =ultidyn('d11',[1,1],'Bound',1);
-Delta_23 =ultidyn('d11',[1,1],'Bound',1);
-Delta_31 =ultidyn('d11',[1,1],'Bound',1);
-Delta_32 =ultidyn('d11',[1,1],'Bound',1);
-Delta_33 =ultidyn('d11',[1,1],'Bound',1);
+% Defining the complex scalar uncertainties for each channel of perturbed
+% plant
+bound = 1;
+Delta_I = [ultidyn('d11',[1,1],'Bound',bound),...
+         ultidyn('d12',[1,1],'Bound',bound),...
+         ultidyn('d13',[1,1],'Bound',bound);...
+         ultidyn('d21',[1,1],'Bound',bound),...
+         ultidyn('d22',[1,1],'Bound',bound),...
+         ultidyn('d23',[1,1],'Bound',bound);...
+         ultidyn('d31',[1,1],'Bound',bound),...
+         ultidyn('d32',[1,1],'Bound',bound),...
+         ultidyn('d33',[1,1],'Bound',bound)];
 
-
-
-
-% Defining the uncertain transfer matrix
-GpUN = G*(eye(3) + Wa*Delta_i);
-% GpUN = (eye(3) + Delta_i*Wa)*G;
-% GpUN = G +  Wa*Delta_a;    
-GpUN = minreal(GpUN);
-
-GpUN_samples = usample(GpUN,20);
-GpUN_frd = frd(GpUN_samples,omega);
-% GpUN_frd = ufrd(GpUN,omega);
-% Plot of the singular values of the uncertain transfer matrix
-% figure
-% bodeplot(usys,Gnom_frd,opts)
-% title('Approximation ucover');
-% grid on
-
+Gp_app = uss([]);
+for i=1:3
+    for j=1:3
+        Gp_app(i,j) = G(i,j)*(1 + W_I(i,j)*Delta_I(i,j));
+    end
+end
+%% % Defining the uncertain transfer matrix
+Gp_app = minreal(Gp_app);
+Gp_app_samples = usample(Gp_app,20);
+%%
 figure
-bodeplot(GpUN_frd,Gnom_frd,opts)
+bodeplot(Gp_app_samples,G,bode_opts)
 title('Custom Delta');
 grid on
 
@@ -247,61 +189,7 @@ end
 % plot(gamma)
 %}
 %% Weights design for error signal, inputs and ouputs
-
-s = zpk('s');
-
-M_1 = 1.5;
-M_2 = 1.5;
-M_3 = 1.5;
-w_c1 = 0.5*2*pi;
-w_c2 = 1*2*pi;
-w_c3 = 1*2*pi;
-A_1 = 1e-4;
-A_2 = 1e-4;
-A_3 = 1e-4;
-
-n = 1;
-
-Wp11 = (s/M_1*(1/n) + w_c1)^n/(s + w_c1*A_1^(1/n))^n;
-Wp22 = (s/M_2*(1/n) + w_c2)^n/(s + w_c2*A_2*(1/n))^n;
-Wp33 = (s/M_3*(1/n) + w_c3)^n/(s + w_c3*A_3*(1/n))^n;
-Wp = [Wp11,   0  ,   0 ;
-        0 , Wp22 ,   0 ;
-        0 ,   0  , Wp33];
-
-% Wu11 = 1/2;
-% Wu22 = 1/2;
-% Wu33 = 1/2;
-
-% Wu11 = makeweight(1e-2, [2*2*pi,1e-1], 1e2);
-Wu11 = makeweight(1e-3, [1*2*pi,1e-1], 1e1);
-Wu22 = Wu11;
-Wu33 = Wu11;
-
-Wu = 1*[Wu11,   0  ,   0 ;
-        0 , Wu22 ,   0 ;
-        0 ,   0  , Wu33];
-% Wu = zpk(Wu);
-
-Wd = zpk(50*eye(6));
-
-% zeta_1 = 1;
-% zeta_2 = 1;
-% zeta_3 = 1;
-% Wr11 = w_c1^2/(s^2 + 2*zeta_1*w_c1*s + w_c1^2);
-% Wr22 = w_c2^2/(s^2 + 2*zeta_2*w_c2*s + w_c2^2);
-% Wr33 = w_c3^2/(s^2 + 2*zeta_3*w_c3*s + w_c3^2);
-% Wr = [Wr11,   0  ,   0 ;
-%         0 , Wr22 ,   0 ;
-%         0 ,   0  , Wr33];
-Wr = zpk(1*eye(3));
-
-tau_s = ureal('tau_s',0.0001,'Range',[0, 0.13]); 
-Wi11 = (tau_s*s)/(tau_s*s + 1);
-Wi22 = Wi11;
-Wi33 = Wi11;
-
-Wi = blkdiag(Wi11,Wi33,Wi33);
+[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
 %%
 figure
 bode(Wu11,opts)
@@ -371,9 +259,9 @@ Pu = connect(G,Gd,Wp,Wu,Wa,Wd,Sum_in,Sum_out,Sum_err,inputs,outputs);
 
 % Pun = connect(GpUN,Gd,Wp,Wu,Sum_err,Sum_out,inputs,outputs);
 % Pun = connect(G,Wp,Wu,W1,Delta_o,Sum_out,Sum_err,inputs,outputs);
-Delta_i.u = 'yWa';
-Delta_i.y = 'uDelta';
-Punc = lft(Delta_i,Pu);
+Delta.u = 'yWa';
+Delta.y = 'uDelta';
+Punc = lft(Delta,Pu);
 Punc = minreal(Punc);
 
 % Wp.u = 'v';
