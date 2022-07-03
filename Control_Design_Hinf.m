@@ -32,32 +32,26 @@ opts.TickLabel.FontSize = 10;
 opts.Title.FontSize = 12;
 opts.PhaseVisible = 'off';
 
-% Approximation of the uncertainty
-omega = logspace(-2,2,100);
-order = 4;
-Wa = ss([]);
-k=0;
+%%
+omega = 
+samples = 5;
+order = 2;
+[Gnom_frd,Gp_frd,Gp_samples,W_I,W_I_frd] = Unc_Approx(omega,order,samples,G,Gp);
 figure
 title('Relative Gaps (blue) vs. Shaping Filter Magnitude (red)')
-% reldiff = frd([]);
-for i=1:3
-    for j=1:3
-        Gnom_frd = frd(G(i,j),omega);
-        Gp_samples = usample(Gp(i,j),50);
-        Gp_frd = frd(Gp_samples,omega);
-%         [usys,Info] = ucover(Gp_frd,Gnom_frd,order,order,'Additive');
-        [~,Info] = ucover(Gp_frd,Gnom_frd,order,'InputMult');
-        Wa(i,j) = Info.W1;
-        Wa_frd = frd(Wa(i,j),omega);
-        k=k+1;
-        subplot(3,3,k)
-        bodeplot((Gp_frd - Gnom_frd)/Gnom_frd,'b--',Wa_frd,'r',opts)
-        j
-    end
-    i
-end   
-
 %%
+Delta_i = ultidyn('Delta_i',[1,1],'Bound',0.5);
+Gnom_frd = frd(G(3,3),omega);
+GpUN = G(3,3)*(1 + Wa(3,3)*Delta_i);
+GpUN_samp = usample(GpUN,40);
+GpUN_frd = frd(GpUN_samp,omega);
+figure
+bodeplot((GpUN_frd - Gnom_frd)/Gnom_frd,'b--',Wa_frd,'r',opts)
+
+figure
+bodeplot(GpUN_frd,Gnom_frd,opts)
+%%
+
 order = [4,4,4];
 Gnom_frd = frd(G,omega);
 Gp_samples = usample(Gp,20);
@@ -92,18 +86,39 @@ legend('Approximated Gp', 'Nominal G')
 %%
 Gnom_frd = frd(G,omega);
 % Defining the block diagonal Multiplicative uncertainties
-Delta_i = ultidyn('Delta_i',[3,3],'Bound',0.5);
+% Delta_i = ultidyn('Delta_i',[3,3],'Bound',0.5);
 % Delta_i =[ultidyn('do1',[1,1],'Bound',1) 0 0;...
 %           0 ultidyn('do2',[1,1],'Bound',1) 0;...
 %           0  0 ultidyn('do3',[1,1],'Bound',1)];
+Delta = [ultidyn('d11',[1,1],'Bound',1),ultidyn('d12',[1,1],'Bound',1),ultidyn('d13',[1,1],'Bound',1);...
+         ultidyn('d21',[1,1],'Bound',1),ultidyn('d22',[1,1],'Bound',1),ultidyn('d23',[1,1],'Bound',1);...
+         ultidyn('d31',[1,1],'Bound',1),ultidyn('d32',[1,1],'Bound',1),ultidyn('d33',[1,1],'Bound',1)];
+
+% Delta_12 =ultidyn('d12',[1,1],'Bound',1);
+% Delta_13 =ultidyn('d13',[1,1],'Bound',1);
+% Delta_21 =ultidyn('d21',[1,1],'Bound',1);
+% Delta_22 =ultidyn('d22',[1,1],'Bound',1);
+% Delta_23 =ultidyn('d23',[1,1],'Bound',1);
+% Delta_31 =ultidyn('d31',[1,1],'Bound',1);
+% Delta_32 =ultidyn('d32',[1,1],'Bound',1);
+% Delta_33 =ultidyn('d33',[1,1],'Bound',1);
+GpUN = uss([]);
+for i=1:3
+    for j=1:3
+        GpUN(i,j) = G(i,j)*(1 + Wa(i,j)*Delta(i,j));
+    end
+end
+%%
 
 % Defining the uncertain transfer matrix
-GpUN = G*(eye(3) + Wa*Delta_i);
+% GpUN = G*(eye(3) + Wa*Delta_i);
 % GpUN = (eye(3) + Delta_i*Wa)*G;
 % GpUN = G +  Wa*Delta_a;    
 GpUN = minreal(GpUN);
 
-GpUN_frd = ufrd(GpUN,omega);
+GpUN_samples = usample(GpUN,20);
+GpUN_frd = frd(GpUN_samples,omega);
+% GpUN_frd = ufrd(GpUN,omega);
 % Plot of the singular values of the uncertain transfer matrix
 % figure
 % bodeplot(usys,Gnom_frd,opts)
@@ -221,61 +236,7 @@ end
 % plot(gamma)
 %}
 %% Weights design for error signal, inputs and ouputs
-
-s = zpk('s');
-
-M_1 = 1.5;
-M_2 = 1.5;
-M_3 = 1.5;
-w_c1 = 0.5*2*pi;
-w_c2 = 1*2*pi;
-w_c3 = 1*2*pi;
-A_1 = 1e-4;
-A_2 = 1e-4;
-A_3 = 1e-4;
-
-n = 1;
-
-Wp11 = (s/M_1*(1/n) + w_c1)^n/(s + w_c1*A_1^(1/n))^n;
-Wp22 = (s/M_2*(1/n) + w_c2)^n/(s + w_c2*A_2*(1/n))^n;
-Wp33 = (s/M_3*(1/n) + w_c3)^n/(s + w_c3*A_3*(1/n))^n;
-Wp = [Wp11,   0  ,   0 ;
-        0 , Wp22 ,   0 ;
-        0 ,   0  , Wp33];
-
-% Wu11 = 1/2;
-% Wu22 = 1/2;
-% Wu33 = 1/2;
-
-% Wu11 = makeweight(1e-2, [2*2*pi,1e-1], 1e2);
-Wu11 = makeweight(1e-3, [1*2*pi,1e-1], 1e1);
-Wu22 = Wu11;
-Wu33 = Wu11;
-
-Wu = 1*[Wu11,   0  ,   0 ;
-        0 , Wu22 ,   0 ;
-        0 ,   0  , Wu33];
-% Wu = zpk(Wu);
-
-Wd = zpk(1*eye(6));
-
-% zeta_1 = 1;
-% zeta_2 = 1;
-% zeta_3 = 1;
-% Wr11 = w_c1^2/(s^2 + 2*zeta_1*w_c1*s + w_c1^2);
-% Wr22 = w_c2^2/(s^2 + 2*zeta_2*w_c2*s + w_c2^2);
-% Wr33 = w_c3^2/(s^2 + 2*zeta_3*w_c3*s + w_c3^2);
-% Wr = [Wr11,   0  ,   0 ;
-%         0 , Wr22 ,   0 ;
-%         0 ,   0  , Wr33];
-Wr = zpk(1*eye(3));
-
-tau_s = ureal('tau_s',0.0001,'Range',[0, 0.13]); 
-Wi11 = (tau_s*s)/(tau_s*s + 1);
-Wi22 = Wi11;
-Wi33 = Wi11;
-
-Wi = blkdiag(Wi11,Wi33,Wi33);
+[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
 %%
 figure
 bode(Wu11,opts)
@@ -285,21 +246,21 @@ Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
 Wu.y = 'z2';
-% Wd.u = 'd';
-% Wd.y = 'dw';
+Wd.u = 'd';
+Wd.y = 'dw';
 % Wr.u = 'r';
 % Wr.y = 'rw';
 G.u = 'u';
 G.y = 'yG';
-% Gd.u = 'dw';
-% Gd.y = 'yGd';
+Gd.u = 'dw';
+Gd.y = 'yGd';
 
-% Sum_err = sumblk('v = rw - yG - yGd',3);
-Sum_err = sumblk('v = r - yG',3);
-% inputs = {'r','d','u'};
-inputs = {'r','u'};
+Sum_err = sumblk('v = r - yG - yGd',3);
+% Sum_err = sumblk('v = r - yG',3);
+inputs = {'r','d','u'};
+% inputs = {'r','u'};
 outputs = {'z1','z2','v'};
-P = connect(G,Wp,Wu,Sum_err,inputs,outputs);
+P = connect(G,Gd,Wp,Wu,Wd,Sum_err,inputs,outputs);
 
 P = minreal(P);
 
@@ -309,9 +270,16 @@ Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
 Wu.y = 'z2';
+Wd.u = 'd';
+Wd.y = 'dw';
 % Input multiplicative uncertainty
-GpUN.u = 'u';
-GpUN.y = 'yG';
+G.u = 'u_un';
+G.y = 'yG';
+Gd.u = 'dw';
+Gd.y = 'yGd';
+Wa.u = 'u';
+Wa.y = 'yWa';
+
 % W1.u = 'u';
 % W1.y = 'yW1';
 % Delta_i.u = 'yW1';
@@ -321,27 +289,27 @@ GpUN.y = 'yG';
 % G.y = 'yG';
 % W1.u = 'yG';
 % W1.y = 'yW1';
-% Delta_o.u = 'yW1';
-% Delta_o.y = 'yDelta';
-Gd.u = 'd';
-Gd.y = 'yGd';
 
 % W2.u = 'yDelta';        
 % W2.y = 'yW2';
 
-% Sum_in = sumblk('u_un = u + yDelta',3);
+Sum_in = sumblk('u_un = u + uDelta',3);
 Sum_out = sumblk('y = yG + yGd',3);
-% Sum_err = sumblk('v = r - yG - yGd',3);
-Sum_err = sumblk('v = r - y',3);
+Sum_err = sumblk('v = r - yG - yGd',3);
+% Sum_err = sumblk('v = r - y',3);
 
-inputs = {'r','u','d'};
-outputs = {'z1','z2','v'};
+inputs = {'uDelta','r','d','u'};
+% inputs = {'r','u'};
+outputs = {'yWa','z1','z2','v'};
 % Pun = connect(Gp_s,Gd_p_s,Wp,Wu,Wd,Sum_err,inputs,outputs);
-% Pun = connect(G,Wp,Wu,W1,Delta_i,Sum_in,Sum_err,inputs,outputs);
-Pun = connect(GpUN,Gd,Wp,Wu,Sum_err,inputs,outputs);
-% Pun = connect(G,Wp,Wu,W1,Delta_o,Sum_out,Sum_err,inputs,outputs);
+Pu = connect(G,Gd,Wp,Wu,Wa,Wd,Sum_in,Sum_out,Sum_err,inputs,outputs);
 
-Pun = minreal(Pun);
+% Pun = connect(GpUN,Gd,Wp,Wu,Sum_err,Sum_out,inputs,outputs);
+% Pun = connect(G,Wp,Wu,W1,Delta_o,Sum_out,Sum_err,inputs,outputs);
+Delta.u = 'yWa';
+Delta.y = 'uDelta';
+Punc = lft(Delta,Pu);
+Punc = minreal(Punc);
 
 % Wp.u = 'v';
 % Wp.y = 'z1';
@@ -368,10 +336,10 @@ ncont = 3; % number of inputs
 [K,CL,gamma,info] = hinfsyn(P,nmeas,ncont);
 gamma
 %% mu-synthesis of Hinf Controller - Perturbed Plant
-opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
+% opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
 tic;
-% opts = musynOptions('MixedMU','on');
-[Kunc,CLunc,info_unc] = musyn(Pun,nmeas,ncont);%,opts); 
+% opts = musynOptions('MixedMU','on','FrequencyGrid',[1e-2,1e2]);
+[Kunc,CLunc,info_unc] = musyn(Punc,nmeas,ncont);%,opts); 
 timerun = toc;
 %%
 loops = loopsens(Gp,K);
