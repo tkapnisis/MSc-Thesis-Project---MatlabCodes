@@ -2,7 +2,7 @@
 % Student ID: 5271355
 % Thesis Project: Modelling and control of experimental scale hydrofoil craft
 
-%% Define the perturbed plant for HEARP
+%% Define the actual perturbed plant with parametric uncertainties
 clc
 clear all
 close all
@@ -27,8 +27,10 @@ Gd = ss(A_u.NominalValue,Bd_u.NominalValue,C_u,Dd_u,...
 % Perturbed plant with uncertain parameters
 Gp = ss(A_u,B_u,C_u,D_u,...
         'statename',states,'inputname',inputs,'outputname',outputs);
+Gp = simplify(Gp,'full');
 % Perturbed disturbances transfer matrix with uncertain parameters
 Gd_p = ss(A_u,Bd_u,C_u,Dd_u,...
         'statename',states,'inputname',disturbances,'outputname',outputs);
+Gd_p = simplify(Gd_p,'full');
 
 save('LTI_Perturbed_Plant.mat')

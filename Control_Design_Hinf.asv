@@ -7,88 +7,19 @@ clc
 clear all
 close all
 
-load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p','Gp_s','Gd_p_s')
+load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-
+load('Uncertainty_Approximation.mat','Delta_O','W_O','Delta_O_d','W_O_d',...
+                                     'Gp_app','Gd_p_app')
+% load('Uncertainty_Approximation2.mat','Delta_O','W_O','Gp_app')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
-%% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
 
-%% Defining multiplicative uncertanty transfer function matrix
-
-% Approximate the parametric uncertainties as multiplicative uncertainties
-% for each channel of the perturbed plant
-omega = logspace(-2,4,200);
-samples = 100;
-order = 4;
-[Gnom_frd,Gp_frd,W_I,W_I_frd] = Unc_Approx(omega,order,samples,G,Gp);
-
-bode_opts = bodeoptions;
-bode_opts.MagScale = 'log';
-bode_opts.MagUnits = 'abs';
-bode_opts.InputLabels.Interpreter = 'none';
-bode_opts.InputLabels.FontSize = 10;
-bode_opts.OutputLabels.FontSize = 10;
-bode_opts.XLabel.FontSize = 11;
-bode_opts.YLabel.FontSize = 11;
-bode_opts.TickLabel.FontSize = 10;
-bode_opts.Title.FontSize = 12;
-bode_opts.PhaseVisible = 'off';
-
-for i=1:3
-    for j=1:3
-        rel_diff(i,j,:,:) = (Gp_frd(i,j) - Gnom_frd(i,j))/Gnom_frd(i,j);
-        rel_diff.u(j) = Gnom_frd.u(j);
-        rel_diff.y(i) = Gnom_frd.y(i);
-    end
-end 
-%%
-figure
-title('Approximation of parametric uncertainties by multiplicative input uncertainties')
-bodeplot(rel_diff,'b--',W_I_frd,'r',bode_opts);
-grid on
-legend('\boldmath{$|(G_p(j\omega)-G(j\omega))/G(j\omega)|$}','\boldmath{$|W_I(j\omega)|$}',...
-  ...
-  'interpreter','latex','Location','best','FontSize',12)
-%%
-% Defining the complex scalar uncertainties for each channel of perturbed
-% plant
-bound = 1;
-Delta_I = [ultidyn('d11',[1,1],'Bound',bound),...
-         ultidyn('d12',[1,1],'Bound',bound),...
-         ultidyn('d13',[1,1],'Bound',bound);...
-         ultidyn('d21',[1,1],'Bound',bound),...
-         ultidyn('d22',[1,1],'Bound',bound),...
-         ultidyn('d23',[1,1],'Bound',bound);...
-         ultidyn('d31',[1,1],'Bound',bound),...
-         ultidyn('d32',[1,1],'Bound',bound),...
-         ultidyn('d33',[1,1],'Bound',bound)];
-
-Gp_app = uss([]);
-for i=1:3
-    for j=1:3
-        Gp_app(i,j) = G(i,j)*(1 + W_I(i,j)*Delta_I(i,j));
-    end
-end
-%% % Defining the uncertain transfer matrix
-Gp_app = minreal(Gp_app);
-Gp_app_samples = usample(Gp_app,20);
-%%
-figure
-bodeplot(Gp_app_samples,G,bode_opts)
-title('Custom Delta');
-grid on
-
-% figure
-% bodeplot(Gp_frd,Gnom_frd,opts)
-% legend('Perturbed','Nominal')
-
-%%
-
+%% Pole-zero map of the open-loops of nominal and perturbed plant
+%{
 % Pole-zero map of the open-loop G(s)
 figure
 pzplot(G,'b');
@@ -106,50 +37,45 @@ pzplot(G,'b');
 hold on
 grid on
 set(findall(gcf,'Type','line'),'MarkerSize',15)
-pzplot(Gp_s,'r')
-legend('Nominal plant G(s)','Simplified Perturbed plant Gp_s(s)','Location','best','FontSize',11)
-
-% opts = sigmaoptions;
-opts = bodeoptions;
-
-opts.MagScale = 'log';
-opts.MagUnits = 'abs';
-opts.InputLabels.Interpreter = 'none';
-opts.InputLabels.FontSize = 10;
-opts.OutputLabels.FontSize = 10;
-opts.XLabel.FontSize = 11;
-opts.YLabel.FontSize = 11;
-opts.TickLabel.FontSize = 10;
-opts.Title.FontSize = 12;
-% opts.XLimMode = 'manual';
-% opts.Xlim = [1e-3 1e2];
-opts.PhaseVisible = 'off';
-
+pzplot(Gd_p_app_samples,'r')
+legend('Nominal plant G(s)','Simplified Perturbed plant Gp_app(s)','Location','best','FontSize',11)
+%}
+%% Bodeplot of the open-loops of nominal and perturbed plant
+%{
+bode_opts = bodeoptions;
+bode_opts.MagScale = 'log';
+bode_opts.MagUnits = 'abs';
+bode_opts.InputLabels.Interpreter = 'none';
+bode_opts.InputLabels.FontSize = 10;
+bode_opts.OutputLabels.FontSize = 10;
+bode_opts.XLabel.FontSize = 11;
+bode_opts.YLabel.FontSize = 11;
+bode_opts.TickLabel.FontSize = 10;
+bode_opts.Title.FontSize = 12;
+bode_opts.XLimMode = 'manual';
+bode_opts.Xlim = [1e-3 1e2];
+bode_opts.PhaseVisible = 'off';
+bode_opts.Grid = 'on';
 
 figure
-bodeplot(Gp,G,opts)
+bodeplot(Gp,G,bode_opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
-grid on
 legend('Perturbed plant Gp(s)','Nominal plant G(s)','Location','best','FontSize',11)
-% legend('G(s)','Gd','Location','best','FontSize',11)
-
 
 figure
-bodeplot(Gp_s,G,opts)
+bodeplot(Gp_app,G,bode_opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
-grid on
-legend('Simplified Perturbed plant Gp_s(s)','Nominal plant G(s)','Location','best','FontSize',11)
-%%
-% Singular values and gamma analysis
-%
+legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location','best','FontSize',11)
+%}
+%% Singular values and gamma analysis
+%{
 % RGA
-omega1 = 0;
-Gf1 = freqresp(Gp,omega1);
+omega1 = 1e-2;
+Gf1 = freqresp(G,omega1);
 RGAw_1(:,:) = Gf1.*inv(Gf1)';
 
-% omega2 = 0.4*2*pi;
-omega2 = 3;
-Gf2 = freqresp(Gp,omega2);
+omega2 = 1*2*pi;
+Gf2 = freqresp(G,omega2);
 RGAw_2(:,:) = Gf2.*inv(Gf2)';
 
 [U1,S1,V1]=svd(Gf1);
@@ -159,16 +85,6 @@ gamma1=sv1(1)/sv1(2);
 [U2,S2,V2]=svd(Gf2);
 sv2=diag(S2);
 gamma2=sv2(1)/sv2(2);
-%
-
-% opts_sigma = sigmaoptions;
-% opts_sigma.MagScale = 'log';
-% opts_sigma.MagUnits = 'abs';
-% opts.InputLabels.Interpreter = 'none';
-% 
-% figure
-% sigmaplot(G,opts_sigma)
-% grid on
 
 [sv,wout] = sigma(Gp,{1e-3 1e2});
 figure
@@ -182,18 +98,29 @@ grid on
 xlabel('Frequency [rad/s]')
 ylabel('Singular Values (abs)')
 title('Singular Values')
-for i=1:size(sv,2)
-    gamma(i) = sv(1,i)/sv(3,i);
-end    
+
+% for i=1:size(sv,2)
+%     gamma(i) = sv(1,i)/sv(3,i);
+% end    
 % figure 
 % plot(gamma)
 %}
-%% Weights design for error signal, inputs and ouputs
+
+%% Scaling matrices
+%{
+De = diag([0.1,0.1,0.1]);
+Du = diag([0.5,0.5,0.5]);
+Dr = diag([0.1,0.1,0.1]);
+Dd = diag([0.05,0.1,0.05,0.1,0.05,0.1]);
+
+G_sc = inv(De)*G*Du;
+Gd_sc = inv(De)*Gd*Dd;
+R = inv(De)*Dr;
+%}
+%% Define the Weighting Functions for the Hinf controller
 [Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
-%%
-figure
-bode(Wu11,opts)
-%% Generalized Plant - Nominal
+
+% Generalized Plant - Nominal
 
 Wp.u = 'v';
 Wp.y = 'z1';
@@ -208,17 +135,50 @@ G.y = 'yG';
 Gd.u = 'dw';
 Gd.y = 'yGd';
 
+
 Sum_err = sumblk('v = r - yG - yGd',3);
 % Sum_err = sumblk('v = r - yG',3);
 inputs = {'r','d','u'};
 % inputs = {'r','u'};
 outputs = {'z1','z2','v'};
+% P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 P = connect(G,Gd,Wp,Wu,Wd,Sum_err,inputs,outputs);
+% P = connect(G_sc,Gd_sc,Wp,Wu,Wd,Sum_err,inputs,outputs);
 
 P = minreal(P);
 
-%% Generalized Plant - Perturbed
+% Hinf Controller synthesis - Nominal Plant
+nmeas = 3; % number of outputs 
+ncont = 3; % number of inputs
 
+[K,CL,gamma,info] = hinfsyn(P,nmeas,ncont);
+gamma
+
+loops = loopsens(G,K);
+L = loops.Lo;
+T = loops.To;
+S = loops.So;
+
+%%
+sigma_opts = sigmaoptions;
+sigma_opts.MagScale = 'log';
+sigma_opts.MagUnits = 'abs';
+bode_osigma_optspts.InputLabels.Interpreter = 'none';
+bode_opts.InputLabels.FontSize = 10;
+bode_opts.OutputLabels.FontSize = 10;
+bode_opts.XLabel.FontSize = 11;
+bode_opts.YLabel.FontSize = 11;
+bode_opts.TickLabel.FontSize = 10;
+bode_opts.Title.FontSize = 12;
+bode_opts.XLimMode = 'manual';
+bode_opts.Xlim = [1e-3 1e2];
+bode_opts.PhaseVisible = 'off';
+bode_opts.Grid = 'on';
+
+figure
+sigma(S);
+%% Generalized Plant - Perturbed
+%{
 Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
@@ -281,38 +241,34 @@ Punc = minreal(Punc);
 
 % [~,sysr] = isproper(Pun);
 % Pun = minreal(Pun);
-
-%% Hinf Controller synthesis - Nominal Plant
-nmeas = 3; % number of outputs 
-ncont = 3; % number of inputs
-
-[K,CL,gamma,info] = hinfsyn(P,nmeas,ncont);
-gamma
+%}
 %% mu-synthesis of Hinf Controller - Perturbed Plant
+%{
 % opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
 tic;
 % opts = musynOptions('MixedMU','on','FrequencyGrid',[1e-2,1e2]);
 [Kunc,CLunc,info_unc] = musyn(Punc,nmeas,ncont);%,opts); 
 timerun = toc;
-%%
-loops = loopsens(Gp,K);
-L = loops.Lo;
-T = loops.To;
-S = loops.So;
+%}
 
 %%
+%{
 % loops_p = loopsens(G,(eye(3)-Wi)*Kunc);
-loops_p = loopsens(Gp,Kunc);
+loops_p = loopsens(Gp_app,K);
 Lp = loops_p.Lo;
 Tp = loops_p.To;
 Sp = loops_p.So;
-%%
+
+% figure
+% lsim(T,ref,t);
+% 
+
 loops_i = loopsens(G,(eye(3)-Wi)*K);
 Lp_i = loops_i.Lo;
 Tp_i = loops_i.To;
 Sp_i = loops_i.So;
 
-%%
+%
 figure
 opts = bodeoptions;
 opts.MagScale = 'log';
@@ -324,8 +280,6 @@ bodeplot(loops.So,loops.To,loops.Lo,opts)
 legend('Sensitivity S(s)','Complementary Sensitivity T(s)','Loop L(s)')
 grid on
 
-%%
-%{
 % K.InputName = {'e_zn','e_roll','e_pitch'};  
 % K.OutputName = {'Theta_s_f','Theta_s_f','Theta_s_as'};
 K.InputName = {'e'};  
@@ -351,12 +305,12 @@ t = 0:dt:tend;
 ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
 
 x0 = [0, 0, 0, 0, 0, 0];
-% [y,~,~] = lsim(T,ref,t);
+[y,~,~] = lsim(T,ref,t);
 
-figure
-lsim(Tp,ref,t);
+% figure
+% lsim(T,ref,t);
 
-%%
+%
 figure
 subplot(3,1,1)
 plot(t,y(:,1) + param.z_n0,'LineWidth',1.5)
@@ -377,7 +331,7 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
-inp_val = lsim(-K*S,ref,t);
+inp_val = lsim(K*S,ref,t);
 % inp_val = lsim(K,ref'-y,t);
 
 figure
@@ -388,9 +342,12 @@ ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
 xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
+figure
+step(T);
+grid minor
 %% Simulation of the closed loop system with the Hinf controller for uncertain plant
 figure
-step(usample(Tp,15),1);
+step(usample(Tp,2),2);
 hold on
 step(T,'r-.') 
 legend('Perturbed Plant', 'Nominal Plant')
@@ -447,28 +404,43 @@ legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 opts = bodeoptions;
 opts.MagScale = 'log';
 opts.MagUnits = 'abs';
-opts.MagLowerLimMode = 'manual';
-opts.MagLowerLim = 1e-5;
+% opts.MagLowerLimMode = 'manual';
+% opts.MagLowerLim = 1e-5;
 opts.PhaseVisible = 'off';
 % opts.YLimMode = 'manual';
 % opts.YLim = {[1e-5,1e1]};
 
 figure
 subplot(3,1,1)
-bodeplot(S(1,1),1/Wp11,opts);
+bodeplot(S(1,1),1/Wp(1,1),opts);
 legend('Sensitivity S11','1/Wp11','Location','best')
 grid on
 subplot(3,1,2)
-bodeplot(S(2,2),1/Wp22,opts)
+bodeplot(S(2,2),1/Wp(2,2),opts)
 legend('Sensitivity S22','1/Wp22','Location','best')
 grid on
 subplot(3,1,3)
-bodeplot(S(3,3),1/Wp33,opts)
+bodeplot(S(3,3),1/Wp(3,3),opts)
 legend('Sensitivity S33','1/W33','Location','best')
 grid on
 %%
+bode_opts = bodeoptions;
+bode_opts.MagScale = 'log';
+bode_opts.MagUnits = 'abs';
+bode_opts.InputLabels.Interpreter = 'none';
+bode_opts.InputLabels.FontSize = 10;
+bode_opts.OutputLabels.FontSize = 10;
+bode_opts.XLabel.FontSize = 11;
+bode_opts.YLabel.FontSize = 11;
+bode_opts.TickLabel.FontSize = 10;
+bode_opts.Title.FontSize = 12;
+% bode_opts.XLimMode = 'manual';
+% bode_opts.Xlim = [1e-3 1e2];
+bode_opts.PhaseVisible = 'off';
+bode_opts.Grid = 'on';
+
 figure 
-bodeplot(K*S,inv(Wu),opts)
+bodeplot(K*S,inv(Wu),bode_opts)
 % bodeplot(K*S,opts)
 grid on
 title('Bode plot of controller K*S versus its weight 1/Wu')
