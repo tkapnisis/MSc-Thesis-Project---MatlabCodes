@@ -10,9 +10,9 @@ close all
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-load('Uncertainty_Approximation.mat','Delta_O','W_O','Delta_O_d','W_O_d',...
-                                     'Gp_app','Gd_p_app')
-% load('Uncertainty_Approximation2.mat','Delta_O','W_O','Gp_app')
+% load('Uncertainty_Approximation.mat','Delta_O','W_O','Delta_O_d','W_O_d',...
+%                                      'Gp_app','Gd_p_app')
+load('Uncertainty_Approximation2.mat','Delta_O','W_O','Gp_app')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -131,22 +131,22 @@ Wd.y = 'dw';
 Wr.u = 'r';
 Wr.y = 'rw';
 Wact.u = 'u';
-Wact.y = 'uw';
-G.u = 'u';
+Wact.y = 'u_act';
+G.u = 'u_act';
 G.y = 'yG';
 Gd.u = 'dw';
 Gd.y = 'yGd';
 
 
-Sum_err = sumblk('v = r - yG - yGd',3);
+Sum_err = sumblk('v = rw - yG - yGd',3);
 % Sum_err = sumblk('v = r - yG',3);
 inputs = {'r','d','u'};
 % inputs = {'r','u'};
 outputs = {'z1','z2','v'};
 % P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
-P = connect(G,Gd,Wp,Wu,Wd,Sum_err,inputs,outputs);
+% P = connect(G,Gd,Wp,Wu,Wd,Sum_err,inputs,outputs);
 % P = connect(G_sc,Gd_sc,Wp,Wu,Wd,Sum_err,inputs,outputs);
-% P = connect(G,Gd,Wp,Wu,Wd,Wr,Wact,Sum_err,inputs,outputs);
+P = connect(G,Gd,Wp,Wu,Wd,Wr,Wact,Sum_err,inputs,outputs);
 
 P = minreal(P);
 
@@ -163,6 +163,7 @@ T = loops.To;
 S = loops.So;
 
 %%
+%{
 sigma_opts = sigmaoptions;
 sigma_opts.MagScale = 'log';
 sigma_opts.MagUnits = 'abs';
@@ -180,85 +181,56 @@ sigma_opts.Grid = 'on';
 
 figure
 sigma(S,sigma_opts);
-%%
+
 figure
 sigma(T,sigma_opts);
 
-%%
+
 figure
 sigma(K*S,sigma_opts);
-
+%}
 %% Generalized Plant - Perturbed
-%{
+
+% [M,Delta,BlkStruct] = lftdata(Gp_app);
+%%
+[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
+
 Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
 Wu.y = 'z2';
-Wd.u = 'd';
-Wd.y = 'dw';
-% Input multiplicative uncertainty
-G.u = 'u_un';
-G.y = 'yG';
-Gd.u = 'dw';
-Gd.y = 'yGd';
-Wa.u = 'u';
-Wa.y = 'yWa';
+% Wd.u = 'd';
+% Wd.y = 'dw';
+% Wr.u = 'r';
+% Wr.y = 'rw';
+% Wact.u = 'u';
+% Wact.y = 'u_Wact';
+% W_O.u = 'yG';
+% W_O.y = 'yW_O';
+Gp_app.u = 'u';
+Gp_app.y = 'y';
+% Gd.u = 'dw';
+% Gd.y = 'yGd';
 
-% W1.u = 'u';
-% W1.y = 'yW1';
-% Delta_i.u = 'yW1';
-% Delta_i.y = 'yDelta';
-% % Output multiplicative uncertainty
-% G.u = 'u';
-% G.y = 'yG';
-% W1.u = 'yG';
-% W1.y = 'yW1';
+% Sum_in = sumblk('u_un = u + u_Wact',3);
+% Sum_out = sumblk('y_un = yG + yW_O',3);
+% Sum_err = sumblk('v = rw - yG - yGd',3);
+Sum_err = sumblk('v = r - y',3);
+inputs = {'r','u'};
+outputs = {'z1','z2','v'};
+% Paug = connect(Gp_app,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
+Paug = connect(Gp_app,Wp,Wu,Sum_err,inputs,outputs);
+Paug = minreal(Paug);
 
-% W2.u = 'yDelta';        
-% W2.y = 'yW2';
-
-Sum_in = sumblk('u_un = u + uDelta',3);
-Sum_out = sumblk('y = yG + yGd',3);
-Sum_err = sumblk('v = r - yG - yGd',3);
-% Sum_err = sumblk('v = r - y',3);
-
-inputs = {'uDelta','r','d','u'};
-% inputs = {'r','u'};
-outputs = {'yWa','z1','z2','v'};
-% Pun = connect(Gp_s,Gd_p_s,Wp,Wu,Wd,Sum_err,inputs,outputs);
-Pu = connect(G,Gd,Wp,Wu,Wa,Wd,Sum_in,Sum_out,Sum_err,inputs,outputs);
-
-% Pun = connect(GpUN,Gd,Wp,Wu,Sum_err,Sum_out,inputs,outputs);
-% Pun = connect(G,Wp,Wu,W1,Delta_o,Sum_out,Sum_err,inputs,outputs);
-Delta.u = 'yWa';
-Delta.y = 'uDelta';
-Punc = lft(Delta,Pu);
-Punc = minreal(Punc);
-
-% Wp.u = 'v';
-% Wp.y = 'z1';
-% Wu.u = 'u_un';
-% Wu.y = 'z2';
-% Wi.u = 'u';
-% Wi.y = 'uw';
-% G.u = 'u_un';
-% G.y = 'yG';
-% 
-% Sum_err = sumblk('v = r - yG',3);
-% Sum_inp = sumblk('u_un = u + uw',3);
-% inputs = {'r','u'};
-% outputs = {'z1','z2','v'};
-% Pun = connect(G,Wp,Wu,Wi,Sum_err,Sum_inp,inputs,outputs);
-
-% [~,sysr] = isproper(Pun);
-% Pun = minreal(Pun);
-%}
+% Generalized feedback interconnection of Delta block P block
+% Punc=lft(Delta_O,Paug);
+% Punc=minreal(Punc);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
-%{
+%
 % opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
 tic;
 % opts = musynOptions('MixedMU','on','FrequencyGrid',[1e-2,1e2]);
-[Kunc,CLunc,info_unc] = musyn(Punc,nmeas,ncont);%,opts); 
+[Kunc,CLunc,info_unc] = musyn(Paug,nmeas,ncont);%,opts); 
 timerun = toc;
 %}
 
