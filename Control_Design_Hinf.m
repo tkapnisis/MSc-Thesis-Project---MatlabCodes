@@ -12,7 +12,7 @@ load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 % load('Uncertainty_Approximation.mat','Delta_O','W_O','Delta_O_d','W_O_d',...
 %                                      'Gp_app','Gd_p_app')
-load('Uncertainty_Approximation2.mat','Delta_O','W_O','Gp_app')
+load('Uncertainty_Approximation2.mat','Gp_app','W_O','Delta_O')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -37,11 +37,18 @@ pzplot(G,'b');
 hold on
 grid on
 set(findall(gcf,'Type','line'),'MarkerSize',15)
-pzplot(Gd_p_app_samples,'r')
+pzplot(Gp_app,'r')
 legend('Nominal plant G(s)','Simplified Perturbed plant Gp_app(s)','Location','best','FontSize',11)
 %}
-%% Bodeplot of the open-loops of nominal and perturbed plant
+%% Nyquist
 %{
+res = usample(Gp_app,1);
+figure
+w = logspace(-1,1,20);
+nyquist(res);
+%}
+%% Bodeplot of the open-loops of nominal and perturbed plant
+%
 bode_opts = bodeoptions;
 bode_opts.MagScale = 'log';
 bode_opts.MagUnits = 'abs';
@@ -52,16 +59,16 @@ bode_opts.XLabel.FontSize = 11;
 bode_opts.YLabel.FontSize = 11;
 bode_opts.TickLabel.FontSize = 10;
 bode_opts.Title.FontSize = 12;
-bode_opts.XLimMode = 'manual';
-bode_opts.Xlim = [1e-3 1e2];
+% bode_opts.XLimMode = 'manual';
+% bode_opts.Xlim = [1e-3 1e2];
 bode_opts.PhaseVisible = 'off';
 bode_opts.Grid = 'on';
-
+%%
 figure
 bodeplot(Gp,G,bode_opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
 legend('Perturbed plant Gp(s)','Nominal plant G(s)','Location','best','FontSize',11)
-
+%%
 figure
 bodeplot(Gp_app,G,bode_opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
@@ -190,8 +197,25 @@ figure
 sigma(K*S,sigma_opts);
 %}
 %% Generalized Plant - Perturbed
+W_O_ref = [W_O(1,1),        0,        0, W_O(1,2),        0,        0, W_O(1,3),        0,        0;...
+                  0, W_O(2,1),        0,        0, W_O(2,2),        0,        0, W_O(2,3),       0;...
+                  0,        0, W_O(3,1),        0,        0, W_O(3,2),        0,        0, W_O(2,3)];
+Delta_I_diag = uss([]);
+for i=1:3
+    for j=1:3
+        temp = Delta_O(i,j);
+        Delta_I_diag = blkdiag(Delta_I_diag,temp);
+    end
+end    
 
-% [M,Delta,BlkStruct] = lftdata(Gp_app);
+sup_map = ss([ ones(3,1), zeros(3,1), zeros(3,1);...
+           zeros(3,1),  ones(3,1), zeros(3,1);...
+           zeros(3,1), zeros(3,1),  ones(3,1)]);
+
+Gp_app_ref = G + W_O_ref*Delta_I_diag*sup_map;
+Gp_app_ref = minreal(Gp_app_ref);
+%%
+[M,Delta,BlkStruct] = lftdata(Gp_app_ref);
 %%
 [Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
 
@@ -207,30 +231,48 @@ Wu.y = 'z2';
 % Wact.y = 'u_Wact';
 % W_O.u = 'yG';
 % W_O.y = 'yW_O';
-Gp_app.u = 'u';
-Gp_app.y = 'y';
+% W_I.u = 'u';
+% W_I.y = 'yDelta_I';
+% G.u = 'u';
+% G.y = 'yG';
 % Gd.u = 'dw';
 % Gd.y = 'yGd';
+% G.u = 'u';
+% G.y = 'yG';
+% W_O_ref.u = 'u';
+% W_O_ref.y = 'yW_O';
+% sup_map.u = 'uDelta_O';
+% sup_map.y = 'y_sup_map';
+Gp_app.u = 'u';
+Gp_app.y = 'y';
 
-% Sum_in = sumblk('u_un = u + u_Wact',3);
-% Sum_out = sumblk('y_un = yG + yW_O',3);
+
+% Sum_add = sumblk('y = yG + y_sup_map',3);
 % Sum_err = sumblk('v = rw - yG - yGd',3);
+% Sum_out = sumblk('y_un = yG + uDelta_O',3);
+% Sum_err = sumblk('v = r - y_un',3);
 Sum_err = sumblk('v = r - y',3);
+% inputs = {'uDelta_O','r','u'};
 inputs = {'r','u'};
+% outputs = {'yW_O','z1','z2','v'};
 outputs = {'z1','z2','v'};
 % Paug = connect(Gp_app,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
+% Paug = connect(G,Wp,Wu,W_O,Sum_out,Sum_err,inputs,outputs);
+% Paug = connect(G,Wp,Wu,W_O_ref,sup_map,Sum_add,Sum_err,inputs,outputs);
 Paug = connect(Gp_app,Wp,Wu,Sum_err,inputs,outputs);
+
 Paug = minreal(Paug);
 
+%%
 % Generalized feedback interconnection of Delta block P block
-% Punc=lft(Delta_O,Paug);
-% Punc=minreal(Punc);
+Punc = lft(Delta_I_diag,Paug);
+Punc = minreal(Punc);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 %
 % opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
 tic;
-% opts = musynOptions('MixedMU','on','FrequencyGrid',[1e-2,1e2]);
-[Kunc,CLunc,info_unc] = musyn(Paug,nmeas,ncont);%,opts); 
+opts = musynOptions('FrequencyGrid',[1e-1,1e1]);
+[Kunc,CLunc,info_unc] = musyn(Paug,nmeas,ncont,opts); 
 timerun = toc;
 %}
 
