@@ -12,14 +12,17 @@ load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 % load('Uncertainty_Approximation.mat','Delta_O','W_O','Delta_O_d','W_O_d',...
 %                                      'Gp_app','Gd_p_app')
-load('Uncertainty_Approximation2.mat','Gp_app','W_O','Delta_O')
+% load('Uncertainty_Approximation2.mat','Gp_app','W_O','Delta_O')
+% load('Uncertainty_Approximation5.mat','W_A')
+load('Uncertainty_Approximation6.mat','Gp_ap','Gp_app','W_I')
+
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
 
 %% Pole-zero map of the open-loops of nominal and perturbed plant
-%{
+%%
 % Pole-zero map of the open-loop G(s)
 figure
 pzplot(G,'b');
@@ -59,20 +62,28 @@ bode_opts.XLabel.FontSize = 11;
 bode_opts.YLabel.FontSize = 11;
 bode_opts.TickLabel.FontSize = 10;
 bode_opts.Title.FontSize = 12;
-% bode_opts.XLimMode = 'manual';
-% bode_opts.Xlim = [1e-3 1e2];
+bode_opts.XLimMode = 'manual';
+bode_opts.Xlim = [1e-3 1e2];
 bode_opts.PhaseVisible = 'off';
 bode_opts.Grid = 'on';
-%%
-figure
-bodeplot(Gp,G,bode_opts)
-set(findall(gcf,'Type','line'),'LineWidth',1.2)
-legend('Perturbed plant Gp(s)','Nominal plant G(s)','Location','best','FontSize',11)
-%%
+
 figure
 bodeplot(Gp_app,G,bode_opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
+legend('Perturbed plant Gp(s)','Nominal plant G(s)','Location','best','FontSize',11)
+title('Gp_app')
+
+figure
+bodeplot(Gp_cor,G,bode_opts)
+set(findall(gcf,'Type','line'),'LineWidth',1.2)
 legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location','best','FontSize',11)
+title('Gp_cor')
+
+figure
+bodeplot(Gp,G,bode_opts)
+set(findall(gcf,'Type','line'),'LineWidth',1.2)
+legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location','best','FontSize',11)
+title('Gp')
 %}
 %% Singular values and gamma analysis
 %{
@@ -133,27 +144,31 @@ Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
 Wu.y = 'z2';
-Wd.u = 'd';
-Wd.y = 'dw';
-Wr.u = 'r';
-Wr.y = 'rw';
-Wact.u = 'u';
-Wact.y = 'u_act';
-G.u = 'u_act';
-G.y = 'yG';
-Gd.u = 'dw';
-Gd.y = 'yGd';
+% Wd.u = 'd';
+% Wd.y = 'dw';
+% Wr.u = 'r';
+% Wr.y = 'rw';
+% Wact.u = 'u';
+% Wact.y = 'u_act';
+% G.u = 'u_act';
+% G.y = 'yG';
+% Gd.u = 'dw';
+% Gd.y = 'yGd';
+G.u = 'u';
+G.y = 'y';
 
 
-Sum_err = sumblk('v = rw - yG - yGd',3);
+% Sum_err = sumblk('v = rw - yG - yGd',3);
+Sum_err = sumblk('v = r - y',3);
 % Sum_err = sumblk('v = r - yG',3);
-inputs = {'r','d','u'};
-% inputs = {'r','u'};
+% inputs = {'r','d','u'};
+inputs = {'r','u'};
 outputs = {'z1','z2','v'};
 % P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 % P = connect(G,Gd,Wp,Wu,Wd,Sum_err,inputs,outputs);
 % P = connect(G_sc,Gd_sc,Wp,Wu,Wd,Sum_err,inputs,outputs);
-P = connect(G,Gd,Wp,Wu,Wd,Wr,Wact,Sum_err,inputs,outputs);
+% P = connect(G,Gd,Wp,Wu,Wd,Wr,Wact,Sum_err,inputs,outputs);
+P = connect(G,Wp,Wu,Sum_err,inputs,outputs);
 
 P = minreal(P);
 
@@ -164,7 +179,8 @@ ncont = 3; % number of inputs
 [K,CL,gamma,info] = hinfsyn(P,nmeas,ncont);
 gamma
 
-loops = loopsens(G*Wact,K);
+% loops = loopsens(G*Wact,K);
+loops = loopsens(Gp,K);
 L = loops.Lo;
 T = loops.To;
 S = loops.So;
@@ -197,25 +213,60 @@ figure
 sigma(K*S,sigma_opts);
 %}
 %% Generalized Plant - Perturbed
-W_O_ref = [W_O(1,1),        0,        0, W_O(1,2),        0,        0, W_O(1,3),        0,        0;...
-                  0, W_O(2,1),        0,        0, W_O(2,2),        0,        0, W_O(2,3),       0;...
-                  0,        0, W_O(3,1),        0,        0, W_O(3,2),        0,        0, W_O(2,3)];
-Delta_I_diag = uss([]);
-for i=1:3
-    for j=1:3
-        temp = Delta_O(i,j);
-        Delta_I_diag = blkdiag(Delta_I_diag,temp);
-    end
-end    
 
-sup_map = ss([ ones(3,1), zeros(3,1), zeros(3,1);...
+% Defining the complex scalar uncertainties for each channel of perturbed plant
+bound = 1;
+Delta_I = [ultidyn('d11',[1,1],'Bound',bound),...
+           ultidyn('d12',[1,1],'Bound',bound),...
+           ultidyn('d13',[1,1],'Bound',bound);...
+           ultidyn('d21',[1,1],'Bound',bound),...
+           ultidyn('d22',[1,1],'Bound',bound),...
+           ultidyn('d23',[1,1],'Bound',bound);...
+           ultidyn('d31',[1,1],'Bound',bound),...
+           ultidyn('d32',[1,1],'Bound',bound),...
+           ultidyn('d33',[1,1],'Bound',bound)];
+
+%%
+% Defining the uncertain transfer matrix
+Gp_app = uss([]);
+
+for i=1:size(G,1)
+    for j=1:size(G,2)
+%         temp_var = strcat('w',num2str(i),num2str(j));
+        Gp_app(i,j) = (1 + W_I(i,j)*Delta_I(i,j))*G(i,j);
+    end
+end
+Gp_app = minreal(Gp_app);
+
+%%
+figure
+pzmap(Gp_app)
+grid on
+%%
+figure
+bodeplot(Gp_ap,bode_opts)
+
+%%
+
+% [M,Delta,BlkStruct] = lftdata(Gp_app);
+% W_I_ref = [W_I(1,1),        0,        0, W_I(1,2),        0,        0, W_I(1,3),        0,        0;...
+%                   0, W_I(2,1),        0,        0, W_I(2,2),        0,        0, W_I(2,3),       0;...
+%                   0,        0, W_I(3,1),        0,        0, W_I(3,2),        0,        0, W_I(2,3)];
+W_I_ref = [W_I(1,1),        0,        0, W_I(2,1),        0,        0, W_I(3,1),        0,        0;...
+                  0, W_I(1,2),        0,        0, W_I(2,2),        0,        0, W_I(3,2),       0;...
+                  0,        0, W_I(1,3),        0,        0, W_I(2,3),        0,        0, W_I(3,3)];
+
+[M,Delta_I_diag,BlkStruct] = lftdata(Gp_ap);
+
+%%
+
+sup_mat = ss([ ones(3,1), zeros(3,1), zeros(3,1);...
            zeros(3,1),  ones(3,1), zeros(3,1);...
            zeros(3,1), zeros(3,1),  ones(3,1)]);
 
-Gp_app_ref = G + W_O_ref*Delta_I_diag*sup_map;
-Gp_app_ref = minreal(Gp_app_ref);
 %%
-[M,Delta,BlkStruct] = lftdata(Gp_app_ref);
+res = W_I_ref*Delta_I_diag*sup_map;
+% [M,Delta,BlkStruct] = lftdata(Gp_app_ref);
 %%
 [Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
 
@@ -239,29 +290,49 @@ Wu.y = 'z2';
 % Gd.y = 'yGd';
 % G.u = 'u';
 % G.y = 'yG';
-% W_O_ref.u = 'u';
-% W_O_ref.y = 'yW_O';
-% sup_map.u = 'uDelta_O';
-% sup_map.y = 'y_sup_map';
-Gp_app.u = 'u';
-Gp_app.y = 'y';
+sup_mat.u = 'u';
+sup_mat.y = 'y_Delta';
+W_I_ref.u = 'u_Delta';
+W_I_ref.y = 'y_W_I';
+G.u = 'u_un';
+G.y = 'y';
 
-
-% Sum_add = sumblk('y = yG + y_sup_map',3);
+Sum_mult = sumblk('u_un = u + y_W_I',3);
 % Sum_err = sumblk('v = rw - yG - yGd',3);
 % Sum_out = sumblk('y_un = yG + uDelta_O',3);
 % Sum_err = sumblk('v = r - y_un',3);
 Sum_err = sumblk('v = r - y',3);
-% inputs = {'uDelta_O','r','u'};
-inputs = {'r','u'};
-% outputs = {'yW_O','z1','z2','v'};
-outputs = {'z1','z2','v'};
+inputs = {'u_Delta','r','u'};
+% inputs = {'r','u'};
+outputs = {'y_Delta','z1','z2','v'};
+% outputs = {'z1','z2','v'};
 % Paug = connect(Gp_app,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 % Paug = connect(G,Wp,Wu,W_O,Sum_out,Sum_err,inputs,outputs);
-% Paug = connect(G,Wp,Wu,W_O_ref,sup_map,Sum_add,Sum_err,inputs,outputs);
-Paug = connect(Gp_app,Wp,Wu,Sum_err,inputs,outputs);
+Paug = connect(G,Wp,Wu,W_I_ref,sup_mat,Sum_mult,Sum_err,inputs,outputs);
+% Paug = connect(Gp_ap,Wp,Wu,Sum_err,inputs,outputs);
 
-Paug = minreal(Paug);
+% Paug = minreal(Paug);
+
+%% Gp reformulated
+
+%%
+sup_mat.u = 'u';
+sup_mat.y = 'y_Delta';
+W_I_ref.u = 'u_Delta';
+W_I_ref.y = 'y_W_I';
+G.u = 'u_un';
+G.y = 'y';
+
+Sum_mult = sumblk('u_un = u + y_W_I',3);
+inputs = {'u_Delta','u'};
+outputs = {'y_Delta','y'};
+Gp_aug = connect(G,W_I_ref,sup_mat,Sum_mult,inputs,outputs);
+
+Gp_aug = minreal(Gp_aug);
+
+Gp_cor = lft(Delta_I_diag,Gp_aug);
+Gp_cor = minreal(Gp_cor);
+
 
 %%
 % Generalized feedback interconnection of Delta block P block
@@ -271,23 +342,22 @@ Punc = minreal(Punc);
 %
 % opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
 tic;
-opts = musynOptions('FrequencyGrid',[1e-1,1e1]);
-[Kunc,CLunc,info_unc] = musyn(Paug,nmeas,ncont,opts); 
+opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false,'FrequencyGrid',[1e-1,1e1]);
+[Kunc,CLunc,info_unc] = musyn(Punc,nmeas,ncont);%,opts); 
 timerun = toc;
 %}
 
 %%
-%{
+%
 % loops_p = loopsens(G,(eye(3)-Wi)*Kunc);
-loops_p = loopsens(Gp_app,K);
+loops_p = loopsens(Gp,Kunc);
 Lp = loops_p.Lo;
 Tp = loops_p.To;
 Sp = loops_p.So;
 
 % figure
 % lsim(T,ref,t);
-% 
-
+%{ 
 loops_i = loopsens(G,(eye(3)-Wi)*K);
 Lp_i = loops_i.Lo;
 Tp_i = loops_i.To;
@@ -321,7 +391,22 @@ sys_CL = connect(G,K,Sum,'r',{'z', 'phi', 'theta'});
 
 % https://nl.mathworks.com/help/robust/ref/uss.musyn.html
 %}
+
 %% Simulation of the closed loop system with the Hinf controller
+
+figure
+step(T)
+title('Hinf')
+grid on
+
+figure
+step(Tp)
+title('mu-synthesis')
+grid on
+%%
+
+
+
 dt = 0.01; % sampling time
 tend = 30; % duration of simulation in seconds
 t = 0:dt:tend;
@@ -332,8 +417,8 @@ ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
 x0 = [0, 0, 0, 0, 0, 0];
 [y,~,~] = lsim(T,ref,t);
 
-% figure
-% lsim(T,ref,t);
+figure
+lsim(Tp,ref,t);
 
 %
 figure
