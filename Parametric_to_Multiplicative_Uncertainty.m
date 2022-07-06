@@ -12,8 +12,8 @@ load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 
 % Approximate the parametric uncertainties as multiplicative uncertainties
 % for each channel of the perturbed plant
-omega = logspace(-2,4,200);
-samples = 30;
+omega = logspace(-3,3,200);
+samples = 50;
 order = 2;
 
 % Approximation of the uncertainty
@@ -27,8 +27,8 @@ Gp_frd = ufrd(Gp_samples,omega);
 % Gd_p_frd = frd(Gd_p_samples,omega);
 
 % W_O = ss([]);
-W_I = ss([]);
-Gp_ap = uss([]);
+% W_I = ss([]);
+% Gp_ap = uss([]);
 % W_O = struct('w11',{},'w12',{},'w13',{},'w21',{},'w22',{},'w23',{},'w31',...
 %              {},'w32',{},'w33',{});
 % W_O_d = ss([]);
@@ -36,16 +36,18 @@ Gp_ap = uss([]);
 
 for i=1:size(G,1)
     for j=1:size(G,2)
-%         [~,Info] = ucover(Gp_frd(i,j),G_frd(i,j),order,order,'Additive');
-        [Gp_a,Info] = ucover(Gp_frd(i,j),G(i,j),order,'InputMult');
-        temp = strcat('d',num2str(i),num2str(j));
-%         W_O_st.(temp_var) = Info.W1;
-        Gp_a.Uncertainty.InputMultDelta.Name = temp;
-        W_I(i,j) = Info.W1;
-        Gp_ap(i,j) = Gp_a;
+%         [~,Info] = ucover(Gp_frd(i,j),G(i,j),order,order,'Additive');
+        [~,Info] = ucover(Gp_frd(i,j),G(i,j),order,'OutputMult');
+%         temp = strcat('d',num2str(i),num2str(j));
+        temp= strcat('w',num2str(i),num2str(j));
+        W_O.(temp) = Info.W1;
+%         Gp_a.Uncertainty.InputMultDelta.Name = temp;
+%         W_I(i,j) = Info.W1;
+%         Gp_ap(i,j) = Gp_a;
+        j
     end
 end  
-Gp_ap = minreal(Gp_ap);
+% Gp_ap = minreal(Gp_ap);
 %%
 % for i=1:size(Gd,1)
 %     for j=1:size(Gd,2)
@@ -205,7 +207,8 @@ bodeplot(Gp_ap_samples,G,omega,bode_opts)
 title('NEW Approximated Perturbed Plant by Multiplicative Input Uncertainty');
 grid on
 %% 
+% W_O = W_I;
 % save('Uncertainty_Approximation.mat')
 % save('Uncertainty_Approximation2.mat')
 % save('Uncertainty_Approximation5.mat','W_A','omega')
-save('Uncertainty_Approximation6.mat')
+save('Uncertainty_Approximation_OutMult.mat','W_O')

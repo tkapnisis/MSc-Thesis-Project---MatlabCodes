@@ -14,7 +14,11 @@ load('LTI_Nominal_Plant.mat','foil_loc')
 %                                      'Gp_app','Gd_p_app')
 % load('Uncertainty_Approximation2.mat','Gp_app','W_O','Delta_O')
 % load('Uncertainty_Approximation5.mat','W_A')
-load('Uncertainty_Approximation6.mat','Gp_ap','Gp_app','W_I')
+% load('Uncertainty_Approximation6.mat','Gp_ap','Gp_app','W_I')
+% load('Uncertainty_ApproximationLAST.mat','W_I')
+
+load('Gp_out_mult.mat')
+
 
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
@@ -22,7 +26,7 @@ load('Uncertainty_Approximation6.mat','Gp_ap','Gp_app','W_I')
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
 
 %% Pole-zero map of the open-loops of nominal and perturbed plant
-%%
+%{
 % Pole-zero map of the open-loop G(s)
 figure
 pzplot(G,'b');
@@ -40,7 +44,7 @@ pzplot(G,'b');
 hold on
 grid on
 set(findall(gcf,'Type','line'),'MarkerSize',15)
-pzplot(Gp_app,'r')
+pzplot(Gp_out_mult,'r')
 legend('Nominal plant G(s)','Simplified Perturbed plant Gp_app(s)','Location','best','FontSize',11)
 %}
 %% Nyquist
@@ -51,7 +55,7 @@ w = logspace(-1,1,20);
 nyquist(res);
 %}
 %% Bodeplot of the open-loops of nominal and perturbed plant
-%
+%{
 bode_opts = bodeoptions;
 bode_opts.MagScale = 'log';
 bode_opts.MagUnits = 'abs';
@@ -66,7 +70,7 @@ bode_opts.XLimMode = 'manual';
 bode_opts.Xlim = [1e-3 1e2];
 bode_opts.PhaseVisible = 'off';
 bode_opts.Grid = 'on';
-
+%%
 figure
 bodeplot(Gp_app,G,bode_opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
@@ -74,7 +78,7 @@ legend('Perturbed plant Gp(s)','Nominal plant G(s)','Location','best','FontSize'
 title('Gp_app')
 
 figure
-bodeplot(Gp_cor,G,bode_opts)
+bodeplot(Gp_out_mult,G,bode_opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
 legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location','best','FontSize',11)
 title('Gp_cor')
@@ -123,7 +127,6 @@ title('Singular Values')
 % figure 
 % plot(gamma)
 %}
-
 %% Scaling matrices
 %{
 De = diag([0.1,0.1,0.1]);
@@ -226,17 +229,16 @@ Delta_I = [ultidyn('d11',[1,1],'Bound',bound),...
            ultidyn('d32',[1,1],'Bound',bound),...
            ultidyn('d33',[1,1],'Bound',bound)];
 
-%%
-% Defining the uncertain transfer matrix
-Gp_app = uss([]);
+% Defining the multiplicative weiting tranfer matrix
+% W_I_Delta = uss([]);
 
 for i=1:size(G,1)
     for j=1:size(G,2)
-%         temp_var = strcat('w',num2str(i),num2str(j));
-        Gp_app(i,j) = (1 + W_I(i,j)*Delta_I(i,j))*G(i,j);
+        temp = strcat('w',num2str(i),num2str(j));
+        W_I_Delta.(temp) = W_I.(temp)*Delta_I(i,j);
     end
 end
-Gp_app = minreal(Gp_app);
+% W_I_Delta = minreal(W_I_Delta);
 
 %%
 figure
@@ -252,17 +254,20 @@ bodeplot(Gp_ap,bode_opts)
 % W_I_ref = [W_I(1,1),        0,        0, W_I(1,2),        0,        0, W_I(1,3),        0,        0;...
 %                   0, W_I(2,1),        0,        0, W_I(2,2),        0,        0, W_I(2,3),       0;...
 %                   0,        0, W_I(3,1),        0,        0, W_I(3,2),        0,        0, W_I(2,3)];
-W_I_ref = [W_I(1,1),        0,        0, W_I(2,1),        0,        0, W_I(3,1),        0,        0;...
-                  0, W_I(1,2),        0,        0, W_I(2,2),        0,        0, W_I(3,2),       0;...
-                  0,        0, W_I(1,3),        0,        0, W_I(2,3),        0,        0, W_I(3,3)];
-
-[M,Delta_I_diag,BlkStruct] = lftdata(Gp_ap);
+W_I_ref = [W_I.w11,        0,        0, W_I.w21,        0,        0, W_I.w31,        0,        0;...
+                  0, W_I.w12,        0,        0, W_I.w22,        0,        0, W_I.w32,       0;...
+                  0,        0, W_I.w13,        0,        0, W_I.w23,        0,        0, W_I.w33];
 
 %%
+[M,Delta_I_diag,BlkStruct] = lftdata(Gp_ap);
 
+
+%%
 sup_mat = ss([ ones(3,1), zeros(3,1), zeros(3,1);...
            zeros(3,1),  ones(3,1), zeros(3,1);...
            zeros(3,1), zeros(3,1),  ones(3,1)]);
+
+
 
 %%
 res = W_I_ref*Delta_I_diag*sup_map;
@@ -290,46 +295,86 @@ Wu.y = 'z2';
 % Gd.y = 'yGd';
 % G.u = 'u';
 % G.y = 'yG';
-sup_mat.u = 'u';
-sup_mat.y = 'y_Delta';
-W_I_ref.u = 'u_Delta';
-W_I_ref.y = 'y_W_I';
-G.u = 'u_un';
-G.y = 'y';
+% sup_mat.u = 'u';
+% sup_mat.y = 'y_Delta';
+% W_I_ref.u = 'u_Delta';
+% W_I_ref.y = 'y_W_I';
+% % W_I_Delta.u = 'u';
+% % W_I_Delta.y = 'u_mult';
+Gp_out_mult.u = 'u';
+Gp_out_mult.y = 'y';
 
-Sum_mult = sumblk('u_un = u + y_W_I',3);
+% Sum_mult = sumblk('u_un = u + u_mult',3);
+% Sum_mult = sumblk('u_un = u + y_W_I',3);
 % Sum_err = sumblk('v = rw - yG - yGd',3);
 % Sum_out = sumblk('y_un = yG + uDelta_O',3);
 % Sum_err = sumblk('v = r - y_un',3);
 Sum_err = sumblk('v = r - y',3);
-inputs = {'u_Delta','r','u'};
-% inputs = {'r','u'};
-outputs = {'y_Delta','z1','z2','v'};
-% outputs = {'z1','z2','v'};
+% inputs = {'u_Delta','r','u'};
+inputs = {'r','u'};
+% outputs = {'y_Delta','z1','z2','v'};
+outputs = {'z1','z2','v'};
 % Paug = connect(Gp_app,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 % Paug = connect(G,Wp,Wu,W_O,Sum_out,Sum_err,inputs,outputs);
-Paug = connect(G,Wp,Wu,W_I_ref,sup_mat,Sum_mult,Sum_err,inputs,outputs);
-% Paug = connect(Gp_ap,Wp,Wu,Sum_err,inputs,outputs);
+% Paug = connect(G,Wp,Wu,W_I_ref,sup_mat,Sum_mult,Sum_err,inputs,outputs);
+Paug = connect(Gp_out_mult,Wp,Wu,Sum_err,inputs,outputs);
+% Paug = connect(G,W_I_ref,sup_mat,Wp,Wu,Sum_mult,Sum_err,inputs,outputs);
 
 % Paug = minreal(Paug);
 
 %% Gp reformulated
 
 %%
+W_I.w11.u = 'u';
+W_I.w11.y = 'yDelta';
+
+res = ultidyn('d11',[1,1],'Bound',bound);
+res.u = 'yDelta';
+res.y = 'uDelta';
+
+multi = connect(W_I.w11,res,'u','uDelta');
+%%
+W_I.w12.u = 'u(2)';
+W_I.w13.u = 'u(3)';
+W_I.w21.u = 'u(1)';
+W_I.w22.u = 'u(2)';
+W_I.w23.u = 'u(3)';
+W_I.w31.u = 'u(1)';
+W_I.w32.u = 'u(2)';
+W_I.w33.u = 'u(3)';
+
+W_I_Delta.w11.y = 'y(1)';
+W_I_Delta.w12.y = 'y(1)';
+W_I_Delta.w13.y = 'y(1)';
+W_I_Delta.w21.y = 'y(2)';
+W_I_Delta.w22.y = 'y(2)';
+W_I_Delta.w23.y = 'y(2)';
+W_I_Delta.w31.y = 'y(3)';
+W_I_Delta.w32.y = 'y(3)';
+W_I_Delta.w33.y = 'y(3)';
+
+W_I_Delta_mat = [W_I_Delta.w11, W_I_Delta.w12, W_I_Delta.w13;...
+                 W_I_Delta.w21, W_I_Delta.w22, W_I_Delta.w23;...
+                 W_I_Delta.w31, W_I_Delta.w32, W_I_Delta.w33];
+
+%%
 sup_mat.u = 'u';
 sup_mat.y = 'y_Delta';
 W_I_ref.u = 'u_Delta';
 W_I_ref.y = 'y_W_I';
-G.u = 'u_un';
-G.y = 'y';
+
+% W_I_Delta_mat.u = 'u';
+% W_I_Delta_mat.y = 'u_mult';
+% G.u = 'u_un';
+% G.y = 'y';
 
 Sum_mult = sumblk('u_un = u + y_W_I',3);
 inputs = {'u_Delta','u'};
 outputs = {'y_Delta','y'};
 Gp_aug = connect(G,W_I_ref,sup_mat,Sum_mult,inputs,outputs);
-
 Gp_aug = minreal(Gp_aug);
 
+%%
 Gp_cor = lft(Delta_I_diag,Gp_aug);
 Gp_cor = minreal(Gp_cor);
 
@@ -343,7 +388,7 @@ Punc = minreal(Punc);
 % opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
 tic;
 opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false,'FrequencyGrid',[1e-1,1e1]);
-[Kunc,CLunc,info_unc] = musyn(Punc,nmeas,ncont);%,opts); 
+[Kunc,CLunc,info_unc] = musyn(Paug,nmeas,ncont,opts); 
 timerun = toc;
 %}
 
