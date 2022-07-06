@@ -34,7 +34,7 @@ Wu22 = (s + omega_bc2/Mu2)/(Ac_2*s + omega_bc2);
 Wu33 = (s + omega_bc3/Mu3)/(Ac_3*s + omega_bc3);
 Wu = blkdiag(Wu11, Wu22 , Wu33);
 
-Wd = zpk(2*eye(6));
+Wd = zpk(5*eye(6));
 
 Wr = zpk(blkdiag(0.5,0.1,0.1));
 

@@ -13,7 +13,7 @@ load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 % Approximate the parametric uncertainties as multiplicative uncertainties
 % for each channel of the perturbed plant
 omega = logspace(-3,3,200);
-samples = 50;
+samples = 30;
 order = 2;
 
 % Approximation of the uncertainty
@@ -36,11 +36,11 @@ Gp_frd = ufrd(Gp_samples,omega);
 
 for i=1:size(G,1)
     for j=1:size(G,2)
-%         [~,Info] = ucover(Gp_frd(i,j),G(i,j),order,order,'Additive');
-        [~,Info] = ucover(Gp_frd(i,j),G(i,j),order,'OutputMult');
+        [~,Info] = ucover(Gp_frd(i,j),G(i,j),order,order,'Additive');
+%         [~,Info] = ucover(Gp_frd(i,j),G(i,j),order,'OutputMult');
 %         temp = strcat('d',num2str(i),num2str(j));
         temp= strcat('w',num2str(i),num2str(j));
-        W_O.(temp) = Info.W1;
+        W_A.(temp) = Info.W1;
 %         Gp_a.Uncertainty.InputMultDelta.Name = temp;
 %         W_I(i,j) = Info.W1;
 %         Gp_ap(i,j) = Gp_a;
@@ -108,7 +108,7 @@ legend('\boldmath{$|(G_p(j\omega)-G(j\omega))/G(j\omega)|$}','\boldmath{$|W_I(j\
 %%
 % Defining the complex scalar uncertainties for each channel of perturbed plant
 bound = 1;
-Delta_I = [ultidyn('d11',[1,1],'Bound',bound),...
+Delta_A = [ultidyn('d11',[1,1],'Bound',bound),...
            ultidyn('d12',[1,1],'Bound',bound),...
            ultidyn('d13',[1,1],'Bound',bound);...
            ultidyn('d21',[1,1],'Bound',bound),...
@@ -156,13 +156,13 @@ for i=1:size(G,1)
     for j=1:size(G,2)
         temp_var = strcat('w',num2str(i),num2str(j));
 %         Gp_app(i,j) = (1 + W_O_st.(temp_var)*Delta_I(i,j))*G(i,j);
-        Gp_app(i,j) = (1 + W_I(i,j)*Delta_I(i,j))*G(i,j);
+%         Gp_app(i,j) = (1 + W_O(i,j)*Delta_O(i,j))*G(i,j);
 %         mult.(temp_var) = (1 + W_I(i,j)*Delta_I(i,j))*G(i,j);
-%         Gp_app(i,j) = W_A(i,j)*Delta_A(i,j) + G(i,j);
+        Gp_app(i,j) = W_A.(temp_var)*Delta_A(i,j) + G(i,j);
     end
 end
 
-Gp_app = minreal(Gp_app);
+% Gp_app = minreal(Gp_app);
 
 %%
 res = [mult.w11, mult.w12, mult.w13;...
@@ -201,9 +201,10 @@ grid on
 % bodeplot(Gd_p_samples,Gd,omega,bode_opts)
 % title('Actual Perturbed Plant with Parametric Uncertainty');
 % grid on
-
+%%
+omega = logspace(-2,3,200);
 figure
-bodeplot(Gp_ap_samples,G,omega,bode_opts)
+bodeplot(Gp_app,G,bode_opts)
 title('NEW Approximated Perturbed Plant by Multiplicative Input Uncertainty');
 grid on
 %% 
@@ -211,4 +212,5 @@ grid on
 % save('Uncertainty_Approximation.mat')
 % save('Uncertainty_Approximation2.mat')
 % save('Uncertainty_Approximation5.mat','W_A','omega')
-save('Uncertainty_Approximation_OutMult.mat','W_O')
+% save('Uncertainty_Approximation_OutMult.mat','W_O')
+save('Uncertainty_Approximation_Add.mat','W_A')
