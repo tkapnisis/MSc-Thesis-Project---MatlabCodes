@@ -61,15 +61,15 @@ hold on
 step(sys_CL_DT)
 grid minor
 legend('Continuous','Discrete')
-
+%%
 % Step responses of the nominal and the perturbed closed-loop system
-% figure
-% step(sys_CL_p)
-% hold on
-% step(sys_CL)
-% grid minor
-% legend('Perturbed','Nominal')
-
+figure
+step(sys_CL_p)
+hold on
+step(sys_CL)
+grid minor
+legend('Perturbed','Nominal')
+%%
 % Reference signal
 ref = [-0.05*square(t);0*ones(size(t));0*ones(size(t))];
 % ref = [0.1*sin(2*t);0*ones(size(t));0.05*sin(1*t)];

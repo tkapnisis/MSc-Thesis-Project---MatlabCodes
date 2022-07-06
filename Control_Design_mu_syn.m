@@ -55,7 +55,7 @@ w = logspace(-1,1,20);
 nyquist(res);
 %}
 %% Bodeplot of the open-loops of nominal and perturbed plant
-%
+%{
 bode_opts = bodeoptions;
 bode_opts.MagScale = 'log';
 bode_opts.MagUnits = 'abs';
@@ -160,17 +160,15 @@ Gd.y = 'yGd';
 G.u = 'u';
 G.y = 'yG';
 
-
 Sum_err = sumblk('v = rw - yG - yGd',3);
 % Sum_err = sumblk('v = r - y',3);
 % Sum_err = sumblk('v = r - yG',3);
 inputs = {'r','d','u'};
 % inputs = {'r','u'};
 outputs = {'z1','z2','v'};
-P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 % P = connect(G,Gd,Wp,Wu,Wd,Wr,Wact,Sum_err,inputs,outputs);
+P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 % P = connect(G,Wp,Wu,Sum_err,inputs,outputs);
-
 P = minreal(P);
 
 % Hinf Controller synthesis - Nominal Plant
@@ -181,7 +179,8 @@ ncont = 3; % number of inputs
 gamma
 
 % loops = loopsens(G*Wact,K);
-loops = loopsens(Gp,K);
+loops = loopsens(G,K);
+
 L = loops.Lo;
 T = loops.To;
 S = loops.So;
@@ -216,7 +215,7 @@ sigma(K*S,sigma_opts);
 %% Generalized Plant - Perturbed
 
 % Defining the complex scalar uncertainties for each channel of perturbed plant
-bound = 0.1;
+bound = 1;
 Delta_A = blkdiag(ultidyn('d11',[1,1],'Bound',bound),...
            ultidyn('d12',[1,1],'Bound',bound),...
            ultidyn('d13',[1,1],'Bound',bound),...
@@ -385,7 +384,7 @@ Punc = minreal(Punc);
 % opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
 tic;
 opts = musynOptions('Display','full');%,'TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
-[Kunc,CLunc,info_unc] = musyn(Paug,nmeas,ncont);%,opts); 
+[Kunc,CLunc,info_unc] = musyn(Paug,nmeas,ncont,opts); 
 timerun = toc;
 %}
 
