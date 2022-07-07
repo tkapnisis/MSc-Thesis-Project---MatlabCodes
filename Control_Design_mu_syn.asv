@@ -10,8 +10,8 @@ close all
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-load('Additive_Uncertainty.mat','W_A','W_A_ss')
-
+% load('Additive_Uncertainty.mat','W_A','W_A_ss')
+load('Multiplicative_Uncertainty.mat','W_I','W_I_ss','Gp_inp_mult')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -206,7 +206,7 @@ sigma(K*S,sigma_opts);
 %% Generalized Plant - Perturbed
 
 % Defining the complex scalar uncertainties for each channel of perturbed plant
-bound = 1;
+bound = 0.1;
 Delta_A = blkdiag(  ultidyn('d11',[1,1],'Bound',bound),...
                     ultidyn('d21',[1,1],'Bound',bound),...
                     ultidyn('d31',[1,1],'Bound',bound),...
@@ -239,16 +239,16 @@ Wr.u = 'r';
 Wr.y = 'rw';
 % Wact.u = 'u';
 % Wact.y = 'u_Wact';
-G.u = 'u';
-G.y = 'yG';
+Gp_inp_mult.u = 'u';
+Gp_inp_mult.y = 'yG';
 Gd.u = 'dw';
 Gd.y = 'yGd';
 % Gp_add.u = 'u';
 % Gp_add.y = 'yG';
-aux_mat.u = 'u';
-aux_mat.y = 'y_Delta';
-W_A_ref.u = 'u_Delta';
-W_A_ref.y = 'y_W_A';
+% aux_mat.u = 'u';
+% aux_mat.y = 'y_Delta';
+% W_A_ref.u = 'u_Delta';
+% W_A_ref.y = 'y_W_A';
 
 % % W_I_Delta.u = 'u';
 % % W_I_Delta.y = 'u_mult';
@@ -260,56 +260,26 @@ W_A_ref.y = 'y_W_A';
 % Sum_out = sumblk('y_un = yG + y_W_A',3);
 % Sum_err = sumblk('v = r - y_un',3);
 % Sum_err = sumblk('v = r - y',3);
-inputs = {'u_Delta','r','d','u'};
-outputs = {'y_Delta','z1','z2','v'};
+% inputs = {'u_Delta','r','d','u'};
+% outputs = {'y_Delta','z1','z2','v'};
 
-Sum_err = sumblk('v = rw - yG - yGd - y_W_A',3);
-% inputs = {'r','d','u'};
-% outputs = {'z1','z2','v'};
+% Sum_err = sumblk('v = rw - yG - yGd - y_W_A',3);
+Sum_err = sumblk('v = rw - yG - yGd',3);
+inputs = {'r','d','u'};
+outputs = {'z1','z2','v'};
 % Paug = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 % Paug = connect(Gp_app,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 % Paug = connect(G,Wp,Wu,W_O,Sum_out,Sum_err,inputs,outputs);
 % Paug = connect(G,Wp,Wu,W_A_ref,sup_mat,Sum_out,Sum_err,inputs,outputs);
 % Paug = connect(Gp_cor,Wp,Wu,Sum_err,inputs,outputs);
-Paug = connect(G,Gd,W_A_ref,aux_mat,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
+% Paug = connect(G,Gd,W_A_ref,aux_mat,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
+Paug = connect(Gp_inp_mult,Gd,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
 
 Paug = minreal(Paug);
 
-%% Gp reformulated
-
-%%
-W_O.w11.u = 'u';
-W_O.w11.y = 'yDelta';   
-
-res = ultidyn('d11',[1,1],'Bound',bound);
-res.u = 'yDelta';
-res.y = 'uDelta';
-
-multi = connect(W_I.w11,res,'u','uDelta');
-%%
-W_I.w12.u = 'u(2)';
-W_I.w13.u = 'u(3)';
-W_I.w21.u = 'u(1)';
-W_I.w22.u = 'u(2)';
-W_I.w23.u = 'u(3)';
-W_I.w31.u = 'u(1)';
-W_I.w32.u = 'u(2)';
-W_I.w33.u = 'u(3)';
-
-W_I_Delta.w11.y = 'y(1)';
-W_I_Delta.w12.y = 'y(1)';
-W_I_Delta.w13.y = 'y(1)';
-W_I_Delta.w21.y = 'y(2)';
-W_I_Delta.w22.y = 'y(2)';
-W_I_Delta.w23.y = 'y(2)';
-W_I_Delta.w31.y = 'y(3)';
-W_I_Delta.w32.y = 'y(3)';
-W_I_Delta.w33.y = 'y(3)';
-
-W_I_Delta_mat = [W_I_Delta.w11, W_I_Delta.w12, W_I_Delta.w13;...
-                 W_I_Delta.w21, W_I_Delta.w22, W_I_Delta.w23;...
-                 W_I_Delta.w31, W_I_Delta.w32, W_I_Delta.w33];
-
+% Generalized feedback interconnection of Delta block P block
+Punc = lft(Delta_A,Paug);
+% Punc = minreal(Punc);
 %% Approximated Perturbed Plant by the Additive Uncertainty
 aux_mat.u = 'u';
 aux_mat.y = 'y_Delta';
@@ -334,28 +304,22 @@ Gp_app = minreal(Gp_app);
 % Gp_app2 = parallel(G,sys2);
 % Gp_app2 = minreal(Gp_app2);
 
-%%
-% Generalized feedback interconnection of Delta block P block
-Punc = lft(Delta_A,Paug);
-Punc = minreal(Punc);
+
 %% mu-synthesis of Hinf Controller - Perturbed Plant
-%
+
 mu_opts = musynOptions('Display','full','FullDG',false);%,'FitOrder',[5 2]);
 tic;
 % mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
-[Kunc,CLunc,info_unc] = musyn(Punc,nmeas,ncont,mu_opts); 
+[Kunc,CLunc,info_unc] = musyn(Punc,nmeas,ncont);%,mu_opts); 
 timerun = toc;
-%}
 
-%%
-%
-% loops_p = loopsens(G,(eye(3)-Wi)*Kunc);
 loops_p = loopsens(G,Kunc);
 Lp = loops_p.Lo;
 Tp = loops_p.To;
 Sp = loops_p.So;
 
-
+% Robust stability of uncertain system
+% [stabmarg,wcu] = robstab(Tp);
 %%
 sigma_opts = sigmaoptions;
 sigma_opts.MagScale = 'log';
@@ -381,7 +345,7 @@ sigma(Kunc*Sp,inv(Wu),sigma_opts);
 legend('\boldmath{$\sigma(KS)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(G*Kunc,sigma_opts);
+sigma(Gp_app*Kunc,sigma_opts);
 legend('\boldmath{$\sigma(GK)$}','interpreter','latex','FontSize',15)
 
 figure
@@ -400,7 +364,7 @@ title('Hinf')
 grid on
 
 figure
-step(Tp,20)
+step(Tp)
 title('mu-synthesis')
 grid on
 %% Simulation with step signal on heave
