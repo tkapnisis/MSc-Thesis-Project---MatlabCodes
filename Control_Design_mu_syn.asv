@@ -10,15 +10,7 @@ close all
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-% load('Uncertainty_Approximation.mat','Delta_O','W_O','Delta_O_d','W_O_d',...
-%                                      'Gp_app','Gd_p_app')
-% load('Uncertainty_Approximation2.mat','Gp_app','W_O','Delta_O')
-% load('Uncertainty_Approximation5.mat','W_A')
-% load('Uncertainty_Approximation6.mat','Gp_ap','Gp_app','W_I')
-% load('Uncertainty_ApproximationLAST.mat','W_I')
-
-load('Gp_add.mat')
-load('Uncertainty_Approximation_Add.mat')
+load('Additive_Uncertainty.mat','W_A','W_A_ss')
 
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
@@ -84,7 +76,7 @@ legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location',
 title('Gp_cor')
 %%
 figure
-bodeplot(Gp_add,G,bode_opts)
+bodeplot(Gp_cor,G,bode_opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
 legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location','best','FontSize',11)
 title('Gp')
@@ -142,7 +134,6 @@ R = inv(De)*Dr;
 [Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
 
 % Generalized Plant - Nominal
-
 Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
@@ -216,54 +207,25 @@ sigma(K*S,sigma_opts);
 
 % Defining the complex scalar uncertainties for each channel of perturbed plant
 bound = 1;
-Delta_A = blkdiag(ultidyn('d11',[1,1],'Bound',bound),...
-           ultidyn('d21',[1,1],'Bound',bound),...
-           ultidyn('d31',[1,1],'Bound',bound),...
-           ultidyn('d12',[1,1],'Bound',bound),...
-           ultidyn('d22',[1,1],'Bound',bound),...
-           ultidyn('d32',[1,1],'Bound',bound),...
-           ultidyn('d13',[1,1],'Bound',bound),...
-           ultidyn('d23',[1,1],'Bound',bound),...
-           ultidyn('d33',[1,1],'Bound',bound));
+Delta_A = blkdiag(  ultidyn('d11',[1,1],'Bound',bound),...
+                    ultidyn('d21',[1,1],'Bound',bound),...
+                    ultidyn('d31',[1,1],'Bound',bound),...
+                    ultidyn('d12',[1,1],'Bound',bound),...
+                    ultidyn('d22',[1,1],'Bound',bound),...
+                    ultidyn('d32',[1,1],'Bound',bound),...
+                    ultidyn('d13',[1,1],'Bound',bound),...
+                    ultidyn('d23',[1,1],'Bound',bound),...
+                    ultidyn('d33',[1,1],'Bound',bound));
 
-%{
-% Defining the multiplicative weiting tranfer matrix
-% W_I_Delta = uss([]);
-
-for i=1:size(G,1)
-    for j=1:size(G,2)
-        temp = strcat('w',num2str(i),num2str(j));
-        W_O_Delta.(temp) = W_O.(temp)*Delta_O(i,j);
-    end
-end
-% W_I_Delta = minreal(W_I_Delta);
-%}
-%%
-% [M,Delta,BlkStruct] = lftdata(Gp_app);
-% W_I_ref = [W_I(1,1),        0,        0, W_I(1,2),        0,        0, W_I(1,3),        0,        0;...
-%                   0, W_I(2,1),        0,        0, W_I(2,2),        0,        0, W_I(2,3),       0;...
-%                   0,        0, W_I(3,1),        0,        0, W_I(3,2),        0,        0, W_I(2,3)];
 W_A_ref = [W_A.w11,        0,        0, W_A.w12,        0,        0, W_A.w13,        0,        0;...
                   0, W_A.w21,        0,        0, W_A.w22,        0,        0, W_A.w23,       0;...
                   0,        0, W_A.w31,        0,        0, W_A.w32,        0,        0, W_A.w33];
 
-G_diag = append(G(1,1),G(2,1),G(3,1),G(1,2),G(2,2),G(3,2),G(1,3),G(2,3),G(3,3));
-
-
-% %%
 % [M,Delta_A_diag,BlkStruct] = lftdata(Gp_add);
 
-
-%%
-sup_mat = ss([ ones(3,1), zeros(3,1), zeros(3,1);...
-           zeros(3,1),  ones(3,1), zeros(3,1);...
-           zeros(3,1), zeros(3,1),  ones(3,1)]);
-
-
-
-%%
-res = W_I_ref*Delta_I_diag*sup_map;
-% [M,Delta,BlkStruct] = lftdata(Gp_app_ref);
+aux_mat = ss([ ones(3,1), zeros(3,1), zeros(3,1);...
+              zeros(3,1),  ones(3,1), zeros(3,1);...
+              zeros(3,1), zeros(3,1), ones(3,1)]);
 %%
 [Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
 
@@ -277,18 +239,14 @@ Wr.u = 'r';
 Wr.y = 'rw';
 % Wact.u = 'u';
 % Wact.y = 'u_Wact';
-% W_O.u = 'yG';
-% W_O.y = 'yW_O';
-% W_I.u = 'u';
-% W_I.y = 'yDelta_I';
 G.u = 'u';
 G.y = 'yG';
-% Gd.u = 'dw';
-% Gd.y = 'yGd';
+Gd.u = 'dw';
+Gd.y = 'yGd';
 % Gp_add.u = 'u';
 % Gp_add.y = 'yG';
-sup_mat.u = 'u';
-sup_mat.y = 'y_Delta';
+aux_mat.u = 'u';
+aux_mat.y = 'y_Delta';
 W_A_ref.u = 'u_Delta';
 W_A_ref.y = 'y_W_A';
 
@@ -313,7 +271,7 @@ Sum_err = sumblk('v = rw - yG - yGd - y_W_A',3);
 % Paug = connect(G,Wp,Wu,W_O,Sum_out,Sum_err,inputs,outputs);
 % Paug = connect(G,Wp,Wu,W_A_ref,sup_mat,Sum_out,Sum_err,inputs,outputs);
 % Paug = connect(Gp_cor,Wp,Wu,Sum_err,inputs,outputs);
-Paug = connect(G,W_A_ref,sup_mat,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
+Paug = connect(G,Gd,W_A_ref,aux_mat,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
 
 Paug = minreal(Paug);
 
@@ -352,9 +310,9 @@ W_I_Delta_mat = [W_I_Delta.w11, W_I_Delta.w12, W_I_Delta.w13;...
                  W_I_Delta.w21, W_I_Delta.w22, W_I_Delta.w23;...
                  W_I_Delta.w31, W_I_Delta.w32, W_I_Delta.w33];
 
-%%
-sup_mat.u = 'u';
-sup_mat.y = 'y_Delta';
+%% Approximated Perturbed Plant by the Additive Uncertainty
+aux_mat.u = 'u';
+aux_mat.y = 'y_Delta';
 W_A_ref.u = 'u_Delta';
 W_A_ref.y = 'y_W_A';
 G.u = 'u';
@@ -363,20 +321,18 @@ G.y = 'y';
 Sum_add = sumblk('y_un = y + y_W_A',3);
 inputs = {'u_Delta','u'};
 outputs = {'y_Delta','y_un'};
-Gp_aug = connect(G,W_A_ref,sup_mat,Sum_add,inputs,outputs);
+Gp_aug = connect(G,W_A_ref,aux_mat,Sum_add,inputs,outputs);
 Gp_aug = minreal(Gp_aug);
 
-Gp_cor = lft(Delta_A_diag,Gp_aug);
-Gp_cor = minreal(Gp_cor);
+Gp_app = lft(Delta_A,Gp_aug);
+Gp_app = minreal(Gp_app);
 
-%%
-sys1 = series(sup_mat,Delta_A_diag);
-sys2 = series(sys1,W_A_ref);
-
-Gp_cor = parallel(G,sys2);
-Gp_cor = minreal(Gp_cor);
-
-
+% Alternative method ***
+% sys1 = series(aux_mat,Delta_A);
+% sys2 = series(sys1,W_A_ref);
+% 
+% Gp_app2 = parallel(G,sys2);
+% Gp_app2 = minreal(Gp_app2);
 
 %%
 % Generalized feedback interconnection of Delta block P block
@@ -384,10 +340,10 @@ Punc = lft(Delta_A,Paug);
 Punc = minreal(Punc);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 %
-% opts = musynOptions('MixedMU','on','FullDG',false,'FitOrder',[5 2]);
+mu_opts = musynOptions('Display','full','FullDG',false);%,'FitOrder',[5 2]);
 tic;
-opts = musynOptions('Display','full');%,'TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
-[Kunc,CLunc,info_unc] = musyn(Punc,nmeas,ncont);%,opts); 
+% mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
+[Kunc,CLunc,info_unc] = musyn(Punc,nmeas,ncont,mu_opts); 
 timerun = toc;
 %}
 
@@ -399,42 +355,42 @@ Lp = loops_p.Lo;
 Tp = loops_p.To;
 Sp = loops_p.So;
 
-% figure
-% lsim(T,ref,t);
-%{ 
-loops_i = loopsens(G,(eye(3)-Wi)*K);
-Lp_i = loops_i.Lo;
-Tp_i = loops_i.To;
-Sp_i = loops_i.So;
 
-%
+%%
+sigma_opts = sigmaoptions;
+sigma_opts.MagScale = 'log';
+sigma_opts.MagUnits = 'abs';
+sigma_opts.InputLabels.FontSize = 10;
+sigma_opts.OutputLabels.FontSize = 10;
+sigma_opts.XLabel.FontSize = 11;
+sigma_opts.YLabel.FontSize = 11;
+sigma_opts.TickLabel.FontSize = 10;
+sigma_opts.Title.FontSize = 12;
+sigma_opts.Grid = 'on';
+
 figure
-opts = bodeoptions;
-opts.MagScale = 'log';
-opts.MagUnits = 'abs';
-opts.PhaseVisible = 'off';
-% opts.XLimMode = 'manual';
-% opts.XLim = {[1e-2,1e2]};
-bodeplot(loops.So,loops.To,loops.Lo,opts)
-legend('Sensitivity S(s)','Complementary Sensitivity T(s)','Loop L(s)')
-grid on
+sigma(Sp,inv(Wp),sigma_opts);
+legend('\boldmath{$\sigma(S)$}','interpreter','latex','FontSize',15)
 
-% K.InputName = {'e_zn','e_roll','e_pitch'};  
-% K.OutputName = {'Theta_s_f','Theta_s_f','Theta_s_as'};
-K.InputName = {'e'};  
-% K.OutputName = {'u'};
-K.OutputName = {'theta_sf';'theta_sap';'theta_sas'};
-K = minreal(K);
+figure
+sigma(Tp,sigma_opts);
+legend('\boldmath{$\sigma(T)$}','interpreter','latex','FontSize',15)
 
-formula = 'e = r - %y';
-signames = ["z", "phi", "theta"];
-Sum = sumblk(formula,signames);
-% Sum = sumblk('e = r - y',3);
-% sys_CL = connect(Gp,K,Sum,'r',{'z', 'phi', 'theta'});
-sys_CL = connect(G,K,Sum,'r',{'z', 'phi', 'theta'});
+figure
+sigma(Kunc*Sp,inv(Wu),sigma_opts);
+legend('\boldmath{$\sigma(KS)$}','interpreter','latex','FontSize',15)
 
-% https://nl.mathworks.com/help/robust/ref/uss.musyn.html
-%}
+figure
+sigma(G*Kunc,sigma_opts);
+legend('\boldmath{$\sigma(GK)$}','interpreter','latex','FontSize',15)
+
+figure
+sigma(Sp*Gd,sigma_opts);
+legend('\boldmath{$\sigma(SG_d)$}','interpreter','latex','FontSize',15)
+
+figure
+sigma(Kunc*Sp*Gd,sigma_opts);
+legend('\boldmath{$\sigma(K S G_d)$}','interpreter','latex','FontSize',15)
 
 %% Simulation of the closed loop system with the Hinf controller
 
@@ -442,15 +398,12 @@ figure
 step(T)
 title('Hinf')
 grid on
-%%
+
 figure
-step(Tp)
+step(Tp,20)
 title('mu-synthesis')
 grid on
-%%
-
-
-
+%% Simulation with step signal on heave
 dt = 0.01; % sampling time
 tend = 30; % duration of simulation in seconds
 t = 0:dt:tend;
@@ -464,7 +417,6 @@ x0 = [0, 0, 0, 0, 0, 0];
 % figure
 % lsim(Tp,ref,t);
 
-%
 figure
 subplot(3,1,1)
 plot(t,y(:,1) + param.z_n0,'LineWidth',1.5)
@@ -496,18 +448,8 @@ ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
 xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
-figure
-step(T);
-grid minor
-%% Simulation of the closed loop system with the Hinf controller for uncertain plant
-figure
-step(usample(Tp,2),2);
-hold on
-step(T,'r-.') 
-legend('Perturbed Plant', 'Nominal Plant')
-
 %% Simulation of the closed loop system with the Hinf controller
-
+%{
 %  Calculation of waves velocity profile for each hydrofoil
 
 % Parameters of long-crested regular wave
@@ -517,10 +459,9 @@ wave_param.zeta_0 = 0.1;  % Wave amplitude [m]
 wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad] 
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
-%%
-% [y,t,x] = lsim(sys_CL,ref,t);
-% figure
+
 [y,~,x] = lsim(S*Gd,dw,t);
+% figure
 % lsim(Sp*Gd,dw,t);
 
 figure
@@ -553,113 +494,17 @@ grid minor
 ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
 xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
-
-%%
-opts = bodeoptions;
-opts.MagScale = 'log';
-opts.MagUnits = 'abs';
-% opts.MagLowerLimMode = 'manual';
-% opts.MagLowerLim = 1e-5;
-opts.PhaseVisible = 'off';
-% opts.YLimMode = 'manual';
-% opts.YLim = {[1e-5,1e1]};
-
-figure
-subplot(3,1,1)
-bodeplot(S(1,1),1/Wp(1,1),opts);
-legend('Sensitivity S11','1/Wp11','Location','best')
-grid on
-subplot(3,1,2)
-bodeplot(S(2,2),1/Wp(2,2),opts)
-legend('Sensitivity S22','1/Wp22','Location','best')
-grid on
-subplot(3,1,3)
-bodeplot(S(3,3),1/Wp(3,3),opts)
-legend('Sensitivity S33','1/W33','Location','best')
-grid on
-%%
-bode_opts = bodeoptions;
-bode_opts.MagScale = 'log';
-bode_opts.MagUnits = 'abs';
-bode_opts.InputLabels.Interpreter = 'none';
-bode_opts.InputLabels.FontSize = 10;
-bode_opts.OutputLabels.FontSize = 10;
-bode_opts.XLabel.FontSize = 11;
-bode_opts.YLabel.FontSize = 11;
-bode_opts.TickLabel.FontSize = 10;
-bode_opts.Title.FontSize = 12;
-% bode_opts.XLimMode = 'manual';
-% bode_opts.Xlim = [1e-3 1e2];
-bode_opts.PhaseVisible = 'off';
-bode_opts.Grid = 'on';
-
-figure 
-bodeplot(K*S,inv(Wu),bode_opts)
-% bodeplot(K*S,opts)
-grid on
-title('Bode plot of controller K*S versus its weight 1/Wu')
-legend('K*S','1/Wu')
-%%
-figure 
-bodeplot(K,opts)
-grid on
-title('Bode plot of controller K(2,1)*S versus its weight 1/Wu12')
-legend('K*S','1/Wu')
-%%
-% Bandwidth
-
-[sv,wout] = sigma(S);
-[Max_sigma,Max_sigma_l] = max(sv(:));
-[I_row, I_col] = ind2sub(size(sv),Max_sigma_l);
-w_B = wout(I_col)
-%%
-figure
-subplot(3,1,1)
-step(T(1,1))
-% hold on
-% step(Tp(1,1))
-title('Heave Step Response')
-xlabel('\textbf{time [s]}','interpreter','latex')
-ylabel('\boldmath{$z_n$} \textbf{[m]}','interpreter','latex')
-grid minor
-legend('Original K','Reduced-order K')
-
-subplot(3,1,2)
-step(T(2,2))
-% hold on
-% step(Tp(2,2))
-title('Roll')
-xlabel('\textbf{time [s]}','interpreter','latex')
-ylabel('\boldmath{$\phi$} \textbf{[rad]}','interpreter','latex')
-grid minor
-subplot(3,1,3)
-step(T(3,3))
-% hold on
-% step(Tp(3,3))
-title('Pitch')
-xlabel('\textbf{time [s]}','interpreter','latex')
-ylabel('\boldmath{$\theta$} \textbf{[rad]}','interpreter','latex')
-grid minor
-
-% figure
-% step(sys_CL)
-% Step_info = stepinfo(sys_CL);
-%% Save data
-% save('Hinf_Controller_Design2')
-
-% load('Hinf_Controller_Design.mat')
-%%
+%}
+%% Order reduction of the controller
+%{
 figure
 ncfmr(Kunc)
 [~,info] = ncfmr(Kunc);
-% ncfmargin(P,C)
-%%
+[marg,freq] = ncfmargin(G,Kunc);
 Kunc_red = ncfmr(Kunc,20,info);
-%%
-% [marg,freq] = ncfmargin(G,Kunc)
+%}
 %% Discrete time step response
 %{
-
 h = 0.05;
 Gp_DT=c2d(Gp,h,'tustin');
 K_DT = c2d(K,h,'tustin');
@@ -674,3 +519,6 @@ step(sys_CL)
 grid on
 title('Step response - Reference tracking with PD controller')
 %}
+%% Save data
+% save('Hinf_Controller_Design2')
+% load('Hinf_Controller_Design.mat')
