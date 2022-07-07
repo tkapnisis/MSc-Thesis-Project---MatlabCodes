@@ -105,12 +105,11 @@ Delta_I = [ultidyn('d11',[1,1],'Bound',bound),...
            ultidyn('d32',[1,1],'Bound',bound),...
            ultidyn('d33',[1,1],'Bound',bound)];
 
-%% 1st method
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 1st method %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The perturbed plant is defined by multpling all the scalar transfer
 % functions in each channel (check Gu et. al., Chapter 9 last section)
-
-%{
-Gp_inp_mult = [  (W_I.w11*Delta_I(1,1)+1)*G(1,1),...
+disp('----- 1st method -----')
+Gp_inp_mult_1 = [(W_I.w11*Delta_I(1,1)+1)*G(1,1),...
                  (W_I.w12*Delta_I(1,2)+1)*G(1,2),...
                  (W_I.w13*Delta_I(1,3)+1)*G(1,3);...
                  (W_I.w21*Delta_I(2,1)+1)*G(2,1),...
@@ -119,6 +118,7 @@ Gp_inp_mult = [  (W_I.w11*Delta_I(1,1)+1)*G(1,1),...
                  (W_I.w31*Delta_I(3,1)+1)*G(3,1),...
                  (W_I.w32*Delta_I(3,2)+1)*G(3,2),...
                  (W_I.w33*Delta_I(3,3)+1)*G(3,3)];
+Gp_inp_mult_1 = minreal(Gp_inp_mult_1);
 
 % Gp_inp_mult = [  G(1,1)*(1+W_I.w11*Delta_I(1,1)),...
 %                  G(1,2)*(1+W_I.w12*Delta_I(1,2)),...
@@ -130,15 +130,11 @@ Gp_inp_mult = [  (W_I.w11*Delta_I(1,1)+1)*G(1,1),...
 %                  G(3,2)*(1+W_I.w32*Delta_I(3,2)),...
 %                  G(3,3)*(1+W_I.w33*Delta_I(3,3))];
 
-Gp_inp_mult = minreal(Gp_inp_mult);
-Controlability=rank(ctrb(Gp_inp_mult.A,Gp_inp_mult.B));
-Observability=rank(obsv(Gp_inp_mult.A,Gp_inp_mult.C));
-%}
-%% 2nd method
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 2nd method %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The perturbed plant is defined by multpling all the scalar transfer
 % functions in each channel for the part G*Delta*W and the result is added
 % with the parallel transfer function of G
-
+disp('----- 2nd method -----')
 W_I_mat = [  G(1,1)*W_I.w11*Delta_I(1,1),...
              G(1,2)*W_I.w12*Delta_I(1,2),...
              G(1,3)*W_I.w13*Delta_I(1,3);...
@@ -149,12 +145,50 @@ W_I_mat = [  G(1,1)*W_I.w11*Delta_I(1,1),...
              G(3,2)*W_I.w32*Delta_I(3,2),...
              G(3,3)*W_I.w33*Delta_I(3,3)];
 
-Gp_inp_mult = parallel(G,W_I_mat);
-%%
-Gp_inp_mult = minreal(Gp_inp_mult);
+Gp_inp_mult_2 = parallel(G,W_I_mat);
+Gp_inp_mult_2 = minreal(Gp_inp_mult_2);
 
-Controlability=rank(ctrb(Gp_inp_mult.A,Gp_inp_mult.B));
-Observability=rank(obsv(Gp_inp_mult.A,Gp_inp_mult.C));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 3rd method %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Working but with low performance because the multiplicative uncertainties
+% of each channel are treated like they are diagonal because we connect
+% the branch of uncertainties in parallel with Identity and then in series
+% with G
+disp('----- 3rd method -----')
+W_I_mat = [  W_I.w11*Delta_I(1,1),...
+             W_I.w12*Delta_I(1,2),...
+             W_I.w13*Delta_I(1,3);...
+             W_I.w21*Delta_I(2,1),...
+             W_I.w22*Delta_I(2,2),...
+             W_I.w23*Delta_I(2,3);...
+             W_I.w31*Delta_I(3,1),...
+             W_I.w32*Delta_I(3,2),...
+             W_I.w33*Delta_I(3,3)];
+
+sys1 = parallel(ss(eye(3)),W_I_mat);
+Gp_inp_mult_3 = series(sys1,G);
+Gp_inp_mult_3 = minreal(Gp_inp_mult_3);
+
+% Select which of the 3 versionS you want to check the controllability and
+% the observability and draw the bodeplot
+
+select = 1;
+switch select
+    case 1
+        Gp_app = Gp_inp_mult_1;
+    case 2
+        Gp_app = Gp_inp_mult_2;
+    case 3
+        Gp_app = Gp_inp_mult_3;
+end
+
+Controlability=rank(ctrb(Gp_app.A,Gp_app.B));
+Observability=rank(obsv(Gp_app.A,Gp_app.C));
+
+% omega = logspace(-2,3,200);
+figure
+bodeplot(Gp_app,G,bode_opts)
+title('Approximated Perturbed Plant G by Additive Uncertainty');
+grid on
 %% Perturbed plant for disturbance transfer function Gd
 %{
 % Delta_O_d = [ultidyn('do11',[1,1],'Bound',bound),...
@@ -195,12 +229,6 @@ end
 
 Gp_app = minreal(Gp_app);
 %}
-%%
-omega = logspace(-2,3,200);
-figure
-bodeplot(Gp_inp_mult,G,bode_opts)
-title('Approximated Perturbed Plant G by Additive Uncertainty');
-grid on
+
 %% Save results
-% save('Additive_Uncertainty.mat')
 save('Multiplicative_Uncertainty.mat')

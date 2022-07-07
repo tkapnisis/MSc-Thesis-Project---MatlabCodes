@@ -144,7 +144,7 @@ Lp = loops_p.Lo;
 Tp = loops_p.To;
 Sp = loops_p.So;
 
-%% Singular Values of S, T, KS, GK
+%% Singular Values of S, T, KS, GK, S*Gd, K*S*Gd
 %
 sigma_opts = sigmaoptions;
 sigma_opts.MagScale = 'log';

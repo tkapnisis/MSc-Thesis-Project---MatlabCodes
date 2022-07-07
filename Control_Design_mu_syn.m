@@ -10,12 +10,20 @@ close all
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-% load('Additive_Uncertainty.mat','W_A','W_A_ss')
-load('Multiplicative_Uncertainty.mat','W_I','W_I_ss','Gp_inp_mult')
+
+load('Additive_Uncertainty.mat','W_A','W_A_ss')
+load('Multiplicative_Uncertainty.mat','W_I','W_I_ss','Gp_inp_mult_1',...
+     'Gp_inp_mult_2','Gp_inp_mult_3')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
+
+% Define the Weighting Functions for the Hinf controller
+[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
+
+nmeas = 3; % number of outputs 
+ncont = 3; % number of inputs
 
 %% Pole-zero map of the open-loops of nominal and perturbed plant
 %{
@@ -130,9 +138,7 @@ G_sc = inv(De)*G*Du;
 Gd_sc = inv(De)*Gd*Dd;
 R = inv(De)*Dr;
 %}
-%% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
-
+%% Mixed-sensitivity Hinf controller Design
 % Generalized Plant - Nominal
 Wp.u = 'v';
 Wp.y = 'z1';
@@ -162,10 +168,8 @@ P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 % P = connect(G,Wp,Wu,Sum_err,inputs,outputs);
 P = minreal(P);
 
+disp('----------- Hinf Controller synthesis-Nominal Plant --------------')
 % Hinf Controller synthesis - Nominal Plant
-nmeas = 3; % number of outputs 
-ncont = 3; % number of inputs
-
 [K,CL,gamma,info] = hinfsyn(P,nmeas,ncont);
 gamma
 
@@ -176,156 +180,116 @@ L = loops.Lo;
 T = loops.To;
 S = loops.So;
 
-%%
+%% Singular Values of S, T, KS, GK, S*Gd, K*S*Gd
 %{
 sigma_opts = sigmaoptions;
 sigma_opts.MagScale = 'log';
 sigma_opts.MagUnits = 'abs';
-% sigma_opts.InputLabels.Interpreter = 'none';
 sigma_opts.InputLabels.FontSize = 10;
 sigma_opts.OutputLabels.FontSize = 10;
 sigma_opts.XLabel.FontSize = 11;
 sigma_opts.YLabel.FontSize = 11;
 sigma_opts.TickLabel.FontSize = 10;
 sigma_opts.Title.FontSize = 12;
-% sigma_opts.XLimMode = 'manual';
-% sigma_opts.Xlim = [1e-3 1e2];
-% sigma_opts.PhaseVisible = 'off';
 sigma_opts.Grid = 'on';
 
 figure
-sigma(S,sigma_opts);
+sigma(S,inv(Wp),sigma_opts);
+legend('\boldmath{$\sigma(S)$}','interpreter','latex','FontSize',15)
 
 figure
 sigma(T,sigma_opts);
-
+legend('\boldmath{$\sigma(T)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(K*S,sigma_opts);
+sigma(K*S,inv(Wu),sigma_opts);
+legend('\boldmath{$\sigma(KS)$}','interpreter','latex','FontSize',15)
+
+figure
+sigma(G*K,sigma_opts);
+legend('\boldmath{$\sigma(GK)$}','interpreter','latex','FontSize',15)
+
+figure
+sigma(S*Gd,sigma_opts);
+legend('\boldmath{$\sigma(SGd)$}','interpreter','latex','FontSize',15)
+
+figure
+sigma(K*S*Gd,sigma_opts);
+legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
 %}
 %% Generalized Plant - Perturbed
+% Upper bound of the absolute value for the complex perturbations
+bound = 0.2;
 
-% Defining the complex scalar uncertainties for each channel of perturbed plant
-bound = 0.1;
-Delta_A = blkdiag(  ultidyn('d11',[1,1],'Bound',bound),...
-                    ultidyn('d21',[1,1],'Bound',bound),...
-                    ultidyn('d31',[1,1],'Bound',bound),...
-                    ultidyn('d12',[1,1],'Bound',bound),...
-                    ultidyn('d22',[1,1],'Bound',bound),...
-                    ultidyn('d32',[1,1],'Bound',bound),...
-                    ultidyn('d13',[1,1],'Bound',bound),...
-                    ultidyn('d23',[1,1],'Bound',bound),...
-                    ultidyn('d33',[1,1],'Bound',bound));
+% Select which method to use, 1 for the additive uncertainty and 2 for the
+% multiplicative uncertainty
+method = 2;
 
-W_A_ref = [W_A.w11,        0,        0, W_A.w12,        0,        0, W_A.w13,        0,        0;...
-                  0, W_A.w21,        0,        0, W_A.w22,        0,        0, W_A.w23,       0;...
-                  0,        0, W_A.w31,        0,        0, W_A.w32,        0,        0, W_A.w33];
-
-% [M,Delta_A_diag,BlkStruct] = lftdata(Gp_add);
-
-aux_mat = ss([ ones(3,1), zeros(3,1), zeros(3,1);...
-              zeros(3,1),  ones(3,1), zeros(3,1);...
-              zeros(3,1), zeros(3,1), ones(3,1)]);
-%%
-[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
-
-Wp.u = 'v';
-Wp.y = 'z1';
-Wu.u = 'u';
-Wu.y = 'z2';
-Wd.u = 'd';
-Wd.y = 'dw';
-Wr.u = 'r';
-Wr.y = 'rw';
-% Wact.u = 'u';
-% Wact.y = 'u_Wact';
-Gp_inp_mult.u = 'u';
-Gp_inp_mult.y = 'yG';
-Gd.u = 'dw';
-Gd.y = 'yGd';
-% Gp_add.u = 'u';
-% Gp_add.y = 'yG';
-% aux_mat.u = 'u';
-% aux_mat.y = 'y_Delta';
-% W_A_ref.u = 'u_Delta';
-% W_A_ref.y = 'y_W_A';
-
-% % W_I_Delta.u = 'u';
-% % W_I_Delta.y = 'u_mult';
-% Gp_cor.u = 'u';
-% Gp_cor.y = 'y';
-
-% Sum_mult = sumblk('u_un = u + u_mult',3);
-% Sum_mult = sumblk('u_un = u + y_W_I',3);
-% Sum_out = sumblk('y_un = yG + y_W_A',3);
-% Sum_err = sumblk('v = r - y_un',3);
-% Sum_err = sumblk('v = r - y',3);
-% inputs = {'u_Delta','r','d','u'};
-% outputs = {'y_Delta','z1','z2','v'};
-
-% Sum_err = sumblk('v = rw - yG - yGd - y_W_A',3);
-Sum_err = sumblk('v = rw - yG - yGd',3);
-inputs = {'r','d','u'};
-outputs = {'z1','z2','v'};
-% Paug = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
-% Paug = connect(Gp_app,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
-% Paug = connect(G,Wp,Wu,W_O,Sum_out,Sum_err,inputs,outputs);
-% Paug = connect(G,Wp,Wu,W_A_ref,sup_mat,Sum_out,Sum_err,inputs,outputs);
-% Paug = connect(Gp_cor,Wp,Wu,Sum_err,inputs,outputs);
-% Paug = connect(G,Gd,W_A_ref,aux_mat,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
-Paug = connect(Gp_inp_mult,Gd,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
-
-% Paug = minreal(Paug);
-
-% Generalized feedback interconnection of Delta block P block
-% Punc = lft(Delta_A,Paug);
-% Punc = minreal(Punc);
-%% Approximated Perturbed Plant by the Additive Uncertainty
-aux_mat.u = 'u';
-aux_mat.y = 'y_Delta';
-W_A_ref.u = 'u_Delta';
-W_A_ref.y = 'y_W_A';
-G.u = 'u';
-G.y = 'y';
-
-Sum_add = sumblk('y_un = y + y_W_A',3);
-inputs = {'u_Delta','u'};
-outputs = {'y_Delta','y_un'};
-Gp_aug = connect(G,W_A_ref,aux_mat,Sum_add,inputs,outputs);
-Gp_aug = minreal(Gp_aug);
-
-Gp_app = lft(Delta_A,Gp_aug);
-Gp_app = minreal(Gp_app);
-
-% Alternative method ***
-% sys1 = series(aux_mat,Delta_A);
-% sys2 = series(sys1,W_A_ref);
-% 
-% Gp_app2 = parallel(G,sys2);
-% Gp_app2 = minreal(Gp_app2);
-
-
+switch method
+    case 1
+        disp('----- Approximation of Parametric Uncertinty by Additive Uncertainty ------------')
+        [P_Delta,Gp_add] = Generalized_Plant_Additive(G,Gd,bound,W_A,Wp,Wu,...
+                                                      Wd,Wr,Wact);
+        Gp_app = Gp_add;
+    case 2    
+        disp('----- Approximation of Parametric Uncertinty by Multiplicative Uncertainty ------------')
+    % Select which of the 3 versionS you want to check the controllability and
+    % the observability and draw the bodeplot 
+    version = 3;
+    [P_Delta,Gp_mult] = Generalized_Plant_Multiplicative(G,Gd,bound,version,...
+                                                         W_I,Wp,Wu,Wd,Wr,Wact);
+    Gp_app = Gp_mult;
+end
 %% mu-synthesis of Hinf Controller - Perturbed Plant
-
+disp('----------- mu-synthesis ccontroller-Perutbed Plant --------------')
 mu_opts = musynOptions('Display','full','FullDG',false);%,'FitOrder',[5 2]);
 tic;
 % mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
-[Kunc,CLunc,info_unc] = musyn(Paug,nmeas,ncont);%,mu_opts); 
+[K_mu,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont);%,mu_opts); 
 timerun = toc;
-%%
-loops_p = loopsens(Gp_inp_mult,Kunc);
-Lp = loops_p.Lo;
-Tp = loops_p.To;
-Sp = loops_p.So;
 
-%% Robust stability of uncertain system
+%%
+loops_mu_n = loopsens(G,K_mu);
+L_mu_n = loops_mu_n.Lo;
+T_mu_n = loops_mu_n.To;
+S_mu_n = loops_mu_n.So;
+
+loops_mu_app = loopsens(Gp_app,K_mu);
+L_mu_p_app = loops_mu_app.Lo;
+T_mu_p_app = loops_mu_app.To;
+S_mu_p_app = loops_mu_app.So;
+
+loops_mu_p = loopsens(Gp,K_mu);
+L_mu_p = loops_mu_p.Lo;
+T_mu_p = loops_mu_p.To;
+S_mu_p = loops_mu_p.So;
+
+num = 3;
+
+switch num
+    case 1
+        Tp = T_mu_n;
+        Sp = S_mu_n;
+        G_p = G;
+    case 2    
+        Tp = T_mu_p;
+        Sp = S_mu_p;
+        G_p = Gp;
+    case 3
+        Tp = T_mu_p_app;
+        Sp = S_mu_p_app;
+        G_p = Gp_app;
+end
+%% Check the Robustness of the mu-synthesis controller
+
+% Robust stability of uncertain system
 [stabmarg,wcu] = robstab(Tp);
 
 % Generalized feedback interconnection of P block K block in order to
 % obtain the N tranfer matrix
-[M,~,BlkStruct] = lftdata(Paug);
+[M,~,BlkStruct] = lftdata(P_Delta);
 
-Ndk=minreal(lft(M,Kunc));
+Ndk=minreal(lft(M,K_mu));
 omega=logspace(-4,3,400);
 
 Nfdk=frd(Ndk,omega);
@@ -333,48 +297,44 @@ Nfdk=frd(Ndk,omega);
 % Nominal stability
 maxeigNdk=max(real(eig(Ndk))); 
 
+% Nominal performance
+blk=[9 6]; % Full complex uncertainty block
+[mubnds,~]=mussv(Nfdk(10:15,10:18),blk,'c');
+muNPdk=mubnds(:,1);
+[muNPinfDK, muNPwDK]=norm(muNPdk,inf); % bound = 0.8744
 
-
-%%
-% % Nominal performance
-% blk=[2 4]; % Full complex uncertainty block
-% [mubnds,muinfo]=mussv(Nfdk(5:8,5:6),blk,'c');
-% muNPdk=mubnds(:,1);
-% [muNPinfDK, muNPwDK]=norm(muNPdk,inf); % bound = 0.8744
-% 
-% % Robust stability
-% blk=[1 0; 1 0; 1 0; 1 0]; % structured uncertainty
-% [mubnds,muinfo]=mussv(Nfdk(1:4,1:4),blk,'c');
-% muRSdk=mubnds(:,1);
-% [muRSinfDK, muRSwDK]=norm(muRSdk,inf); % bound = 0.5942
+% Robust stability
+blk = [9 0]; % structured uncertainty (additive uncertainty)
+[mubnds,~]=mussv(Nfdk(1:9,1:9),blk,'c');
+muRSdk=mubnds(:,1);
+[muRSinfDK, muRSwDK]=norm(muRSdk,inf); 
 
 % Robust performance
-blk = [9 0]; % structured uncertainty and ΔP
-[mubnds,muinfo]=mussv(Nfdk(:,:),BlkStruct);
+blk=[9 0; 9 6]; % structured uncertainty and ΔP
+[mubnds,~]=mussv(Nfdk(:,:),blk,'c');
 muRPdk=mubnds(:,1);
 [muRPinfDK, muRPwDK]=norm(muRPdk,inf); % bound = 1.1420
-%%
-% Frequency response of the structured singular values for NP, RS and RP
+%% Frequency response of the structured singular values for NP, RS and RP
+bode_opts = bodeoptions;
+bode_opts.MagScale = 'log';
+bode_opts.MagUnits = 'abs';
+bode_opts.InputLabels.Interpreter = 'none';
+bode_opts.InputLabels.FontSize = 10;
+bode_opts.OutputLabels.FontSize = 10;
+bode_opts.XLabel.FontSize = 11;
+bode_opts.YLabel.FontSize = 11;
+bode_opts.TickLabel.FontSize = 10;
+bode_opts.Title.FontSize = 12;
+bode_opts.PhaseVisible = 'off';
+bode_opts.Grid = 'on';
+
 figure
 hold on
-opts=bodeoptions;
-opts.MagUnits='abs';
-opts.MagScale='log';
-opts.Title.FontSize=14;
-opts.TickLabel.FontSize=12;
-opts.Xlabel.FontSize=12;
-opts.Ylabel.FontSize=12;
-% bodemag(muNPdk,opts)
-% bodemag(muRSdk,opts)
-bodemag(muRPdk,opts)
-grid on
-legend('μ_ΔP(N22(jω))','μ_Δ(N11(jω))','μ_Δhat(N(jω))','Location','best')
+bodeplot(muNPdk,bode_opts)
+bodeplot(muRSdk,bode_opts)
+bodeplot(muRPdk,bode_opts)
+legend('μ_ΔP(N22(jω))-NP','μ_Δ(N11(jω))-RS','μ_Δhat(N(jω))-RP','Location','best')
 title('Structured singular values - μ for NP, RS and RP (mu-synthesis)')
-
-
-
-
-
 
 %%
 sigma_opts = sigmaoptions;
@@ -397,11 +357,11 @@ sigma(Tp,sigma_opts);
 legend('\boldmath{$\sigma(T)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(Kunc*Sp,inv(Wu),sigma_opts);
+sigma(K_mu*Sp,inv(Wu),sigma_opts);
 legend('\boldmath{$\sigma(KS)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(Gp_inp_mult*Kunc,sigma_opts);
+sigma(G_p*K_mu,sigma_opts);
 legend('\boldmath{$\sigma(GK)$}','interpreter','latex','FontSize',15)
 
 figure
@@ -409,7 +369,7 @@ sigma(Sp*Gd,sigma_opts);
 legend('\boldmath{$\sigma(SG_d)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(Kunc*Sp*Gd,sigma_opts);
+sigma(K_mu*Sp*Gd,sigma_opts);
 legend('\boldmath{$\sigma(K S G_d)$}','interpreter','latex','FontSize',15)
 
 %% Simulation of the closed loop system with the Hinf controller
@@ -420,7 +380,7 @@ title('Hinf')
 grid on
 
 figure
-step(Tp)
+step(Tp,4)
 title('mu-synthesis')
 grid on
 %% Simulation with step signal on heave
@@ -434,9 +394,9 @@ ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
 x0 = [0, 0, 0, 0, 0, 0];
 [y,~,~] = lsim(Tp,ref,t);
 
-% figure
-% lsim(Tp,ref,t);
-
+figure
+lsim(Tp,ref,t);
+%%
 figure
 subplot(3,1,1)
 plot(t,y(:,1) + param.z_n0,'LineWidth',1.5)
@@ -469,7 +429,7 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
 %% Simulation of the closed loop system with the Hinf controller
-%{
+%
 %  Calculation of waves velocity profile for each hydrofoil
 
 % Parameters of long-crested regular wave
@@ -480,7 +440,8 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
-[y,~,x] = lsim(S*Gd,dw,t);
+[y,~,x] = lsim(Sp*Gd,dw,t);
+
 % figure
 % lsim(Sp*Gd,dw,t);
 
@@ -505,7 +466,7 @@ ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
 % inp_val = lsim(K,-y,t);
-inp_val = lsim(-K*S*Gd,dw,t);
+inp_val = lsim(-K_mu*Sp*Gd,dw,t);
 
 figure 
 plot(t,rad2deg(inp_val),'LineWidth', 1.5)
@@ -518,10 +479,10 @@ legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 %% Order reduction of the controller
 %{
 figure
-ncfmr(Kunc)
-[~,info] = ncfmr(Kunc);
-[marg,freq] = ncfmargin(G,Kunc);
-Kunc_red = ncfmr(Kunc,20,info);
+ncfmr(K_mu)
+[~,info] = ncfmr(K_mu);
+[marg,freq] = ncfmargin(G,K_mu);
+K_mu_red = ncfmr(K_mu,20,info);
 %}
 %% Discrete time step response
 %{
