@@ -275,7 +275,7 @@ outputs = {'z1','z2','v'};
 % Paug = connect(G,Gd,W_A_ref,aux_mat,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
 Paug = connect(Gp_inp_mult,Gd,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
 
-Paug = minreal(Paug);
+% Paug = minreal(Paug);
 
 % Generalized feedback interconnection of Delta block P block
 % Punc = lft(Delta_A,Paug);
@@ -312,14 +312,70 @@ tic;
 % mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
 [Kunc,CLunc,info_unc] = musyn(Paug,nmeas,ncont);%,mu_opts); 
 timerun = toc;
-
-loops_p = loopsens(G,Kunc);
+%%
+loops_p = loopsens(Gp_inp_mult,Kunc);
 Lp = loops_p.Lo;
 Tp = loops_p.To;
 Sp = loops_p.So;
 
-% Robust stability of uncertain system
-% [stabmarg,wcu] = robstab(Tp);
+%% Robust stability of uncertain system
+[stabmarg,wcu] = robstab(Tp);
+
+% Generalized feedback interconnection of P block K block in order to
+% obtain the N tranfer matrix
+[M,~,BlkStruct] = lftdata(Paug);
+
+Ndk=minreal(lft(M,Kunc));
+omega=logspace(-4,3,400);
+
+Nfdk=frd(Ndk,omega);
+
+% Nominal stability
+maxeigNdk=max(real(eig(Ndk))); 
+
+
+
+%%
+% % Nominal performance
+% blk=[2 4]; % Full complex uncertainty block
+% [mubnds,muinfo]=mussv(Nfdk(5:8,5:6),blk,'c');
+% muNPdk=mubnds(:,1);
+% [muNPinfDK, muNPwDK]=norm(muNPdk,inf); % bound = 0.8744
+% 
+% % Robust stability
+% blk=[1 0; 1 0; 1 0; 1 0]; % structured uncertainty
+% [mubnds,muinfo]=mussv(Nfdk(1:4,1:4),blk,'c');
+% muRSdk=mubnds(:,1);
+% [muRSinfDK, muRSwDK]=norm(muRSdk,inf); % bound = 0.5942
+
+% Robust performance
+blk = [9 0]; % structured uncertainty and ΔP
+[mubnds,muinfo]=mussv(Nfdk(:,:),BlkStruct);
+muRPdk=mubnds(:,1);
+[muRPinfDK, muRPwDK]=norm(muRPdk,inf); % bound = 1.1420
+%%
+% Frequency response of the structured singular values for NP, RS and RP
+figure
+hold on
+opts=bodeoptions;
+opts.MagUnits='abs';
+opts.MagScale='log';
+opts.Title.FontSize=14;
+opts.TickLabel.FontSize=12;
+opts.Xlabel.FontSize=12;
+opts.Ylabel.FontSize=12;
+% bodemag(muNPdk,opts)
+% bodemag(muRSdk,opts)
+bodemag(muRPdk,opts)
+grid on
+legend('μ_ΔP(N22(jω))','μ_Δ(N11(jω))','μ_Δhat(N(jω))','Location','best')
+title('Structured singular values - μ for NP, RS and RP (mu-synthesis)')
+
+
+
+
+
+
 %%
 sigma_opts = sigmaoptions;
 sigma_opts.MagScale = 'log';
@@ -345,7 +401,7 @@ sigma(Kunc*Sp,inv(Wu),sigma_opts);
 legend('\boldmath{$\sigma(KS)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(Gp_app*Kunc,sigma_opts);
+sigma(Gp_inp_mult*Kunc,sigma_opts);
 legend('\boldmath{$\sigma(GK)$}','interpreter','latex','FontSize',15)
 
 figure
