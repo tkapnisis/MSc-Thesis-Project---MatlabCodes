@@ -61,7 +61,7 @@ set(findall(gcf,'Type','line'),'LineWidth',1.2)
 legend('Perturbed plant Gp(s)','Nominal plant G(s)','Location','best','FontSize',11)
 %}
 %% Singular values and gamma analysis
-%{
+%
 [sv,wout] = sigma(G,{1e-5 1e2});
 figure
 loglog(wout(:,1),sv(1,:))

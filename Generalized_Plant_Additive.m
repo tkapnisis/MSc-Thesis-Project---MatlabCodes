@@ -1,4 +1,4 @@
-function [P_Delta,Gp_add] = Generalized_Plant_Additive(G,Gd,bound,W_A,Wp,Wu,Wd,Wr,Wact)
+function [P_Delta,Gp_add,Paug] = Generalized_Plant_Additive(G,Gd,bound,W_A,Wp,Wu,Wd,Wr,Wact)
 
 % Defining the complex scalar uncertainties for each channel of perturbed plant
 
@@ -38,20 +38,31 @@ aux_mat.u = 'u';
 aux_mat.y = 'y_Delta';
 W_A_ref.u = 'u_Delta';
 W_A_ref.y = 'y_W_A';
+% Gp_add.u = 'u';
+% Gp_add.y = 'yG';
 
 Sum_err = sumblk('v = rw - yG - yGd - y_W_A',3);
 inputs = {'u_Delta','r','d','u'};
 outputs = {'y_Delta','z1','z2','v'};
 
+% Sum_err = sumblk('v = rw - yG - yGd',3);
+% inputs = {'r','d','u'};
+% outputs = {'z1','z2','v'};
+
 Paug = connect(G,Gd,W_A_ref,aux_mat,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
+% Paug = connect(Gp_add,Gd,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
 disp('Minimal realization of Generalized Plant with Additive Uncertainty')
+% [Paug,~] = balreal(Paug);
 Paug = minreal(Paug);
 
+% P_Delta = Paug;
 % Generalized feedback interconnection of Delta block P block
 P_Delta = lft(Delta_A,Paug);
 P_Delta = minreal(P_Delta);
 
-% Approximated Perturbed Plant by the Additive Uncertainty
+
+%% Approximated Perturbed Plant by the Additive Uncertainty
+%
 aux_mat.u = 'u';
 aux_mat.y = 'y_Delta';
 W_A_ref.u = 'u_Delta';
@@ -64,10 +75,10 @@ inputs = {'u_Delta','u'};
 outputs = {'y_Delta','y_un'};
 Gp_aug = connect(G,W_A_ref,aux_mat,Sum_add,inputs,outputs);
 disp('Minimal realization of Perturbed Plant with Additive Uncertainty')
-Gp_aug = minreal(Gp_aug);
+% Gp_aug = minreal(Gp_aug);
 
 Gp_add = lft(Delta_A,Gp_aug);
-Gp_add = minreal(Gp_add);
+% Gp_add = minreal(Gp_add);
 
 % Alternative method ***
 % sys1 = series(aux_mat,Delta_A);
@@ -75,5 +86,5 @@ Gp_add = minreal(Gp_add);
 % 
 % Gp_app2 = parallel(G,sys2);
 % Gp_app2 = minreal(Gp_app2);
-
+%}
 end

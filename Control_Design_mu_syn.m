@@ -11,7 +11,7 @@ load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 
-load('Additive_Uncertainty.mat','W_A','W_A_ss')
+load('Additive_Uncertainty.mat','W_A','W_A_ss','W_A_cor','Gp_add')
 load('Multiplicative_Uncertainty.mat','W_I','W_I_ss','Gp_inp_mult_1',...
      'Gp_inp_mult_2','Gp_inp_mult_3')
 % Nominal plant G(s)
@@ -55,7 +55,7 @@ w = logspace(-1,1,20);
 nyquist(res);
 %}
 %% Bodeplot of the open-loops of nominal and perturbed plant
-%{
+%
 bode_opts = bodeoptions;
 bode_opts.MagScale = 'log';
 bode_opts.MagUnits = 'abs';
@@ -84,7 +84,7 @@ legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location',
 title('Gp_cor')
 %%
 figure
-bodeplot(Gp_cor,G,bode_opts)
+bodeplot(Gp_app,G,bode_opts)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
 legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location','best','FontSize',11)
 title('Gp')
@@ -168,7 +168,7 @@ P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
 % P = connect(G,Wp,Wu,Sum_err,inputs,outputs);
 P = minreal(P);
 
-disp('----------- Hinf Controller synthesis-Nominal Plant --------------')
+disp('----------- Hinf Controller Synthesis-Nominal Plant --------------')
 % Hinf Controller synthesis - Nominal Plant
 [K,CL,gamma,info] = hinfsyn(P,nmeas,ncont);
 gamma
@@ -219,7 +219,7 @@ legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
 %}
 %% Generalized Plant - Perturbed
 % Upper bound of the absolute value for the complex perturbations
-bound = 0.2;
+bound = 1;
 
 % Select which method to use, 1 for the additive uncertainty and 2 for the
 % multiplicative uncertainty
@@ -228,20 +228,21 @@ method = 2;
 switch method
     case 1
         disp('----- Approximation of Parametric Uncertinty by Additive Uncertainty ------------')
-        [P_Delta,Gp_add] = Generalized_Plant_Additive(G,Gd,bound,W_A,Wp,Wu,...
-                                                      Wd,Wr,Wact);
+        [P_Delta,Gp_add,Paug] = Generalized_Plant_Additive(G,Gd,bound,W_A_cor,Wp,Wu,...
+                                                           Wd,Wr,Wact);
         Gp_app = Gp_add;
     case 2    
         disp('----- Approximation of Parametric Uncertinty by Multiplicative Uncertainty ------------')
-    % Select which of the 3 versionS you want to check the controllability and
-    % the observability and draw the bodeplot 
-    version = 3;
-    [P_Delta,Gp_mult] = Generalized_Plant_Multiplicative(G,Gd,bound,version,...
-                                                         W_I,Wp,Wu,Wd,Wr,Wact);
-    Gp_app = Gp_mult;
+        % Select which of the 3 versionS you want to check the controllability and
+        % the observability and draw the bodeplot 
+        version = 3;
+        [P_Delta,Gp_mult] = Generalized_Plant_Multiplicative(G,Gd,bound,version,...
+                                                             W_I,Wp,Wu,Wd,Wr,Wact);
+        Gp_app = Gp_mult;
 end
+
 %% mu-synthesis of Hinf Controller - Perturbed Plant
-disp('----------- mu-synthesis ccontroller-Perutbed Plant --------------')
+disp('----------- mu-synthesis controller-Perturbed Plant --------------')
 mu_opts = musynOptions('Display','full','FullDG',false);%,'FitOrder',[5 2]);
 tic;
 % mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
@@ -264,7 +265,7 @@ L_mu_p = loops_mu_p.Lo;
 T_mu_p = loops_mu_p.To;
 S_mu_p = loops_mu_p.So;
 
-num = 3;
+num = 1;
 
 switch num
     case 1
@@ -283,8 +284,9 @@ end
 %% Check the Robustness of the mu-synthesis controller
 
 % Robust stability of uncertain system
-[stabmarg,wcu] = robstab(Tp);
+[stabmarg,wcu,info] = robstab(Tp)
 
+% [stabmarg,destabunc,report,info] = robuststab(Tp)
 % Generalized feedback interconnection of P block K block in order to
 % obtain the N tranfer matrix
 [M,~,BlkStruct] = lftdata(P_Delta);
@@ -429,7 +431,7 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
 %% Simulation of the closed loop system with the Hinf controller
-%
+%{
 %  Calculation of waves velocity profile for each hydrofoil
 
 % Parameters of long-crested regular wave

@@ -74,6 +74,9 @@ switch version
         
         sys1 = parallel(ss(eye(3)),W_I_mat);
         Gp_mult = series(sys1,G);
+%         sys1 = series(G,ss(eye(3)));
+%         sys2 = series(G,W_I_mat);
+%         Gp_mult = parallel(sys1,sys2);
         Gp_mult = minreal(Gp_mult);
 end
 

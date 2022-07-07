@@ -7,6 +7,8 @@ clear all
 close all
 
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
+
+load('Multiplicative_Uncertainty.mat')
 %% Calculate weighting functions for multiplicative uncertanties
 
 % Approximate the parametric uncertainties as multiplicative uncertainties
@@ -78,7 +80,7 @@ end
 %         rel_diff_d.y(i) = Gd_frd.y(i);
 %     end
 % end 
-
+%%
 figure
 title('Approximation of parametric uncertainties by multiplicative uncertainties')
 bodeplot(rel_diff,'b--',W_I_ss,'r',omega,bode_opts);
@@ -118,8 +120,7 @@ Gp_inp_mult_1 = [(W_I.w11*Delta_I(1,1)+1)*G(1,1),...
                  (W_I.w31*Delta_I(3,1)+1)*G(3,1),...
                  (W_I.w32*Delta_I(3,2)+1)*G(3,2),...
                  (W_I.w33*Delta_I(3,3)+1)*G(3,3)];
-Gp_inp_mult_1 = minreal(Gp_inp_mult_1);
-
+% Gp_inp_mult_1 = minreal(Gp_inp_mult_1);
 % Gp_inp_mult = [  G(1,1)*(1+W_I.w11*Delta_I(1,1)),...
 %                  G(1,2)*(1+W_I.w12*Delta_I(1,2)),...
 %                  G(1,3)*(1+W_I.w13*Delta_I(1,3));...
@@ -129,7 +130,7 @@ Gp_inp_mult_1 = minreal(Gp_inp_mult_1);
 %                  G(3,1)*(1+W_I.w31*Delta_I(3,1)),...
 %                  G(3,2)*(1+W_I.w32*Delta_I(3,2)),...
 %                  G(3,3)*(1+W_I.w33*Delta_I(3,3))];
-
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 2nd method %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The perturbed plant is defined by multpling all the scalar transfer
 % functions in each channel for the part G*Delta*W and the result is added
@@ -146,7 +147,7 @@ W_I_mat = [  G(1,1)*W_I.w11*Delta_I(1,1),...
              G(3,3)*W_I.w33*Delta_I(3,3)];
 
 Gp_inp_mult_2 = parallel(G,W_I_mat);
-Gp_inp_mult_2 = minreal(Gp_inp_mult_2);
+Gp_inp_mult_2 = minreal(Gp_inp_mult_2,1e-5);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 3rd method %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Working but with low performance because the multiplicative uncertainties
@@ -170,8 +171,8 @@ Gp_inp_mult_3 = minreal(Gp_inp_mult_3);
 
 % Select which of the 3 versionS you want to check the controllability and
 % the observability and draw the bodeplot
-
-select = 1;
+%%
+select = 2;
 switch select
     case 1
         Gp_app = Gp_inp_mult_1;
@@ -231,4 +232,4 @@ Gp_app = minreal(Gp_app);
 %}
 
 %% Save results
-save('Multiplicative_Uncertainty.mat')
+% save('Multiplicative_Uncertainty.mat')

@@ -61,6 +61,10 @@ hold on
 step(sys_CL_DT)
 grid minor
 legend('Continuous','Discrete')
+
+set(gcf, 'WindowState', 'maximized');
+saveas(gcf,[pwd '/Figures/LQR/Step Response CT-DT.png'])
+
 %%
 % Step responses of the nominal and the perturbed closed-loop system
 figure
@@ -69,6 +73,9 @@ hold on
 step(sys_CL)
 grid minor
 legend('Perturbed','Nominal')
+
+set(gcf, 'WindowState', 'maximized');
+saveas(gcf,[pwd '/Figures/LQR/Step Response Nominal-Perurbed.png'])
 %%
 % Reference signal
 ref = [-0.05*square(t);0*ones(size(t));0*ones(size(t))];
@@ -169,6 +176,7 @@ legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
 %%
 %% Optical simulation
+%{
 figure
 view(3)
 set(gcf, 'WindowState', 'maximized');
@@ -194,3 +202,4 @@ for k=1:length(t)
     tic;
 %     pause(2e-2)
 end
+%}
