@@ -27,7 +27,7 @@ Gp_frd = frd(Gp_samples,omega);
 W_A_ss = ss([]);
 
 %%
-%{
+%
 order = 3;
 ord1 = [order;order;order];
 ord2 = [order;order;order];
@@ -184,6 +184,8 @@ d33 = ultidyn('d33',[1,1],'Bound',bound);
 %                  Delta_A(3,1)*W_A_cor.w31,...
 %                  Delta_A(3,2)*W_A_cor.w32,...
 %                  Delta_A(3,3)*W_A_cor.w33];
+W_A_cor = W_A;
+
 W_A_Delta_mat = [W_A_cor.w11*d11,...
                  W_A_cor.w12*d12,...
                  W_A_cor.w13*d13;...
@@ -196,10 +198,16 @@ W_A_Delta_mat = [W_A_cor.w11*d11,...
 
 % Gp_add = parallel(G,W_A_Delta_mat);
 Gp_add = G + W_A_Delta_mat;
-Gp_add = minreal(Gp_add);
+% Gp_add = minreal(Gp_add);
 
 Controlability=rank(ctrb(Gp_add.A,Gp_add.B));
 Observability=rank(obsv(Gp_add.A,Gp_add.C));
+
+%%
+bound = 1;
+Delta_A = ultidyn('da',[3,3],'Bound',bound);
+W_A_Delta_mat = W_2*Delta_A*W_1;
+
 
 %% Perturbed plant for disturbance transfer function Gd
 %{
@@ -259,9 +267,9 @@ sigma_opts.YLabel.FontSize = 11;
 sigma_opts.TickLabel.FontSize = 10;
 sigma_opts.Title.FontSize = 12;
 sigma_opts.Grid = 'on';
-
+% Gp_add,G,
 figure
-sigma(Gp_add,G,sigma_opts);
+sigma(W_A_Delta_mat,G,sigma_opts);
 legend('\boldmath{$\sigma(Gp_app)$}','\boldmath{$\sigma(G)$}','interpreter','latex','FontSize',15)
 %% Save results
 save('Additive_Uncertainty2.mat')

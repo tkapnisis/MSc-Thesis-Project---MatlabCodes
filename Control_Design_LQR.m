@@ -65,7 +65,7 @@ legend('Continuous','Discrete')
 set(gcf, 'WindowState', 'maximized');
 saveas(gcf,[pwd '/Figures/LQR/Step Response CT-DT.png'])
 
-%%
+
 % Step responses of the nominal and the perturbed closed-loop system
 figure
 step(sys_CL_p)
