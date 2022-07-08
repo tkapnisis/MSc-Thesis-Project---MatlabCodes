@@ -35,7 +35,7 @@ switch version
 %                  G(3,1)*(1+W_I.w31*Delta_I(3,1)),...
 %                  G(3,2)*(1+W_I.w32*Delta_I(3,2)),...
 %                  G(3,3)*(1+W_I.w33*Delta_I(3,3))];
-        Gp_mult = minreal(Gp_mult);
+%         Gp_mult = minreal(Gp_mult);
 
     case 2
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 2nd method %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -54,7 +54,7 @@ switch version
                      G(3,3)*W_I.w33*Delta_I(3,3)];
         
         Gp_mult = parallel(G,W_I_mat);
-        Gp_mult = minreal(Gp_mult);
+%         Gp_mult = minreal(Gp_mult);
     case 3
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 3rd method %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Working but with low performance because the multiplicative uncertainties
@@ -101,6 +101,6 @@ outputs = {'z1','z2','v'};
 
 P_Delta = connect(Gp_mult,Gd,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
 disp('Minimal realization of Generalized Plant with Multiplicative Uncertainty')
-P_Delta = minreal(P_Delta);
+% P_Delta = minreal(P_Delta);
 
 end

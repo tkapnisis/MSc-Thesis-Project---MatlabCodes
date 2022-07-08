@@ -11,19 +11,12 @@ load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 
-load('Additive_Uncertainty.mat','W_A','W_A_ss','W_A_cor','Gp_add')
-load('Multiplicative_Uncertainty.mat','W_I','W_I_ss','Gp_inp_mult_1',...
-     'Gp_inp_mult_2','Gp_inp_mult_3')
+load('Additive_Uncertainty2.mat','W_A','W_A_ss','W_A_cor','Gp_add')
+load('Multiplicative_Uncertainty.mat','W_I')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
-
-% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
-
-nmeas = 3; % number of outputs 
-ncont = 3; % number of inputs
 
 %% Pole-zero map of the open-loops of nominal and perturbed plant
 %{
@@ -90,6 +83,25 @@ legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location',
 title('Gp')
 %}
 %% Singular values and gamma analysis
+sigma_opts = sigmaoptions;
+sigma_opts.MagScale = 'log';
+sigma_opts.MagUnits = 'abs';
+sigma_opts.InputLabels.FontSize = 10;
+sigma_opts.OutputLabels.FontSize = 10;
+sigma_opts.XLabel.FontSize = 11;
+sigma_opts.YLabel.FontSize = 11;
+sigma_opts.TickLabel.FontSize = 10;
+sigma_opts.Title.FontSize = 12;
+sigma_opts.Grid = 'on';
+
+figure
+sigma(Gp_app,G,sigma_opts);
+legend('\boldmath{$\sigma(Gp_app)$}','\boldmath{$\sigma(G)$}','interpreter','latex','FontSize',15)
+%%
+figure
+sigma(Gp,G,sigma_opts);
+legend('\boldmath{$\sigma(Gp)$}','\boldmath{$\sigma(G)$}','interpreter','latex','FontSize',15)
+
 %{
 % RGA
 omega1 = 1e-2;
@@ -139,6 +151,13 @@ Gd_sc = inv(De)*Gd*Dd;
 R = inv(De)*Dr;
 %}
 %% Mixed-sensitivity Hinf controller Design
+
+% Define the Weighting Functions for the Hinf controller
+[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
+
+nmeas = 3; % number of outputs 
+ncont = 3; % number of inputs
+
 % Generalized Plant - Nominal
 Wp.u = 'v';
 Wp.y = 'z1';
@@ -223,7 +242,7 @@ bound = 1;
 
 % Select which method to use, 1 for the additive uncertainty and 2 for the
 % multiplicative uncertainty
-method = 2;
+method = 1;
 
 switch method
     case 1
@@ -233,9 +252,9 @@ switch method
         Gp_app = Gp_add;
     case 2    
         disp('----- Approximation of Parametric Uncertinty by Multiplicative Uncertainty ------------')
-        % Select which of the 3 versionS you want to check the controllability and
+        % Select which of the 3 version you want to check the controllability and
         % the observability and draw the bodeplot 
-        version = 3;
+        version = 2;
         [P_Delta,Gp_mult] = Generalized_Plant_Multiplicative(G,Gd,bound,version,...
                                                              W_I,Wp,Wu,Wd,Wr,Wact);
         Gp_app = Gp_mult;
@@ -265,7 +284,7 @@ L_mu_p = loops_mu_p.Lo;
 T_mu_p = loops_mu_p.To;
 S_mu_p = loops_mu_p.So;
 
-num = 1;
+num = 3;
 
 switch num
     case 1
@@ -382,7 +401,7 @@ title('Hinf')
 grid on
 
 figure
-step(Tp,4)
+step(Tp,10)
 title('mu-synthesis')
 grid on
 %% Simulation with step signal on heave

@@ -8,7 +8,7 @@ close all
 
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 
-load('Multiplicative_Uncertainty.mat')
+% load('Multiplicative_Uncertainty.mat')
 %% Calculate weighting functions for multiplicative uncertanties
 
 % Approximate the parametric uncertainties as multiplicative uncertainties
@@ -19,13 +19,19 @@ samples = 50;
 % Approximation of the uncertainty
 G_frd = frd(G,omega);
 Gp_samples = usample(Gp,samples);
-Gp_frd = ufrd(Gp_samples,omega);
+Gp_frd = frd(Gp_samples,omega);
 
 % Gd_frd = frd(Gd,omega);
 % Gd_p_samples = usample(Gd_p,samples);
 % Gd_p_frd = frd(Gd_p_samples,omega);
 
-W_A_ss = ss([]);
+W_I_ss = ss([]);
+%%
+%%
+% order = 3;
+% ord1 = [order;order;order];
+% [~,Info] = ucover(Gp_frd,G,ord1,'InputMult');
+% W_1 = Info.W1;
 %%
 order = 3;
 for i=1:size(G,1)
@@ -61,8 +67,6 @@ bode_opts.YLabel.FontSize = 11;
 bode_opts.TickLabel.FontSize = 10;
 bode_opts.Title.FontSize = 12;
 bode_opts.PhaseVisible = 'off';
-
-Gp_frd = frd(Gp_samples,omega);
 
 for i=1:size(G,1)
     for j=1:size(G,2)
@@ -120,7 +124,7 @@ Gp_inp_mult_1 = [(W_I.w11*Delta_I(1,1)+1)*G(1,1),...
                  (W_I.w31*Delta_I(3,1)+1)*G(3,1),...
                  (W_I.w32*Delta_I(3,2)+1)*G(3,2),...
                  (W_I.w33*Delta_I(3,3)+1)*G(3,3)];
-% Gp_inp_mult_1 = minreal(Gp_inp_mult_1);
+Gp_inp_mult_1 = minreal(Gp_inp_mult_1);
 % Gp_inp_mult = [  G(1,1)*(1+W_I.w11*Delta_I(1,1)),...
 %                  G(1,2)*(1+W_I.w12*Delta_I(1,2)),...
 %                  G(1,3)*(1+W_I.w13*Delta_I(1,3));...
@@ -172,7 +176,7 @@ Gp_inp_mult_3 = minreal(Gp_inp_mult_3);
 % Select which of the 3 versionS you want to check the controllability and
 % the observability and draw the bodeplot
 %%
-select = 2;
+select = 3;
 switch select
     case 1
         Gp_app = Gp_inp_mult_1;
@@ -185,6 +189,7 @@ end
 Controlability=rank(ctrb(Gp_app.A,Gp_app.B));
 Observability=rank(obsv(Gp_app.A,Gp_app.C));
 
+%%
 % omega = logspace(-2,3,200);
 figure
 bodeplot(Gp_app,G,bode_opts)
@@ -232,4 +237,4 @@ Gp_app = minreal(Gp_app);
 %}
 
 %% Save results
-% save('Multiplicative_Uncertainty.mat')
+save('Multiplicative_Uncertainty.mat')

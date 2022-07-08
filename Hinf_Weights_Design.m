@@ -33,6 +33,7 @@ Wu11 = (s + omega_bc1/Mu1)/(Ac_1*s + omega_bc1);
 Wu22 = (s + omega_bc2/Mu2)/(Ac_2*s + omega_bc2);
 Wu33 = (s + omega_bc3/Mu3)/(Ac_3*s + omega_bc3);
 Wu = blkdiag(Wu11, Wu22 , Wu33);
+% Wu = ss(blkdiag(0.2,0.2,0.2));
 
 Wd = zpk(5*eye(6));
 

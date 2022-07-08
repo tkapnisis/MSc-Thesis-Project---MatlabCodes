@@ -7,7 +7,7 @@ clear all
 close all
 
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
-load('Additive_Uncertainty.mat')
+% load('Additive_Uncertainty.mat')
 %% Calculate weighting functions for additive uncertanties
 
 % Approximate the parametric uncertainties as additive uncertainties
@@ -26,6 +26,15 @@ Gp_frd = frd(Gp_samples,omega);
 
 W_A_ss = ss([]);
 
+%%
+%{
+order = 3;
+ord1 = [order;order;order];
+ord2 = [order;order;order];
+[~,Info] = ucover(Gp_frd,G,ord1,ord2,'Additive');
+W_1 = Info.W1;
+W_2 = Info.W2;
+%}
 %%
 order = 3;
 for i=1:size(G,1)
@@ -93,25 +102,25 @@ legend('\boldmath{$|(G_p(j\omega)-G(j\omega))|$}','\boldmath{$|W_A(j\omega)|$}',
 s = tf('s');
 select = 11;
 
-% cor_11 = (8e-3)^2*((1/8e-3)*s + 1)^2/(s^2*((1/1e4)*s + 1)^2);
-% cor_12 = (1e-2)^2*((1/1e-2)*s + 1)^2/(s^2*((1/1e4)*s + 1)^2);
-% cor_13 = (1e-2)^2*((1/1e-2)*s + 1)^2/(s^2*((1/1e4)*s + 1)^2);
-% cor_21 = 2e-3*((1/2e-3)*s + 1)/(s*((1/1e4)*s + 1)^2);
-% cor_22 = 4e-4*((1/4e-4)*s + 1)/(s*((1/1.5e4)*s + 1)*((1/2e4)*s + 1));
-% cor_23 = 1e-3*((1/1e-3)*s + 1)/(s*((1/1.5e4)*s + 1)*((1/3e4)*s + 1));
-% cor_31 = 4e-3*((1/4e-3)*s + 1)/(s*((1/1.5e4)*s + 1)*((1/3e4)*s + 1));
-% cor_32 = 4e-4*((1/4e-4)*s + 1)/(s*((1/1e4)*s + 1)*((1/1e4)*s + 1));
-% cor_33 = 2e-4*((1/2e-4)*s + 1)/(s*((1/1e4)*s + 1)*((1/1e4)*s + 1));
+cor_11 = (8e-3)^2*((1/8e-3)*s + 1)^2/(s^2*((1/1e4)*s + 1)^2);
+cor_12 = (1e-2)^2*((1/1e-2)*s + 1)^2/(s^2*((1/1e4)*s + 1)^2);
+cor_13 = (1e-2)^2*((1/1e-2)*s + 1)^2/(s^2*((1/1e4)*s + 1)^2);
+cor_21 = 2e-3*((1/2e-3)*s + 1)/(s*((1/1e4)*s + 1)^2);
+cor_22 = 4e-4*((1/4e-4)*s + 1)/(s*((1/1.5e4)*s + 1)*((1/2e4)*s + 1));
+cor_23 = 1e-3*((1/1e-3)*s + 1)/(s*((1/1.5e4)*s + 1)*((1/3e4)*s + 1));
+cor_31 = 4e-3*((1/4e-3)*s + 1)/(s*((1/1.5e4)*s + 1)*((1/3e4)*s + 1));
+cor_32 = 4e-4*((1/4e-4)*s + 1)/(s*((1/1e4)*s + 1)*((1/1e4)*s + 1));
+cor_33 = 2e-4*((1/2e-4)*s + 1)/(s*((1/1e4)*s + 1)*((1/1e4)*s + 1));
 
-cor_11 = 1/(((1/1e4)*s + 1)^2);
-cor_12 = 1/(((1/1.1e4)*s + 1)^2);
-cor_13 = 1/(((1/1.2e4)*s + 1)^2);
-cor_21 = 1/(((1/1.3e4)*s + 1)^2);
-cor_22 = 1/(((1/1.5e4)*s + 1)*((1/2e4)*s + 1));
-cor_23 = 1/(((1/1.4e4)*s + 1)*((1/4e4)*s + 1));
-cor_31 = 1/(((1/1.35e4)*s + 1)*((1/35e4)*s + 1));
-cor_32 = 1/(((1/1.05e4)*s + 1)*((1/1.05e4)*s + 1));
-cor_33 = 1/(((1/1.15e4)*s + 1)*((1/1.15e4)*s + 1));
+% cor_11 = 1/(((1/1e4)*s + 1)^2);
+% cor_12 = 1/(((1/1.1e4)*s + 1)^2);
+% cor_13 = 1/(((1/1.2e4)*s + 1)^2);
+% cor_21 = 1/(((1/1.3e4)*s + 1)^2);
+% cor_22 = 1/(((1/1.5e4)*s + 1)*((1/2e4)*s + 1));
+% cor_23 = 1/(((1/1.4e4)*s + 1)*((1/4e4)*s + 1));
+% cor_31 = 1/(((1/1.35e4)*s + 1)*((1/35e4)*s + 1));
+% cor_32 = 1/(((1/1.05e4)*s + 1)*((1/1.05e4)*s + 1));
+% cor_33 = 1/(((1/1.15e4)*s + 1)*((1/1.15e4)*s + 1));
 
 % cor_11 = (8e-3)^2*((1/8e-3)*s + 1)^2/(s^2*((1/1e4)*s + 1)^2);
 % cor_12 = (1e-2)^2*((1/1e-2)*s + 1)^2/(s^2*((1/1.1e4)*s + 1)^2);
@@ -147,27 +156,46 @@ W_A_cor.w33 = W_A.w33 * cor_33;
 %% Additive uncertainty
 % Defining the complex scalar uncertainties for each channel of perturbed plant
 bound = 1;
-Delta_A = [ultidyn('d11',[1,1],'Bound',bound),...
-           ultidyn('d12',[1,1],'Bound',bound),...
-           ultidyn('d13',[1,1],'Bound',bound);...
-           ultidyn('d21',[1,1],'Bound',bound),...
-           ultidyn('d22',[1,1],'Bound',bound),...
-           ultidyn('d23',[1,1],'Bound',bound);...
-           ultidyn('d31',[1,1],'Bound',bound),...
-           ultidyn('d32',[1,1],'Bound',bound),...
-           ultidyn('d33',[1,1],'Bound',bound)];
+% Delta_A = [ultidyn('d11',[1,1],'Bound',bound),...
+%            ultidyn('d12',[1,1],'Bound',bound),...
+%            ultidyn('d13',[1,1],'Bound',bound);...
+%            ultidyn('d21',[1,1],'Bound',bound),...
+%            ultidyn('d22',[1,1],'Bound',bound),...
+%            ultidyn('d23',[1,1],'Bound',bound);...
+%            ultidyn('d31',[1,1],'Bound',bound),...
+%            ultidyn('d32',[1,1],'Bound',bound),...
+%            ultidyn('d33',[1,1],'Bound',bound)];
+d11 = ultidyn('d11',[1,1],'Bound',bound);
+d12 = ultidyn('d12',[1,1],'Bound',bound);
+d13 = ultidyn('d13',[1,1],'Bound',bound);
+d21 = ultidyn('d21',[1,1],'Bound',bound);
+d22 = ultidyn('d22',[1,1],'Bound',bound);
+d23 = ultidyn('d23',[1,1],'Bound',bound);
+d31 = ultidyn('d31',[1,1],'Bound',bound);
+d32 = ultidyn('d32',[1,1],'Bound',bound);
+d33 = ultidyn('d33',[1,1],'Bound',bound);
 
-W_A_Delta_mat = [W_A_cor.w11*Delta_A(1,1),...
-                 W_A_cor.w12*Delta_A(1,2),...
-                 W_A_cor.w13*Delta_A(1,3);...
-                 W_A_cor.w21*Delta_A(2,1),...
-                 W_A_cor.w22*Delta_A(2,2),...
-                 W_A_cor.w23*Delta_A(2,3);...
-                 W_A_cor.w31*Delta_A(3,1),...
-                 W_A_cor.w32*Delta_A(3,2),...
-                 W_A_cor.w33*Delta_A(3,3)];
+% W_A_Delta_mat = [Delta_A(1,1)*W_A_cor.w11,...
+%                  Delta_A(1,2)*W_A_cor.w12,...
+%                  Delta_A(1,3)*W_A_cor.w13;...
+%                  Delta_A(2,1)*W_A_cor.w21,...
+%                  Delta_A(2,2)*W_A_cor.w22,...
+%                  Delta_A(2,3)*W_A_cor.w23;...
+%                  Delta_A(3,1)*W_A_cor.w31,...
+%                  Delta_A(3,2)*W_A_cor.w32,...
+%                  Delta_A(3,3)*W_A_cor.w33];
+W_A_Delta_mat = [W_A_cor.w11*d11,...
+                 W_A_cor.w12*d12,...
+                 W_A_cor.w13*d13;...
+                 W_A_cor.w21*d21,...
+                 W_A_cor.w22*d22,...
+                 W_A_cor.w23*d23;...
+                 W_A_cor.w31*d31,...
+                 W_A_cor.w32*d32,...
+                 W_A_cor.w33*d33];
 
-Gp_add = parallel(G,W_A_Delta_mat);
+% Gp_add = parallel(G,W_A_Delta_mat);
+Gp_add = G + W_A_Delta_mat;
 Gp_add = minreal(Gp_add);
 
 Controlability=rank(ctrb(Gp_add.A,Gp_add.B));
@@ -219,5 +247,21 @@ figure
 bodeplot(Gp_add,G,bode_opts)
 title('Approximated Perturbed Plant G by Additive Uncertainty');
 grid on
+
+%%
+sigma_opts = sigmaoptions;
+sigma_opts.MagScale = 'log';
+sigma_opts.MagUnits = 'abs';
+sigma_opts.InputLabels.FontSize = 10;
+sigma_opts.OutputLabels.FontSize = 10;
+sigma_opts.XLabel.FontSize = 11;
+sigma_opts.YLabel.FontSize = 11;
+sigma_opts.TickLabel.FontSize = 10;
+sigma_opts.Title.FontSize = 12;
+sigma_opts.Grid = 'on';
+
+figure
+sigma(Gp_add,G,sigma_opts);
+legend('\boldmath{$\sigma(Gp_app)$}','\boldmath{$\sigma(G)$}','interpreter','latex','FontSize',15)
 %% Save results
-save('Additive_Uncertainty.mat')
+save('Additive_Uncertainty2.mat')
