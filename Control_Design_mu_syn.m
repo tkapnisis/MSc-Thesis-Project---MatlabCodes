@@ -11,7 +11,7 @@ load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 
-load('Multiplicative_Uncertainty.mat','W_O_G_ss','W_O_Gd_ss')
+load('Multiplicative_Uncertainty.mat','W_I_G_ss','W_I_Gd_ss')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -169,6 +169,11 @@ L = loops.Lo;
 T = loops.To;
 S = loops.So;
 
+loops_hinf_p = loopsens(Gp,K_hinf);
+L_hinf_p = loops_hinf_p.Lo;
+T_hinf_p = loops_hinf_p.To;
+S_hinf_p = loops_hinf_p.So;
+
 %% Singular Values of S, T, KS, GK, S*Gd, K*S*Gd
 %{
 sigma_opts = sigmaoptions;
@@ -210,17 +215,23 @@ legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
 % Upper bound of the absolute value for the complex perturbations
 bound_G = 0.3;
 bound_Gd = 0.3;
-[P_Delta,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
-                (G,Gd,bound_G,bound_Gd,W_O_G_ss,W_O_Gd_ss,Wp,Wu,Wd,Wr,Wact);
+[P_Delta,Paug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
+                (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Wact);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
 mu_opts = musynOptions('Display','full','FitOrder',[5 5]);
 tic;
 % mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
-[K_mu,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont,mu_opts); 
+[K_mu,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont);%,mu_opts); 
 timerun = toc;
 
 %%
+
+loops_hinf_p_app = loopsens(Gp_app,K_hinf);
+L_hinf_p_app = loops_hinf_p_app.Lo;
+T_hinf_p_app = loops_hinf_p_app.To;
+S_hinf_p_app = loops_hinf_p_app.So;
+
 loops_mu_n = loopsens(G,K_mu);
 L_mu_n = loops_mu_n.Lo;
 T_mu_n = loops_mu_n.To;
@@ -240,22 +251,25 @@ num = 3;
 
 switch num
     case 1
-        Tp = T_mu_n;
-        Sp = S_mu_n;
-        G_p = G;
+        T_ = T_mu_n;
+        S_ = S_mu_n;
+        G_ = G;
+        Gd_ = Gd;
     case 2    
-        Tp = T_mu_p;
-        Sp = S_mu_p;
-        G_p = Gp;
+        T_ = T_mu_p;
+        S_ = S_mu_p;
+        G_ = Gp;
+        Gd_ = Gd_p;
     case 3
-        Tp = T_mu_p_app;
-        Sp = S_mu_p_app;
-        G_p = Gp_app;
+        T_ = T_mu_p_app;
+        S_ = S_mu_p_app;
+        G_ = Gp_app;
+        Gd_ = Gd_p_app;
 end
 %% Check the Robustness of the mu-synthesis controller
 
 % Robust stability of uncertain system
-[stabmarg,wcu,info] = robstab(Tp)
+[stabmarg,wcu,info] = robstab(T_)
 
 % [stabmarg,destabunc,report,info] = robuststab(Tp)
 % Generalized feedback interconnection of P block K block in order to
@@ -271,22 +285,28 @@ Nfdk=frd(Ndk,omega);
 maxeigNdk=max(real(eig(Ndk))); 
 %%
 % Nominal performance
-blk=[9 6]; % Full complex uncertainty block
+% blk=[9 6]; 
+% [mubnds,~]=mussv(Nfdk(7:12,10:18),blk,'c');
+blk=[9 6]; 
 [mubnds,~]=mussv(Nfdk(4:9,4:12),blk,'c');
 muNPdk=mubnds(:,1);
-[muNPinfDK, muNPwDK]=norm(muNPdk,inf); % bound = 0.8744
+[muNPinfDK, muNPwDK]=norm(muNPdk,inf); 
 
 % Robust stability
-blk = [3 3]; % structured uncertainty (additive uncertainty)
+% blk = [3 3;6 3]; 
+% [mubnds,~]=mussv(Nfdk(1:6,1:9),blk,'c');
+blk = [3 3]; 
 [mubnds,~]=mussv(Nfdk(1:3,1:3),blk,'c');
 muRSdk=mubnds(:,1);
 [muRSinfDK, muRSwDK]=norm(muRSdk,inf); 
 
 % Robust performance
-blk=[3 3; 9 6]; % structured uncertainty and ΔP
+% blk=[3 3; 6 3; 9 6]; 
+% [mubnds,~]=mussv(Nfdk(:,:),blk,'c');
+blk=[3 3; 9 6]; 
 [mubnds,~]=mussv(Nfdk(:,:),blk,'c');
 muRPdk=mubnds(:,1);
-[muRPinfDK, muRPwDK]=norm(muRPdk,inf); % bound = 1.1420
+[muRPinfDK, muRPwDK]=norm(muRPdk,inf); 
 %% Frequency response of the structured singular values for NP, RS and RP
 bode_opts = bodeoptions;
 bode_opts.MagScale = 'log';
@@ -322,38 +342,71 @@ sigma_opts.Title.FontSize = 12;
 sigma_opts.Grid = 'on';
 
 figure
-sigma(Sp,inv(Wp),sigma_opts);
+sigma(S_,inv(Wp),sigma_opts);
 legend('\boldmath{$\sigma(S)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(Tp,sigma_opts);
+sigma(T_,sigma_opts);
 legend('\boldmath{$\sigma(T)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(K_mu*Sp,inv(Wu),sigma_opts);
+sigma(K_mu*S_,inv(Wu),sigma_opts);
 legend('\boldmath{$\sigma(KS)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(G_p*K_mu,sigma_opts);
+sigma(G_*K_mu,sigma_opts);
 legend('\boldmath{$\sigma(GK)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(Sp*Gd,sigma_opts);
+sigma(S_*Gd_,sigma_opts);
 legend('\boldmath{$\sigma(SG_d)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(K_mu*Sp*Gd,sigma_opts);
+sigma(K_mu*S_*Gd_,sigma_opts);
 legend('\boldmath{$\sigma(K S G_d)$}','interpreter','latex','FontSize',15)
 
 %% Simulation of the closed loop system with the Hinf controller
 
 figure
+step(T_mu_p,5)
 hold on
 step(T)
-step(T_mu_p,5)
-title('Hinf')
+title('Step Response of the Closed-Loop System - Parametric Uncertainty')
+legend('mu-synthesis controller-Perturbed','Hinf Controller-Nominal')
 grid on
 
+figure
+step(T_mu_p_app,5)
+hold on
+step(T)
+title('Step Response of the Closed-Loop System - Multiplicative Input Uncertainty')
+legend('mu-synthesis controller-Perturbed','Hinf Controller-Nominal')
+grid on
+
+figure
+step(T_hinf_p,5)
+hold on
+step(T)
+title('Step Response of the Closed-Loop System - Parametric Uncertainty')
+legend('Hinf Controller-Perturbed','Hinf Controller-Nominal')
+grid on
+
+figure
+step(T_hinf_p_app,5)
+hold on
+step(T)
+title('Step Response of the Closed-Loop System - Multiplicative Input Uncertainty')
+legend('Hinf Controller-Perturbed','Hinf Controller-Nominal')
+grid on
+
+%%
+figure
+step(T_mu_n)
+hold on
+step(T)
+title('Step Response of the Closed-Loop System')
+legend('mu-synthesis controller','Hinf Controller')
+grid on
 %% Simulation with step signal on heave
 dt = 0.01; % sampling time
 tend = 30; % duration of simulation in seconds
@@ -363,10 +416,10 @@ t = 0:dt:tend;
 ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
 
 x0 = [0, 0, 0, 0, 0, 0];
-[y,~,~] = lsim(Tp,ref,t);
+[y,~,~] = lsim(T_,ref,t);
 
 figure
-lsim(Tp,ref,t);
+lsim(T_,ref,t);
 %%
 figure
 subplot(3,1,1)
@@ -388,7 +441,7 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
-inp_val = lsim(Kunc*Sp,ref,t);
+inp_val = lsim(Kunc*S_,ref,t);
 % inp_val = lsim(K,ref'-y,t);
 
 figure
