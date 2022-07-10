@@ -215,7 +215,7 @@ legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
 % Upper bound of the absolute value for the complex perturbations
 bound_G = 0.3;
 bound_Gd = 0.3;
-[P_Delta,Paug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
+[P_Delta,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
                 (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Wact);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
