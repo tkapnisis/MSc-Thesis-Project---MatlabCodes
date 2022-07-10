@@ -11,7 +11,8 @@ load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 
-load('Multiplicative_Uncertainty.mat','W_I_G_ss','W_I_Gd_ss')
+load('Multiplicative_Input_Uncertainty.mat','W_I_G_ss','W_I_Gd_ss')
+
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
