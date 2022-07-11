@@ -7,7 +7,7 @@ load('Parameters_Nominal.mat','param')
 load('LTI_Perturbed_Plant.mat','Gp')
 
 % Simulation time 
-dt = 0.05; % sampling time
+dt = 1/100; % sampling time
 tend = 20; % duration of simulation in seconds
 t = 0:dt:tend;
 
@@ -22,7 +22,7 @@ G_DT = c2d(G,dt);
 Gd_DT = c2d(Gd,dt);
 %% LQR control design
 
-Q = diag([100 10 100 1e-2 1e-2 1e-2]); % Weights for the states
+Q = diag([50 50 50 1e-2 1e-2 1e-2]); % Weights for the states
 R = diag([1 1 1]);                     % Weights for the inputs
 K = lqr(G.A,G.B,Q,R);                  % LQR Controller gain for continuous-time
 K_DT = dlqr(G_DT.A,G_DT.B,Q,R);         % LQR Controller gain for discrete-time
@@ -52,20 +52,28 @@ sys_CL_w = ss(G.A - G.B*K,[G.B*Lc, Gd.B],G.C,[G.D,Gd.D],'statename',states,...
 % Closed-loop system of the perturbed-plant in continuous-time
 sys_CL_p = ss(Gp.A - Gp.B*K,Gp.B*Lc,Gp.C,Gp.D,'statename',states,'inputname',...
                                        inputs,'outputname',outputs);
+%%
+K2 = [K(1:3,1:3),zeros(3,3)];
+% Closed-loop system for continuous-time
+sys_CL2 = ss(G.A - G.B*K2,G.B,G.C,G.D);
+Lc2 = inv(dcgain(sys_CL2));        % DC-gain for continuous-time closed-loop system
+% Closed-loop system for continuous-time including the DC-gain
+sys_CL2 = ss(G.A - G.B*K2,G.B*Lc2,G.C,G.D,'statename',states,'inputname',...
+                                       inputs,'outputname',outputs);
 %% Simulations in calm water
 
 % Step responses of the closed-loop system for continuous and discrete-time
 figure
 step(sys_CL)
 hold on
-step(sys_CL_DT)
+step(sys_CL2)
 grid minor
-legend('Continuous','Discrete')
+legend('Original','Zero gains for velocities')
 
-set(gcf, 'WindowState', 'maximized');
-saveas(gcf,[pwd '/Figures/LQR/Step Response CT-DT.png'])
+% set(gcf, 'WindowState', 'maximized');
+% saveas(gcf,[pwd '/Figures/LQR/Step Response CT-DT.png'])
 
-
+%%
 % Step responses of the nominal and the perturbed closed-loop system
 figure
 step(sys_CL_p)
@@ -78,7 +86,7 @@ set(gcf, 'WindowState', 'maximized');
 saveas(gcf,[pwd '/Figures/LQR/Step Response Nominal-Perurbed.png'])
 %%
 % Reference signal
-ref = [-0.05*square(t);0*ones(size(t));0*ones(size(t))];
+ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
 % ref = [0.1*sin(2*t);0*ones(size(t));0.05*sin(1*t)];
 % Initial sate of the system
 x0 = [0, 0, 0, 0, 0, 0];

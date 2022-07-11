@@ -11,7 +11,7 @@ load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 
-load('Multiplicative_Uncertainty.mat','Gp_app','Gd_p_app','W_O_G_ss','W_O_Gd_ss')
+% load('Multiplicative_Uncertainty.mat','Gp_app','Gd_p_app','W_O_G_ss','W_O_Gd_ss')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -30,6 +30,21 @@ opts_sigma.YLabel.FontSize = 11;
 opts_sigma.TickLabel.FontSize = 10;
 opts_sigma.Title.FontSize = 12;
 opts_sigma.Grid = 'on';
+
+opts_bode = bodeoptions;
+opts_bode.MagScale = 'log';
+opts_bode.MagUnits = 'abs';
+opts_bode.InputLabels.Interpreter = 'none';
+opts_bode.InputLabels.FontSize = 10;
+opts_bode.OutputLabels.FontSize = 10;
+opts_bode.XLabel.FontSize = 11;
+opts_bode.YLabel.FontSize = 11;
+opts_bode.TickLabel.FontSize = 10;
+opts_bode.Title.FontSize = 12;
+% opts_bode.XLimMode = 'manual';
+% opts_bode.Xlim = [1e-3 1e2];
+opts_bode.PhaseVisible = 'off';
+opts_bode.Grid = 'on';
 %% Pole-zero map of the open-loops of nominal and perturbed plant
 %{
 % Pole-zero map of the open-loop G(s)
@@ -54,23 +69,9 @@ nyquist(G);
 %}
 %% Bodeplot of the open-loops of nominal and perturbed plant
 %{
-bode_opts = bodeoptions;
-bode_opts.MagScale = 'log';
-bode_opts.MagUnits = 'abs';
-bode_opts.InputLabels.Interpreter = 'none';
-bode_opts.InputLabels.FontSize = 10;
-bode_opts.OutputLabels.FontSize = 10;
-bode_opts.XLabel.FontSize = 11;
-bode_opts.YLabel.FontSize = 11;
-bode_opts.TickLabel.FontSize = 10;
-bode_opts.Title.FontSize = 12;
-bode_opts.XLimMode = 'manual';
-bode_opts.Xlim = [1e-3 1e2];
-bode_opts.PhaseVisible = 'off';
-bode_opts.Grid = 'on';
 
 figure
-bodeplot(Gp,G,bode_opts)
+bodeplot(Gp,G,opts_bode)
 set(findall(gcf,'Type','line'),'LineWidth',1.2)
 legend('Perturbed plant Gp(s)','Nominal plant G(s)','Location','best','FontSize',11)
 %}
@@ -92,28 +93,17 @@ Gd_sc = inv(De)*Gd*Dd;
 R = inv(De)*Dr;
 %}
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
+[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Hinf_Weights_Design();
 
 % Generalized Plant - Nominal
-P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Wact);
+P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
 
 % Hinf Controller synthesis - Nominal Plant
-[K_hinf,CL,gamma,info] = hinfsyn(P,nmeas,ncont);
+[K_hinf,~,gamma,~] = hinfsyn(P,nmeas,ncont);
 gamma
 
-% Define the Perturbed Plant and the Disturbance Transfer Matrix
-bound_G = 0.3;
-Delta_O_G = ultidyn('Delta_O_G',[3,3],'Bound',bound_G);
-Gp_app = (eye(3) + W_O_G_ss*Delta_O_G)*G;
-Gp_app = minreal(Gp_app);
-
-bound_Gd = 0.3;
-Delta_O_Gd = ultidyn('Delta_O_Gd',[6,3],'Bound',bound_Gd);
-Gd_p_app = (eye(3) + W_O_Gd_ss*Delta_O_Gd)*Gd;
-Gd_p_app = minreal(Gd_p_app);
-
-% loops = loopsens(G*Wact,K);
-loops = loopsens(G,K_hinf);
+loops = loopsens(G*Gact,K_hinf);
+% loops = loopsens(G,K_hinf);
 L = loops.Lo;
 T = loops.To;
 S = loops.So;
@@ -123,12 +113,7 @@ Lp = loops_p.Lo;
 Tp = loops_p.To;
 Sp = loops_p.So;
 
-loops_p_app = loopsens(Gp_app,K_hinf);
-Lp_app = loops_p_app.Lo;
-Tp_app = loops_p_app.To;
-Sp_app = loops_p_app.So;
-%%
-select = 2;
+select = 1;
 switch select
     case 1
         T_ = T;
@@ -140,12 +125,16 @@ switch select
         S_ = Sp;
         G_ = Gp;
         Gd_ = Gd_p;
-    case 3    
-        T_ = Tp_app;
-        S_ = Sp_app;
-        G_ = Gp_app;
-        Gd_ = Gd_p_app;        
+%     case 3    
+%         T_ = Tp_app;
+%         S_ = Sp_app;
+%         G_ = Gp_app;
+%         Gd_ = Gd_p_app;        
 end
+
+%%
+figure
+bodeplot(Wd(1,1),opts_bode)
 
 %% Singular Values of S, T, KS, GK, S*Gd, K*S*Gd
 %
@@ -177,13 +166,13 @@ legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
 %% Simulation of the closed loop system with the Hinf controller
 
 figure
-step(usample(Tp,20),3);
-hold on
-step(T,'r-')
+% step(usample(Tp,20),3);
+% hold on
+step(T,3)
 legend('Perturbed Plant', 'Nominal Plant')
 title('Step Response with Hinf Controller')
 grid minor
-
+%%
 figure
 step(usample(Tp_app,20),3);
 hold on
@@ -202,10 +191,10 @@ ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
 x0 = [0, 0, 0, 0, 0, 0];
 [y,~,~] = lsim(T,ref,t);
 
-figure
-lsim(Tp_app,ref,t);
-legend('Approximated Perturbed Plant')
-%%
+% figure
+% lsim(Tp_app,ref,t);
+% legend('Approximated Perturbed Plant')
+%
 
 figure
 subplot(3,1,1)
@@ -289,6 +278,15 @@ ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
 xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
+%% Order-reduction of the controller
+figure
+ncfmr(K_hinf)
+[~,info] = ncfmr(K_hinf);
+% ncfmargin(P,C)
+K_hinf_red = ncfmr(K_hinf,15,info);
+% [marg,freq] = ncfmargin(G,Kunc)
+
+%%
 %%
 figure
 subplot(3,1,1)
@@ -321,14 +319,6 @@ grid minor
 % figure
 % step(sys_CL)
 % Step_info = stepinfo(sys_CL);
-%%
-figure
-ncfmr(K_hinf)
-[~,info] = ncfmr(K_hinf);
-% ncfmargin(P,C)
-K_hinf_red = ncfmr(K_hinf,10,info);
-% [marg,freq] = ncfmargin(G,Kunc)
-
 %% Save data
 % save('Hinf_Controller')
 %% Discrete time step response
