@@ -155,10 +155,10 @@ R = inv(De)*Dr;
 %}
 %% Mixed-sensitivity Hinf controller Design
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
+[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Hinf_Weights_Design();
 
 % Generalized Plant - Nominal
-P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Wact);
+P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
 disp('----------- Hinf Controller Synthesis-Nominal Plant --------------')
 % Hinf Controller synthesis - Nominal Plant
 [K_hinf,~,gamma,~] = hinfsyn(P,nmeas,ncont);
@@ -228,7 +228,7 @@ timerun = toc;
 
 %%
 
-loops_hinf_p_app = loopsens(Gp_app,K_hinf);
+loops_hinf_p_app = loopsens(Gp_app*,K_hinf);
 L_hinf_p_app = loops_hinf_p_app.Lo;
 T_hinf_p_app = loops_hinf_p_app.To;
 S_hinf_p_app = loops_hinf_p_app.So;
@@ -368,7 +368,7 @@ legend('\boldmath{$\sigma(K S G_d)$}','interpreter','latex','FontSize',15)
 
 %% Simulations with square signal on heave
 dt = 0.05; % sampling time
-tend = 5; % duration of simulation in seconds
+tend = 30; % duration of simulation in seconds
 t = 0:dt:tend;
 
 % ref = [0.5*sin(t);0*ones(size(t));0*ones(size(t))];
@@ -463,11 +463,11 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 
 [y,~,x] = lsim(S_*Gd,dw,t);
 
-opts_lsim = timeoptions;
-opts_step.InputVisible = 'off';
-opts_step.Gid = 'on';
-figure
-lsimplot(S_*Gd_,dw,t,opts_step);
+% opts_lsim = timeoptions;
+% opts_lsim.InputVisible = {'off'};
+% % opts_lsim.Grid = {'on'};
+% figure
+% lsimplot(S_*Gd_,dw,t,opts_lsim);
 
 figure
 subplot(3,1,1)

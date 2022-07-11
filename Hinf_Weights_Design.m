@@ -1,4 +1,4 @@
-function [Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design()
+function [Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Hinf_Weights_Design()
 
 s = zpk('s');
 
@@ -55,16 +55,17 @@ Wr33 = 1/(T_3*s + 1);
 Wr = blkdiag(Wr11, Wr22 , Wr33);
 
 % Wr = zpk(blkdiag(1,0.1,0.1));
+tau_s_n = 0.1; 
+Gact_i = 1/(tau_s_n*s + 1);
+Gact = blkdiag(Gact_i,Gact_i,Gact_i);
 
-% tau_s = ureal('tau_s',0.05,'Range',[0, 0.1]); 
-tau_s = 0.1; 
-% Wact_11 = (tau_s*s)/(tau_s*s + 1);
-Wact_11 = (1)/(tau_s*s + 1);
-% Wact_11 = zpk(1);
-Wact_22 = Wact_11;
-Wact_33 = Wact_11;
+tau_s_p = ureal('tau_s',0.1,'Range',[0, 0.2]); 
+Gact_i = 1/(tau_s_p*s + 1);
+Gact_p = blkdiag(Gact_i,Gact_i,Gact_i);
 
-Wact = blkdiag(Wact_11,Wact_22,Wact_33);
-% Wact = eye(3) - Wact;
+tau_s_max = 0.2; 
+Wact_i = (tau_s_max*s)/(tau_s_max*s + 1);
+Wact = blkdiag(Wact_i,Wact_i,Wact_i);
+
 
 end

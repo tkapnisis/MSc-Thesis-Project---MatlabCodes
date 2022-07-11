@@ -155,22 +155,22 @@ R = inv(De)*Dr;
 %}
 %% Mixed-sensitivity Hinf controller Design
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Wact] = Hinf_Weights_Design();
+[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Hinf_Weights_Design();
 
 % Generalized Plant - Nominal
-P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Wact);
+P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
 disp('----------- Hinf Controller Synthesis-Nominal Plant --------------')
 % Hinf Controller synthesis - Nominal Plant
 [K_hinf,~,gamma,~] = hinfsyn(P,nmeas,ncont);
 gamma
 
-loops = loopsens(G,K_hinf);
+loops = loopsens(G*Gact,K_hinf);
 
 L = loops.Lo;
 T = loops.To;
 S = loops.So;
 
-loops_hinf_p = loopsens(Gp,K_hinf);
+loops_hinf_p = loopsens(Gp*Gact_p,K_hinf);
 L_hinf_p = loops_hinf_p.Lo;
 T_hinf_p = loops_hinf_p.To;
 S_hinf_p = loops_hinf_p.So;
@@ -233,7 +233,7 @@ L_hinf_p_app = loops_hinf_p_app.Lo;
 T_hinf_p_app = loops_hinf_p_app.To;
 S_hinf_p_app = loops_hinf_p_app.So;
 
-loops_mu_n = loopsens(G,K_mu);
+loops_mu_n = loopsens(G*Gact,K_mu);
 L_mu_n = loops_mu_n.Lo;
 T_mu_n = loops_mu_n.To;
 S_mu_n = loops_mu_n.So;
@@ -243,7 +243,7 @@ L_mu_p_app = loops_mu_app.Lo;
 T_mu_p_app = loops_mu_app.To;
 S_mu_p_app = loops_mu_app.So;
 
-loops_mu_p = loopsens(Gp,K_mu);
+loops_mu_p = loopsens(Gp*Gact_p,K_mu);
 L_mu_p = loops_mu_p.Lo;
 T_mu_p = loops_mu_p.To;
 S_mu_p = loops_mu_p.So;
@@ -368,7 +368,7 @@ legend('\boldmath{$\sigma(K S G_d)$}','interpreter','latex','FontSize',15)
 
 %% Simulations with square signal on heave
 dt = 0.05; % sampling time
-tend = 30; % duration of simulation in seconds
+tend = 10; % duration of simulation in seconds
 t = 0:dt:tend;
 
 % ref = [0.5*sin(t);0*ones(size(t));0*ones(size(t))];
