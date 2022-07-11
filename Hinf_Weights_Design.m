@@ -57,7 +57,7 @@ Wr = blkdiag(Wr11, Wr22 , Wr33);
 % Wr = zpk(blkdiag(1,0.1,0.1));
 
 % tau_s = ureal('tau_s',0.05,'Range',[0, 0.1]); 
-tau_s = 0.05; 
+tau_s = 0.1; 
 % Wact_11 = (tau_s*s)/(tau_s*s + 1);
 Wact_11 = (1)/(tau_s*s + 1);
 % Wact_11 = zpk(1);

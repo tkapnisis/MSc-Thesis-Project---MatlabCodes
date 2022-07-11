@@ -1,72 +1,84 @@
 function [P_Delta,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
-                (G,Gd,bound_G,bound_Gd,W_I_G,W_I_Gd,Wp,Wu,Wd,Wr,Wact)
+                (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Wact)
 
 % Define the Perturbed Plant and the Disturbance Transfer Matrix
 % Multiplicative Input Uncertainty
 
-delta_G11 = ultidyn('delta_G11',[1,1],'Bound',bound_G);
-delta_G12 = ultidyn('delta_G12',[1,1],'Bound',bound_G);
-delta_G13 = ultidyn('delta_G13',[1,1],'Bound',bound_G);
-delta_G21 = ultidyn('delta_G21',[1,1],'Bound',bound_G);
-delta_G22 = ultidyn('delta_G22',[1,1],'Bound',bound_G);
-delta_G23 = ultidyn('delta_G23',[1,1],'Bound',bound_G);
-delta_G31 = ultidyn('delta_G31',[1,1],'Bound',bound_G);
-delta_G32 = ultidyn('delta_G32',[1,1],'Bound',bound_G);
-delta_G33 = ultidyn('delta_G33',[1,1],'Bound',bound_G);
+% Delta_I_G = ultidyn('Delta_I_G',[3,3],'Bound',bound_G);
+% Delta_I_Gd = ultidyn('Delta_I_Gd',[6,3],'Bound',bound_Gd);
 
-G_W_I_Delta = [  W_I_G.w11*delta_G11,...
-                 W_I_G.w12*delta_G12,...
-                 W_I_G.w13*delta_G13;...
-                 W_I_G.w21*delta_G21,...
-                 W_I_G.w22*delta_G22,...
-                 W_I_G.w23*delta_G23;...
-                 W_I_G.w31*delta_G31,...
-                 W_I_G.w32*delta_G32,...
-                 W_I_G.w33*delta_G33];
+bound_G11 = bound_G;
+bound_G12 = bound_G;
+bound_G13 = bound_G;
+bound_G21 = bound_G;
+bound_G22 = bound_G;
+bound_G23 = bound_G;
+bound_G31 = bound_G;
+bound_G32 = bound_G;
+bound_G33 = bound_G;
 
-delta_Gd11 = ultidyn('delta_Gd11',[1,1],'Bound',bound_Gd);
-delta_Gd12 = ultidyn('delta_Gd12',[1,1],'Bound',bound_Gd);
-delta_Gd13 = ultidyn('delta_Gd13',[1,1],'Bound',bound_Gd);
-delta_Gd14 = ultidyn('delta_Gd14',[1,1],'Bound',bound_Gd);
-delta_Gd15 = ultidyn('delta_Gd15',[1,1],'Bound',bound_Gd);
-delta_Gd16 = ultidyn('delta_Gd16',[1,1],'Bound',bound_Gd);
-delta_Gd21 = ultidyn('delta_Gd21',[1,1],'Bound',bound_Gd);
-delta_Gd22 = ultidyn('delta_Gd22',[1,1],'Bound',bound_Gd);
-delta_Gd23 = ultidyn('delta_Gd23',[1,1],'Bound',bound_Gd);
-delta_Gd24 = ultidyn('delta_Gd24',[1,1],'Bound',bound_Gd);
-delta_Gd25 = ultidyn('delta_Gd25',[1,1],'Bound',bound_Gd);
-delta_Gd26 = ultidyn('delta_Gd26',[1,1],'Bound',bound_Gd);
-delta_Gd31 = ultidyn('delta_Gd31',[1,1],'Bound',bound_Gd);
-delta_Gd32 = ultidyn('delta_Gd32',[1,1],'Bound',bound_Gd);
-delta_Gd33 = ultidyn('delta_Gd33',[1,1],'Bound',bound_Gd);
-delta_Gd34 = ultidyn('delta_Gd34',[1,1],'Bound',bound_Gd);
-delta_Gd35 = ultidyn('delta_Gd35',[1,1],'Bound',bound_Gd);
-delta_Gd36 = ultidyn('delta_Gd36',[1,1],'Bound',bound_Gd);
+delta_G11 = ultidyn('delta_G11',[1,1],'Bound',bound_G11);
+delta_G12 = ultidyn('delta_G12',[1,1],'Bound',bound_G12);
+delta_G13 = ultidyn('delta_G13',[1,1],'Bound',bound_G13);
+delta_G21 = ultidyn('delta_G21',[1,1],'Bound',bound_G21);
+delta_G22 = ultidyn('delta_G22',[1,1],'Bound',bound_G22);
+delta_G23 = ultidyn('delta_G23',[1,1],'Bound',bound_G23);
+delta_G31 = ultidyn('delta_G31',[1,1],'Bound',bound_G31);
+delta_G32 = ultidyn('delta_G32',[1,1],'Bound',bound_G32);
+delta_G33 = ultidyn('delta_G33',[1,1],'Bound',bound_G33);
 
-Gd_W_I_Delta = [ W_I_Gd.w11*delta_Gd11,...
-                 W_I_Gd.w12*delta_Gd12,...
-                 W_I_Gd.w13*delta_Gd13,...
-                 W_I_Gd.w14*delta_Gd14,...
-                 W_I_Gd.w15*delta_Gd15,...
-                 W_I_Gd.w16*delta_Gd16;...
-                 W_I_Gd.w21*delta_Gd21,...
-                 W_I_Gd.w22*delta_Gd22,...
-                 W_I_Gd.w23*delta_Gd23,...
-                 W_I_Gd.w24*delta_Gd24,...
-                 W_I_Gd.w25*delta_Gd25,...
-                 W_I_Gd.w26*delta_Gd26;...
-                 W_I_Gd.w31*delta_Gd31,...
-                 W_I_Gd.w32*delta_Gd32,...
-                 W_I_Gd.w33*delta_Gd33,...
-                 W_I_Gd.w34*delta_Gd34,...
-                 W_I_Gd.w35*delta_Gd35,...
-                 W_I_Gd.w36*delta_Gd36];
-%%
-Gp_app = G*(eye(3) + G_W_I_Delta);
+Delta_I_G = [delta_G11,delta_G12,delta_G13;...
+             delta_G21,delta_G22,delta_G23;
+             delta_G31,delta_G32,delta_G33];
+
+bound_Gd11 = bound_Gd;
+bound_Gd12 = bound_Gd;
+bound_Gd13 = bound_Gd;
+bound_Gd14 = bound_Gd;
+bound_Gd15 = bound_Gd;
+bound_Gd16 = bound_Gd;
+bound_Gd21 = bound_Gd;
+bound_Gd22 = bound_Gd;
+bound_Gd23 = bound_Gd;
+bound_Gd24 = bound_Gd;
+bound_Gd25 = bound_Gd;
+bound_Gd26 = bound_Gd;
+bound_Gd31 = bound_Gd;
+bound_Gd32 = bound_Gd;
+bound_Gd33 = bound_Gd;
+bound_Gd34 = bound_Gd;
+bound_Gd35 = bound_Gd;
+bound_Gd36 = bound_Gd;
+
+delta_Gd11 = ultidyn('delta_Gd11',[1,1],'Bound',bound_Gd11);
+delta_Gd12 = ultidyn('delta_Gd12',[1,1],'Bound',bound_Gd12);
+delta_Gd13 = ultidyn('delta_Gd13',[1,1],'Bound',bound_Gd13);
+delta_Gd14 = ultidyn('delta_Gd14',[1,1],'Bound',bound_Gd14);
+delta_Gd15 = ultidyn('delta_Gd15',[1,1],'Bound',bound_Gd15);
+delta_Gd16 = ultidyn('delta_Gd16',[1,1],'Bound',bound_Gd16);
+delta_Gd21 = ultidyn('delta_Gd21',[1,1],'Bound',bound_Gd21);
+delta_Gd22 = ultidyn('delta_Gd22',[1,1],'Bound',bound_Gd22);
+delta_Gd23 = ultidyn('delta_Gd23',[1,1],'Bound',bound_Gd23);
+delta_Gd24 = ultidyn('delta_Gd24',[1,1],'Bound',bound_Gd24);
+delta_Gd25 = ultidyn('delta_Gd25',[1,1],'Bound',bound_Gd25);
+delta_Gd26 = ultidyn('delta_Gd26',[1,1],'Bound',bound_Gd26);
+delta_Gd31 = ultidyn('delta_Gd31',[1,1],'Bound',bound_Gd31);
+delta_Gd32 = ultidyn('delta_Gd32',[1,1],'Bound',bound_Gd32);
+delta_Gd33 = ultidyn('delta_Gd33',[1,1],'Bound',bound_Gd33);
+delta_Gd34 = ultidyn('delta_Gd34',[1,1],'Bound',bound_Gd34);
+delta_Gd35 = ultidyn('delta_Gd35',[1,1],'Bound',bound_Gd35);
+delta_Gd36 = ultidyn('delta_Gd36',[1,1],'Bound',bound_Gd36);
+
+Delta_I_Gd = [delta_Gd11,delta_Gd21,delta_Gd31;delta_Gd14,delta_Gd15,delta_Gd16;...
+              delta_Gd21,delta_Gd22,delta_Gd23,delta_Gd24,delta_Gd25,delta_Gd26;...
+              delta_Gd31,delta_Gd32,delta_Gd33,delta_Gd34,delta_Gd35,delta_Gd36]';
+
+Gp_app = G*(eye(3) + Delta_I_G*W_I_G_ss);
 Gp_app = minreal(Gp_app);
 
-Gd_p_app = Gd*(eye(6) + G_W_I_Delta);
+Gd_p_app = Gd*(eye(6) + Delta_I_Gd*W_I_Gd_ss);
 Gd_p_app = minreal(Gd_p_app);
+
 %%
 Wp.u = 'v';
 Wp.y = 'z1';
@@ -78,28 +90,42 @@ Wr.u = 'r';
 Wr.y = 'rw';
 % Wact.u = 'u';
 % Wact.y = 'u_Wact';
-Gd.u = 'uGd_un';
-Gd.y = 'yGd';
-G.u = 'uG_un';
-G.y = 'yG';
-W_I_G_ss.u = 'u';
-W_I_G_ss.y = 'yG_Delta';
-W_I_Gd_ss.u = 'dw';
-W_I_Gd_ss.y = 'yGd_Delta';
-Delta_I_G.u = 'yG_Delta';
-Delta_I_G.y = 'uG_Delta';
-Delta_I_Gd.u = 'yGd_Delta';
-Delta_I_Gd.y = 'uGd_Delta';
+% G.u = 'uG_un';
+% G.y = 'yG';
+% Gd.u = 'uGd_un';
+% Gd.y = 'yGd';
+% W_I_G_ss.u = 'u';
+% W_I_G_ss.y = 'yG_Delta';
+% W_I_Gd_ss.u = 'dw';
+% W_I_Gd_ss.y = 'yGd_Delta';
+% Delta_I_G.u = 'yG_Delta';
+% Delta_I_G.y = 'uG_Delta';
+% Delta_I_Gd.u = 'yGd_Delta';
+% Delta_I_Gd.y = 'uGd_Delta';
+Gp_app.u = 'u';
+Gp_app.y = 'yG';
+Gd_p_app.u = 'dw';
+Gd_p_app.y = 'yGd';
 
-sum_in_G = sumblk('uG_un = u + uG_Delta',3);
-sum_in_Gd = sumblk('uGd_un = dw + uGd_Delta',6);
+% sum_in_G = sumblk('uG_un = u + uG_Delta',3);
+% sum_in_Gd = sumblk('uGd_un = dw + uGd_Delta',6);
+% inputs = {'uG_Delta','uGd_Delta','r','d','u'};
+% outputs = {'yG_Delta','yGd_Delta','z1','z2','v'};
 Sum_err = sumblk('v = rw - yG - yGd',3);
-inputs = {'uG_Delta','uGd_Delta','r','d','u'};
-outputs = {'yG_Delta','yGd_Delta','z1','z2','v'};
+inputs = {'r','d','u'};
+outputs = {'z1','z2','v'};
 
-P_Delta = connect(G,Gd,W_I_G_ss,W_I_Gd_ss,Delta_I_G,Delta_I_Gd,Wp,Wu,Wr,Wd,...
-               sum_in_G,sum_in_Gd,Sum_err,inputs,outputs);
+% P_Delta = connect(G,Gd,W_I_G_ss,W_I_Gd_ss,Delta_I_G,Delta_I_Gd,Wp,Wu,Wr,Wd,...
+%                sum_in_G,sum_in_Gd,Sum_err,inputs,outputs);
+% P_aug = connect(G,Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wr,Wd,...
+%                sum_in_G,sum_in_Gd,Sum_err,inputs,outputs);
+P_Delta = connect(Gp_app,Gd_p_app,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
 disp('Minimal Realization of Generalized Plant with Multiplicative Uncertainty')
+% P_aug = minreal(P_aug);
 P_Delta = minreal(P_Delta);
+% 
+% Delta_aug = append(Delta_I_G, Delta_I_Gd);
+% P_Delta = lft(Delta_aug,P_aug);
+% P_Delta = minreal(P_Delta);
 
 end

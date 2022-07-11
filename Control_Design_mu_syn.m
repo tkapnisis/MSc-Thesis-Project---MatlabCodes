@@ -214,13 +214,13 @@ legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
 %}
 %% Generalized Plant - Perturbed
 % Upper bound of the absolute value for the complex perturbations
-bound_G = 0.3;
-bound_Gd = 0.3;
+bound_G = 0.2;
+bound_Gd = 0.1;
 [P_Delta,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
                 (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Wact);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
-mu_opts = musynOptions('Display','full','FitOrder',[5 5]);
+mu_opts = musynOptions('FitOrder',[5 5],'MaxIter',20);
 tic;
 % mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
 [K_mu,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont);%,mu_opts); 
@@ -286,26 +286,26 @@ Nfdk=frd(Ndk,omega);
 maxeigNdk=max(real(eig(Ndk))); 
 %%
 % Nominal performance
-% blk=[9 6]; 
-% [mubnds,~]=mussv(Nfdk(7:12,10:18),blk,'c');
 blk=[9 6]; 
-[mubnds,~]=mussv(Nfdk(4:9,4:12),blk,'c');
+[mubnds,~]=mussv(Nfdk(7:12,10:18),blk,'c');
+% blk=[9 6]; 
+% [mubnds,~]=mussv(Nfdk(4:9,4:12),blk,'c');
 muNPdk=mubnds(:,1);
 [muNPinfDK, muNPwDK]=norm(muNPdk,inf); 
 
 % Robust stability
-% blk = [3 3;6 3]; 
-% [mubnds,~]=mussv(Nfdk(1:6,1:9),blk,'c');
-blk = [3 3]; 
-[mubnds,~]=mussv(Nfdk(1:3,1:3),blk,'c');
+blk = [3 3;6 3]; 
+[mubnds,~]=mussv(Nfdk(1:6,1:9),blk,'c');
+% blk = [3 3]; 
+% [mubnds,~]=mussv(Nfdk(1:3,1:3),blk,'c');
 muRSdk=mubnds(:,1);
 [muRSinfDK, muRSwDK]=norm(muRSdk,inf); 
 
 % Robust performance
-% blk=[3 3; 6 3; 9 6]; 
-% [mubnds,~]=mussv(Nfdk(:,:),blk,'c');
-blk=[3 3; 9 6]; 
+blk=[3 3; 6 3; 9 6]; 
 [mubnds,~]=mussv(Nfdk(:,:),blk,'c');
+% blk=[3 3; 9 6]; 
+% [mubnds,~]=mussv(Nfdk(:,:),blk,'c');
 muRPdk=mubnds(:,1);
 [muRPinfDK, muRPwDK]=norm(muRPdk,inf); 
 %% Frequency response of the structured singular values for NP, RS and RP
@@ -366,61 +366,57 @@ figure
 sigma(K_mu*S_*Gd_,sigma_opts);
 legend('\boldmath{$\sigma(K S G_d)$}','interpreter','latex','FontSize',15)
 
-%% Simulation of the closed loop system with the Hinf controller
-
-figure
-step(T_mu_p,5)
-hold on
-step(T)
-title('Step Response of the Closed-Loop System - Parametric Uncertainty')
-legend('mu-synthesis controller-Perturbed','Hinf Controller-Nominal')
-grid on
-
-figure
-step(T_mu_p_app,5)
-hold on
-step(T)
-title('Step Response of the Closed-Loop System - Multiplicative Input Uncertainty')
-legend('mu-synthesis controller-Perturbed','Hinf Controller-Nominal')
-grid on
-
-figure
-step(T_hinf_p,5)
-hold on
-step(T)
-title('Step Response of the Closed-Loop System - Parametric Uncertainty')
-legend('Hinf Controller-Perturbed','Hinf Controller-Nominal')
-grid on
-
-figure
-step(T_hinf_p_app,5)
-hold on
-step(T)
-title('Step Response of the Closed-Loop System - Multiplicative Input Uncertainty')
-legend('Hinf Controller-Perturbed','Hinf Controller-Nominal')
-grid on
-
-%%
-figure
-step(T_mu_n)
-hold on
-step(T)
-title('Step Response of the Closed-Loop System')
-legend('mu-synthesis controller','Hinf Controller')
-grid on
-%% Simulation with step signal on heave
-dt = 0.01; % sampling time
+%% Simulations with square signal on heave
+dt = 0.05; % sampling time
 tend = 30; % duration of simulation in seconds
 t = 0:dt:tend;
 
 % ref = [0.5*sin(t);0*ones(size(t));0*ones(size(t))];
 ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
 
-x0 = [0, 0, 0, 0, 0, 0];
+% x0 = [0, 0, 0, 0, 0, 0];
 [y,~,~] = lsim(T_,ref,t);
 
 figure
-lsim(T_,ref,t);
+lsim(T_mu_p,ref,t)
+hold on
+lsim(T,ref,t)
+title('Response of the Closed-Loop System - Parametric Uncertainty')
+legend('mu-synthesis controller-Perturbed','Hinf Controller-Nominal')
+grid on
+
+figure
+lsim(T_mu_p_app,ref,t)
+hold on
+lsim(T,ref,t)
+title('Response of the Closed-Loop System - Multiplicative Input Uncertainty')
+legend('mu-synthesis controller-Perturbed','Hinf Controller-Nominal')
+grid on
+
+figure
+lsim(T_hinf_p,ref,t)
+hold on
+lsim(T,ref,t)
+title('Response of the Closed-Loop System - Parametric Uncertainty')
+legend('Hinf Controller-Perturbed','Hinf Controller-Nominal')
+grid on
+
+figure
+lsim(T_hinf_p_app,ref,t)
+hold on
+lsim(T,ref,t)
+title('Response of the Closed-Loop System - Multiplicative Input Uncertainty')
+legend('Hinf Controller-Perturbed','Hinf Controller-Nominal')
+grid on
+
+figure
+lsim(T_mu_n,ref,t)
+hold on
+lsim(T,ref,t)
+title('Response of the Closed-Loop System')
+legend('mu-synthesis controller','Hinf Controller')
+grid on
+
 %%
 figure
 subplot(3,1,1)
@@ -442,7 +438,7 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
-inp_val = lsim(Kunc*S_,ref,t);
+inp_val = lsim(K_mu*S_,ref,t);
 % inp_val = lsim(K,ref'-y,t);
 
 figure
@@ -453,8 +449,8 @@ ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
 xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
-%% Simulation of the closed loop system with the Hinf controller
-%{
+%% Simulation of the closed loop system with regular waves
+%
 %  Calculation of waves velocity profile for each hydrofoil
 
 % Parameters of long-crested regular wave
@@ -465,10 +461,13 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
-[y,~,x] = lsim(Sp*Gd,dw,t);
+[y,~,x] = lsim(S_*Gd,dw,t);
 
+% opts_lsim = timeoptions;
+% opts_lsim.InputVisible = {'off'};
+% % opts_lsim.Grid = {'on'};
 % figure
-% lsim(Sp*Gd,dw,t);
+% lsimplot(S_*Gd_,dw,t,opts_lsim);
 
 figure
 subplot(3,1,1)
@@ -491,7 +490,7 @@ ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
 % inp_val = lsim(K,-y,t);
-inp_val = lsim(-K_mu*Sp*Gd,dw,t);
+inp_val = lsim(-K_mu*S_*Gd,dw,t);
 
 figure 
 plot(t,rad2deg(inp_val),'LineWidth', 1.5)
