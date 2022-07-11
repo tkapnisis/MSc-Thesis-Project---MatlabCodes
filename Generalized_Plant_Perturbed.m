@@ -86,7 +86,7 @@ Gp_app = minreal(Gp_app);
 Gd_p_app = Gd*(eye(6) + Delta_I_Gd*W_I_Gd_ss);
 Gd_p_app = minreal(Gd_p_app);
 
-%%
+%
 Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
@@ -111,8 +111,8 @@ Wr.y = 'rw';
 % Delta_I_Gd.y = 'uGd_Delta';
 Gp_app.u = 'u';
 Gp_app.y = 'yG';
-Gd.u = 'dw';
-Gd.y = 'yGd';
+Gd_p_app.u = 'dw';
+Gd_p_app.y = 'yGd';
 
 % sum_in_G = sumblk('uG_un = u + uG_Delta',3);
 % sum_in_Gd = sumblk('uGd_un = dw + uGd_Delta',6);
@@ -126,7 +126,7 @@ outputs = {'z1','z2','v'};
 %                sum_in_G,sum_in_Gd,Sum_err,inputs,outputs);
 % P_aug = connect(G,Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wr,Wd,...
 %                sum_in_G,sum_in_Gd,Sum_err,inputs,outputs);
-P_Delta = connect(Gp_app,Gd,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
+P_Delta = connect(Gp_app,Gd_p_app,Wp,Wu,Wr,Wd,Sum_err,inputs,outputs);
 disp('Minimal Realization of Generalized Plant with Multiplicative Uncertainty')
 % P_aug = minreal(P_aug);
 P_Delta = minreal(P_Delta);

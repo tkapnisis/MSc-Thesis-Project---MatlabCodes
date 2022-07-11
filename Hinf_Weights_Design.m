@@ -38,6 +38,8 @@ Wu = blkdiag(Wu11, Wu22 , Wu33);
 % disturbances.
 % Band pass filter is a combination of a low-pass filter and a high-pass
 % filter (see Ogata p.493)
+% https://www.analog.com/en/analog-dialogue/articles/band-pass-response-in-active-filters.html
+
 omega_w_low = 0.1; 
 omega_w_high = 5;
 k_waves = 2e2; % gain that is used to increase the magnitude of the filter
@@ -53,7 +55,7 @@ Wd = blkdiag(BPF_w,BPF_w,BPF_w,BPF_w,BPF_w,BPF_w);
 tau_z_ref = 4;
 tau_phi_ref = 4;
 tau_theta_ref = 4;
-mag_z_ref = 10;
+mag_z_ref = 5;
 mag_phi_ref = 0.1;
 mag_theta_ref = 0.1;
 Wr11 = mag_z_ref/(tau_z_ref*s + 1);

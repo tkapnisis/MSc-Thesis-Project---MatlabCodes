@@ -15,7 +15,7 @@ I_y = 7.60;    % Moment of inertia around y- axis [kg*m^2]
 
 % Operating conditions of HEARP
 U_0 = 4;              % Operating cruise speed [m/s]
-z_n0 = -0.2; % Operating point of vertical position of CG with respect to 
+z_n0 = -0.25; % Operating point of vertical position of CG with respect to 
              % mean water surface [m]
 
 % Hydrofoils parameters
@@ -104,4 +104,4 @@ param.l_zj_ap = l_zj_ap; % z distance between the hinge of aft port hydrofoil
 param.l_zj_as = l_zj_as; % z distance between the hinge of aft starboard
                          % hydrofoil and CG [m]      
 
-save('Parameters_Nominal.mat','param','-append')                         
+save('Parameters_Nominal.mat')                         
