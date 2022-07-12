@@ -1,4 +1,4 @@
-function [Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Hinf_Weights_Design()
+function [Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Weights_Design()
 
 s = zpk('s');
 
@@ -6,9 +6,9 @@ s = zpk('s');
 Ms1 = 1.5;
 Ms2 = 1.5;
 Ms3 = 1.5;
-omega_b1 = 0.25*2*pi;
-omega_b2 = 0.25*2*pi;
-omega_b3 = 0.25*2*pi;
+omega_b1 = 0.2*2*pi;
+omega_b2 = 0.2*2*pi;
+omega_b3 = 0.2*2*pi;
 A_1 = 1e-4;
 A_2 = 1e-4;
 A_3 = 1e-4;
@@ -22,12 +22,12 @@ Wp = blkdiag(Wp11, Wp22 , Wp33);
 Mu1 = 1e2;
 Mu2 = 1e2;
 Mu3 = 1e2;
-omega_bc1 = 10*2*pi;
-omega_bc2 = 10*2*pi;
-omega_bc3 = 10*2*pi;
-Ac_1 = 1e-4;
-Ac_2 = 1e-4;
-Ac_3 = 1e-4;
+omega_bc1 = 20*2*pi;
+omega_bc2 = 20*2*pi;
+omega_bc3 = 20*2*pi;
+Ac_1 = 1e-2;
+Ac_2 = 1e-2;
+Ac_3 = 1e-2;
 
 Wu11 = (s + omega_bc1/Mu1)/(Ac_1*s + omega_bc1);
 Wu22 = (s + omega_bc2/Mu2)/(Ac_2*s + omega_bc2);
@@ -43,7 +43,7 @@ Wu = blkdiag(Wu11, Wu22 , Wu33);
 omega_w_low = 0.1; 
 omega_w_high = 5;
 % k_waves = 2e2;
-k_waves = 1e2; % gain that is used to increase the magnitude of the filter
+k_waves = 4e2; % gain that is used to increase the magnitude of the filter
 LPF_w = omega_w_low/(s + omega_w_low);
 HPF_w = s/(s + omega_w_high);
 BPF_w = k_waves*LPF_w*HPF_w;
@@ -53,10 +53,10 @@ Wd = blkdiag(BPF_w,BPF_w,BPF_w,BPF_w,BPF_w,BPF_w);
 
 % Design low-pass filters for the frequency content of the reference
 % signals
-tau_z_ref = 4;
-tau_phi_ref = 4;
-tau_theta_ref = 4;
-mag_z_ref = 5;
+tau_z_ref = 2;
+tau_phi_ref = 2;
+tau_theta_ref = 2;
+mag_z_ref = 1;
 mag_phi_ref = 0.1;
 mag_theta_ref = 0.1;
 Wr11 = mag_z_ref/(tau_z_ref*s + 1);
@@ -68,6 +68,7 @@ Wr = blkdiag(Wr11, Wr22 , Wr33);
 tau_s_n = 0.1; 
 Gact_i_n = 1/(tau_s_n*s + 1);
 Gact = blkdiag(Gact_i_n,Gact_i_n,Gact_i_n);
+% Gact = ss(eye(3));
 
 tau_s_p = ureal('tau_s',0.1,'Range',[0, 0.2]); 
 Gact_i_p = 1/(tau_s_p*s + 1);

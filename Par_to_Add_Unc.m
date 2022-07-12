@@ -8,7 +8,7 @@ close all
 
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 
-% load('Multiplicative_Uncertainty.mat')
+% load('Additive_Uncertainty.mat')
 
 opts_bode = bodeoptions;
 opts_bode.MagScale = 'log';
@@ -27,7 +27,7 @@ opts_bode.Grid = 'on';
 
 % Approximate the parametric uncertainties as multiplicative uncertainties
 % for each channel of the perturbed plant
-omega = logspace(-2,4,200);
+omega = logspace(-2,4,100);
 samples = 30;
 
 % Approximation of the uncertainty
@@ -75,34 +75,34 @@ title('Approximation of parametric uncertainties by additive uncertainties for e
 bodeplot(abs_dif_G,'b--',W_A_G_ss,'r',omega,opts_bode);
 legend('\boldmath{$|(G_p(j\omega)-G(j\omega))/G(j\omega)|$}','\boldmath{$|W_A_G(j\omega)|$}',...
        'interpreter','latex','FontSize',12)
-% set(gcf, 'WindowState', 'maximized');
-% saveas(gcf,[pwd '/Figures/Parametric to Multiplicative/Relative Difference G.png'])
+set(gcf, 'WindowState', 'maximized');
+saveas(gcf,[pwd '/Figures/Parametric to Additive/Absolute Difference G.png'])
 
 figure
-title('Approximation of parametric uncertainties by additive input uncertainties')
+title('Approximation of parametric uncertainties by additive uncertainties for each channel')
 bodeplot(abs_dif_Gd,'b--',W_A_Gd_ss,'r',omega,opts_bode);
 grid on
 legend('\boldmath{$|(G_{d,p}(j\omega)-G_d(j\omega))/G_d(j\omega)|$}',...
        '\boldmath{$|W_A_Gd(j\omega)|$}','interpreter','latex','FontSize',12)
-% set(gcf, 'WindowState', 'maximized');
-% saveas(gcf,[pwd '/Figures/Parametric to Multiplicative/Relative Difference Gd.png'])
+set(gcf, 'WindowState', 'maximized');
+saveas(gcf,[pwd '/Figures/Parametric to Additive/Absolute Difference Gd.png'])
 %% Define the Perturbed Plant and the Disturbance Transfer Matrix
-% Multiplicative Input Uncertainty
-bound_G = 0.3;
+% Additive Uncertainty
+bound_G = 1;
 Delta_A_G = ultidyn('Delta_A_G',[3,3],'Bound',bound_G);
 % Delta_I_G = [ultidyn('Delta_I_G1',[3,1],'Bound',bound_G),...
 %              ultidyn('Delta_I_G2',[3,1],'Bound',bound_G),...
 %              ultidyn('Delta_I_G3',[3,1],'Bound',bound_G)];
-%%
-bound_G11 = 0.01;
-bound_G12 = 0.01;
-bound_G13 = 0.01;
-bound_G21 = 0.01;
-bound_G22 = 0.01;
-bound_G23 = 0.01;
-bound_G31 = 0.01;
-bound_G32 = 0.01;
-bound_G33 = 0.01;
+
+bound_G11 = 1;
+bound_G12 = 1;
+bound_G13 = 1;
+bound_G21 = 1;
+bound_G22 = 1;
+bound_G23 = 1;
+bound_G31 = 1;
+bound_G32 = 1;
+bound_G33 = 1;
 
 d11 = ultidyn('d11',[1,1],'Bound',bound_G11);
 d12 = ultidyn('d12',[1,1],'Bound',bound_G12);
@@ -125,14 +125,14 @@ W_A_Delta_mat = [W_A_G.w11*d11,...
                  W_A_G.w31*d31,...
                  W_A_G.w32*d32,...
                  W_A_G.w33*d33];
-%%
-% Gp_app = G + W_A_G_ss*Delta_A_G;
+
+% Gp_app = G + Delta_A_G*W_A_G_ss;
 Gp_app = G + W_A_Delta_mat;
 Gp_app = minreal(Gp_app);
 
-% bound_Gd = 0.4;
-% Delta_I_Gd = ultidyn('Delta_I_Gd',[6,3],'Bound',bound_Gd);
-% Gd_p_app = Gd*(eye(6) + Delta_I_Gd*W_I_Gd_ss);
+% bound_Gd = 1;
+% Delta_A_Gd = ultidyn('Delta_A_Gd',[6,3],'Bound',bound_Gd);
+% Gd_p_app = Gd + Delta_A_Gd*W_A_Gd_ss;
 % Gd_p_app = minreal(Gd_p_app);
 
 %% Bode plot
@@ -141,17 +141,23 @@ figure
 bodeplot(Gp,'r--',Gp_app,'g-.',G,'b-',omega,opts_bode)
 title('Plant Bode Plot');
 legend('\boldmath{$G_p$}\textbf{-Parametric Uncertainty}',...
-       '\boldmath{$G_{p,app}$}\textbf{-Multiplicative Output Uncertainty}',...
+       '\boldmath{$G_{p,app}$}\textbf{-Additive Uncertainty}',...
        '\boldmath{$G$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
-%
-% figure
-% bodeplot(Gd_p,'r--',Gd_p_app,'g-.',Gd,'b-',omega,opts_bode)
-% title('Disturbance Tranfer Function Matrix Bode Plot');
-% legend('\boldmath{$G_{d,p}$}\textbf{-Parametric Uncertainty}',...
-%        '\boldmath{$G_{d,p,app}$}\textbf{-Multiplicative Output Uncertainty}',...
-%        '\boldmath{$G_d$}\textbf{-Nominal Disturbance Tranfer Matrix}','interpreter','latex','FontSize',10)
+set(gcf, 'WindowState', 'maximized');
+saveas(gcf,[pwd '/Figures/Parametric to Additive/Bode Plot G.png'])
 
+%{
+figure
+bodeplot(Gd_p,'r--',Gd_p_app,'g-.',Gd,'b-',omega,opts_bode)
+title('Disturbance Tranfer Function Matrix Bode Plot');
+legend('\boldmath{$G_{d,p}$}\textbf{-Parametric Uncertainty}',...
+       '\boldmath{$G_{d,p,app}$}\textbf{-Additive Uncertainty}',...
+       '\boldmath{$G_d$}\textbf{-Nominal Disturbance Tranfer Matrix}','interpreter','latex','FontSize',10)
+set(gcf, 'WindowState', 'maximized');
+saveas(gcf,[pwd '/Figures/Parametric to Additive/Bode Plot Gd.png'])
+%}
 % Singular Values Plot
+
 opts_sigma = sigmaoptions;
 opts_sigma.MagScale = 'log';
 opts_sigma.MagUnits = 'abs';
@@ -171,15 +177,20 @@ figure
 sigmaplot(Gp,'r--',Gp_app,'g.',G,'b-',omega,opts_sigma)
 title('Plant Singular Values');
 legend('\boldmath{$G_p$}\textbf{-Parametric Uncertainty}',...
-       '\boldmath{$G_{p,app}$}\textbf{-Multiplicative Output Uncertainty}',...
+       '\boldmath{$G_{p,app}$}\textbf{-Additive Uncertainty}',...
        '\boldmath{$G$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
-%%
+set(gcf, 'WindowState', 'maximized');
+saveas(gcf,[pwd '/Figures/Parametric to Additive/Sigma Plot G.png'])
+
+%{
 figure
 sigmaplot(Gd_p,'r--',Gd_p_app,'g.',Gd,'b-',omega,opts_sigma)
 title('Disturbance Tranfer Function Matrix Bode Plot');
 legend('\boldmath{$G_{d,p}$}\textbf{-Parametric Uncertainty}',...
-       '\boldmath{$G_{d,p,app}$}\textbf{-Multiplicative Output Uncertainty}',...
+       '\boldmath{$G_{d,p,app}$}\textbf{-Additive Uncertainty}',...
        '\boldmath{$G_d$}\textbf{-Nominal Disturbance Tranfer Matrix}','interpreter','latex','FontSize',10)
-
+set(gcf, 'WindowState', 'maximized');
+saveas(gcf,[pwd '/Figures/Parametric to Additive/Sigma Plot Gd.png'])
+%}
 %% Save results
-save('Multiplicative_Uncertainty.mat')
+save('Additive_Uncertainty.mat')

@@ -93,7 +93,7 @@ Gd_sc = inv(De)*Gd*Dd;
 R = inv(De)*Dr;
 %}
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Hinf_Weights_Design();
+[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Weights_Design();
 
 % Generalized Plant - Nominal
 P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
@@ -169,7 +169,7 @@ figure
 % step(usample(Tp,20),3);
 % hold on
 step(T,3)
-legend('Perturbed Plant', 'Nominal Plant')
+% legend('Perturbed Plant', 'Nominal Plant')
 title('Step Response with Hinf Controller')
 grid minor
 %%
@@ -287,7 +287,6 @@ K_hinf_red = ncfmr(K_hinf,15,info);
 % [marg,freq] = ncfmargin(G,Kunc)
 
 %%
-%%
 figure
 subplot(3,1,1)
 step(T(1,1))
@@ -321,13 +320,13 @@ grid minor
 % Step_info = stepinfo(sys_CL);
 %% Save data
 % save('Hinf_Controller')
-%% Discrete time step response
+%% Discretization of the controller time step response
+%
+dt = 1/100;
+K_hinf_DT = c2d(K_hinf,dt,'tustin');
+
 %{
-
-h = 0.05;
 Gp_DT=c2d(Gp,h,'tustin');
-K_DT = c2d(K,h,'tustin');
-
 Sum = sumblk('e = r - y',3);
 sys_CL_DT = connect(Gp_DT,K_DT,Sum,'r','y');
 
@@ -337,4 +336,5 @@ hold on
 step(sys_CL)
 grid on
 title('Step response - Reference tracking with PD controller')
+%}
 %}

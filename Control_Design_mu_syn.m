@@ -155,7 +155,7 @@ R = inv(De)*Dr;
 %}
 %% Mixed-sensitivity Hinf controller Design
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Hinf_Weights_Design();
+[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Weights_Design();
 
 % Generalized Plant - Nominal
 P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
@@ -534,5 +534,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-save('Controller_mu_synthesis.mat')
-% load('Controller_mu_synthesis.mat')
+% save('Controller_mu_synthesis.mat')
+load('Controller_mu_synthesis.mat')
