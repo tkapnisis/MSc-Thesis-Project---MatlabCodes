@@ -42,7 +42,8 @@ Wu = blkdiag(Wu11, Wu22 , Wu33);
 
 omega_w_low = 0.1; 
 omega_w_high = 5;
-k_waves = 2e2; % gain that is used to increase the magnitude of the filter
+% k_waves = 2e2;
+k_waves = 1e2; % gain that is used to increase the magnitude of the filter
 LPF_w = omega_w_low/(s + omega_w_low);
 HPF_w = s/(s + omega_w_high);
 BPF_w = k_waves*LPF_w*HPF_w;

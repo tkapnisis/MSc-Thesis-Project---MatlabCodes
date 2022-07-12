@@ -214,16 +214,16 @@ legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
 %}
 %% Generalized Plant - Perturbed
 % Upper bound of the absolute value for the complex perturbations
-bound_G = 0.2;
-bound_Gd = 0.2;
-[P_Delta,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
+bound_G = 0.4;
+bound_Gd = 0.4;
+[P_Delta,P_aug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
                 (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Wact);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
 mu_opts = musynOptions('FitOrder',[5 5],'MaxIter',20);
 tic;
 % mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
-[K_mu,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont);%,mu_opts); 
+[K_mu,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont,mu_opts); 
 timerun = toc;
 
 %%
@@ -248,7 +248,7 @@ L_mu_p = loops_mu_p.Lo;
 T_mu_p = loops_mu_p.To;
 S_mu_p = loops_mu_p.So;
 
-num = 3;
+num = 1;
 
 switch num
     case 1
@@ -278,7 +278,7 @@ end
 [M,~,BlkStruct] = lftdata(P_Delta);
 
 Ndk=minreal(lft(M,K_mu));
-omega=logspace(-4,3,400);
+omega=logspace(-4,4,400);
 
 Nfdk=frd(Ndk,omega);
 
@@ -287,7 +287,7 @@ maxeigNdk=max(real(eig(Ndk)));
 %%
 % Nominal performance
 blk=[9 6]; 
-[mubnds,~]=mussv(Nfdk(7:12,7:15),blk,'c');
+[mubnds,~]=mussv(Nfdk(10:15,13:21),blk,'c');
 % blk=[9 6]; 
 % [mubnds,~]=mussv(Nfdk(7:12,10:18),blk,'c');
 % blk=[9 6]; 
@@ -296,8 +296,8 @@ muNPdk=mubnds(:,1);
 [muNPinfDK, muNPwDK]=norm(muNPdk,inf); 
 
 % Robust stability
-blk = [3 3;1 0;1 0;1 0]; 
-[mubnds,~]=mussv(Nfdk(1:6,1:6),blk,'c');
+blk = [3 3;6 3;1 0;1 0;1 0]; 
+[mubnds,~]=mussv(Nfdk(1:9,1:12),blk,'c');
 % blk = [3 3;6 3]; 
 % [mubnds,~]=mussv(Nfdk(1:6,1:9),blk,'c');
 % blk = [3 3]; 
@@ -306,8 +306,10 @@ muRSdk=mubnds(:,1);
 [muRSinfDK, muRSwDK]=norm(muRSdk,inf); 
 
 % Robust performance
-blk=[3 3;1 0;1 0;1 0;9 6]; 
+blk=[3 3;6 3;1 0;1 0;1 0;9 6]; 
 [mubnds,~]=mussv(Nfdk(:,:),blk,'c');
+% blk=[3 3;1 0;1 0;1 0;9 6]; 
+% [mubnds,~]=mussv(Nfdk(:,:),blk,'c');
 % blk=[3 3; 6 3; 9 6]; 
 % [mubnds,~]=mussv(Nfdk(:,:),blk,'c');
 % blk=[3 3; 9 6]; 
@@ -424,6 +426,7 @@ legend('mu-synthesis controller','Hinf Controller')
 grid on
 
 %%
+[y,~,~] = lsim(T_,ref,t);
 figure
 subplot(3,1,1)
 plot(t,y(:,1) + param.z_n0,'LineWidth',1.5)
@@ -467,7 +470,7 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
-[y,~,x] = lsim(S_*Gd,dw,t);
+[y,~,x] = lsim(S_*Gd_,dw,t);
 
 % opts_lsim = timeoptions;
 % opts_lsim.InputVisible = {'off'};
@@ -496,7 +499,7 @@ ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
 % inp_val = lsim(K,-y,t);
-inp_val = lsim(-K_mu*S_*Gd,dw,t);
+inp_val = lsim(-K_mu*S_*Gd_,dw,t);
 
 figure 
 plot(t,rad2deg(inp_val),'LineWidth', 1.5)
@@ -531,5 +534,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-% save('Hinf_Controller_Design2')
-% load('Hinf_Controller_Design.mat')
+save('Controller_mu_synthesis.mat')
+% load('Controller_mu_synthesis.mat')
