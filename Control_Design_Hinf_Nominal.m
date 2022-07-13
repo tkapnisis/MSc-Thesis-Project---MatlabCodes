@@ -132,10 +132,10 @@ switch select
 %         Gd_ = Gd_p_app;        
 end
 
-%%
+%{
 figure
 bodeplot(Wd(1,1),opts_bode)
-
+%}
 %% Singular Values of S, T, KS, GK, S*Gd, K*S*Gd
 %
 figure
@@ -161,6 +161,10 @@ legend('\boldmath{$\sigma(SGd)$}','interpreter','latex','FontSize',15)
 figure
 sigma(K_hinf*S_*Gd_,opts_sigma);
 legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
+
+figure
+sigma(K_hinf,opts_sigma);
+legend('\boldmath{$\sigma(K)$}','interpreter','latex','FontSize',15)
 %}
 
 %% Simulation of the closed loop system with the Hinf controller
@@ -219,7 +223,8 @@ grid minor
 % figure
 % lsim(K*Sp,ref,t);
 
-inp_val = lsim(K_hinf*S,ref,t);
+eq_input = [param.theta_s_f0,param.theta_s_ap0,param.theta_s_as0];
+inp_val = lsim(K_hinf*S,ref,t) + eq_input;
 % inp_val = lsim(K,ref'-y,t);
 
 figure
@@ -267,8 +272,8 @@ xlabel('\textbf{time [s]}','interpreter','latex')
 ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 grid minor
 
-inp_val = lsim(-K_hinf,y,t);
-% inp_val = lsim(-K*S*Gd,dw,t);
+% inp_val = lsim(-K_hinf,y,t);
+inp_val = lsim(-K_hinf*S*Gd,dw,t) + eq_input;
 
 figure 
 plot(t,rad2deg(inp_val),'LineWidth', 1.5)
