@@ -16,22 +16,10 @@ Wr.u = 'r';
 Wr.y = 'rw';
 Gact.u = 'u';
 Gact.y = 'u_act';
-% G.u = 'u';
-% G.y = 'yG';
-% Gd.u = 'dw';
-% Gd.y = 'yGd';
-% G.u = 'u';
-% G.y = 'yG';
 
-% Sum_err = sumblk('v = rw - yG - yGd',3);
 Sum_err = sumblk('v = rw - y',3);
-% Sum_err = sumblk('v = r - yG',3);
 inputs = {'r','d','u'};
-% inputs = {'r','u'};
 outputs = {'z1','z2','v'};
-% P = connect(G,Gd,Wp,Wu,Wd,Wr,Gact,Sum_err,inputs,outputs);
-% P = connect(G,Gd,Wp,Wu,Wd,Wr,Sum_err,inputs,outputs);
-% P = connect(G,Wp,Wu,Sum_err,inputs,outputs);
 P = connect(G_aug,Wp,Wu,Wd,Wr,Gact,Sum_err,inputs,outputs);
 P = minreal(P);
 

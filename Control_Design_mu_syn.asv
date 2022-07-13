@@ -432,62 +432,77 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 
 % Number of samples for simulating the uncertain systems
 samples = 10;
-
-
 mu_syn.y_p_app_dist = lsim_uss(mu_syn.S_p_app*Gd_p_app,dw,t,samples);
 mu_syn.y_p_dist = lsim_uss(mu_syn.S_p*Gd_p,dw,t,samples);
 mu_syn.y_dist = lsim(mu_syn.S*Gd,dw,t);
 
-hinf.y_p_app_dist = lsim_uss(hinf.S_p_app*Gd_p_app,dw,t,samples);
-hinf.y_p_dist = lsim_uss(hinf.S_p*Gd_p,dw,t,samples);
-hinf.y_dist = lsim(hinf.S*Gd,dw,t);
-
-figure('Name','Response of the Closed-Loop System in Regular Waves');
-fig1 = plot_uss_states(t,mu_syn.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
-fig2 = plot_uss_states(t,mu_syn.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');
+%%
+figure
+fig1 = plot_uss_states(t,mu_syn.y_p_app_dist,samples,[param.z_n0,0,0],0.5,'-','#0072BD');
+fig2 = plot_uss_states(t,mu_syn.y_p_dist,samples,[param.z_n0,0,0],0.5,'-.','#EDB120');
 fig3 = plot_ss_states(t,mu_syn.y_dist,param.z_n0,1,'--','red');
 
 legend([fig1,fig2,fig3],'\boldmath{$\mu$} \textbf{-synthesis-Multiplicative}',...
        '\boldmath{$\mu$} \textbf{-synthesis-Parametric}',...
        '\boldmath{$\mu$} \textbf{-synthesis-Nominal}','interpreter','latex')
 
-figure('Name','Response of the Closed-Loop System in Regular Waves');
-fig1 = plot_uss_states(t,hinf.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
-fig2 = plot_uss_states(t,hinf.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');
-fig3 = plot_ss_states(t,hinf.y_dist,param.z_n0, 1,'--','red');
-
+hinf.y_p_app_dist = lsim_uss(hinf.S_p_app*Gd_p_app,dw,t,samples);
+hinf.y_p_dist = lsim_uss(hinf.S_p*Gd_p,dw,t,samples);
+hinf.y_dist = lsim(hinf.S*Gd,dw,t);
+%%
+figure
+fig1 = plot_uss_states(t,hinf.y_p_app_dist,samples,[param.z_n0,0,0],0.5,'-','#0072BD');
+fig2 = plot_uss_states(t,hinf.y_p_dist,samples,[param.z_n0,0,0],'-.','#EDB120');
+fig3 = plot_ss_states(t,hinf.y_dist,param.z_n0);
 legend([fig1,fig2,fig3],'\boldmath{$h_{\infty}$} \textbf{ controller-Multiplicative}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller-Parametric}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller-Nominal}','interpreter','latex')
+%%
+lsim(hinf.S_p_app*Gd_p_app,'b--',dw,t)
+hold on
+lsim(hinf.S_p*Gd_p,'r-.',dw,t)
+lsim(hinf.S*Gd,'k-',dw,t)
+mu_syn.y_p_app_dist = lsim_uss(mu_syn.S_p_app*Gd_p_app,dw,t,samples);
+mu_syn.y_p_app_dist = lsim_uss(mu_syn.S_p_app*Gd_p_app,dw,t,samples);
 
+figure
+lsim(mu_syn.S_p_app*Gd_p_app,'b--',dw,t);
+hold on
+lsim(mu_syn.S_p*Gd_p,'r-.',dw,t)
+lsim(mu_syn.S*Gd,'k-',dw,t)
+title('Response of the Closed-Loop System')
+legend('\boldmath{$\mu$} \textbf{-synthesis controller-Multiplicative}',...
+       '\boldmath{$\mu$} \textbf{-synthesis controller-Parametric}',...
+       '\boldmath{$\mu$} \textbf{-synthesis controller-Nominal}','interpreter','latex')
+grid on
 
-figure('Name','Response of the Closed-Loop System in Regular Waves - Parametric Uncertainty');
-fig1 = plot_uss_states(t,mu_syn.y_p_dist,samples,param.z_n0,0.5,'-','blue');
-fig2 = plot_uss_states(t,hinf.y_p_dist,samples,param.z_n0,0.5,'-','red');
+figure
+lsim(hinf.S_p_app*Gd_p_app,'b--',dw,t)
+hold on
+lsim(hinf.S_p*Gd_p,'r-.',dw,t)
+lsim(hinf.S*Gd,'k-',dw,t)
+title('Response of the Closed-Loop System')
+legend('\boldmath{$h_{\infty}$} \textbf{ controller-Multiplicative}',...
+       '\boldmath{$h_{\infty}$} \textbf{ controller-Parametric}',...
+       '\boldmath{$h_{\infty}$} \textbf{ controller-Nominal}','interpreter','latex')
+grid on
 
-subplot(3,1,1)
-grid minor
-subplot(3,1,2)
-grid minor
-subplot(3,1,3)
-grid minor
-legend([fig1,fig2],'\boldmath{$\mu$} \textbf{-synthesis}',...
-       '\boldmath{$h_{\infty}$}','interpreter','latex')
-
-
-figure('Name','Response of the Closed-Loop System in Regular Waves - Nominal');
-fig1 = plot_ss_states(t,mu_syn.y_dist,param.z_n0, 1,'-','#D95319');
-fig2 = plot_ss_states(t,hinf.y_dist,param.z_n0, 1,'-','#0072BD');
-
-subplot(3,1,1)
-grid minor
-subplot(3,1,2)
-grid minor
-subplot(3,1,3)
-grid minor
-
-legend([fig1,fig2],'\boldmath{$\mu$} \textbf{-synthesis controller}',...
+figure
+lsim(mu_syn.S_p*Gd_p,'b--',dw,t)
+hold on
+lsim(hinf.S_p*Gd_p,'r-.',dw,t)
+title('Response of the Closed-Loop System in Regular Waves - Parametric Uncertainty')
+legend('\boldmath{$\mu$} \textbf{-synthesis controller}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller}','interpreter','latex')
+grid on
+
+figure
+lsim(mu_syn.S*Gd,dw,t)
+hold on
+lsim(hinf.S*Gd,dw,t)
+title('Response of the Closed-Loop System in Regular Waves')
+legend('mu-synthesis controller','Hinf Controller')
+grid on
 
 %%
 

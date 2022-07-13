@@ -1,0 +1,12 @@
+opts_bode = bodeoptions;
+opts_bode.MagScale = 'log';
+opts_bode.MagUnits = 'abs';
+opts_bode.InputLabels.Interpreter = 'none';
+opts_bode.InputLabels.FontSize = 10;
+opts_bode.OutputLabels.FontSize = 10;
+opts_bode.XLabel.FontSize = 11;
+opts_bode.YLabel.FontSize = 11;
+opts_bode.TickLabel.FontSize = 10;
+opts_bode.Title.FontSize = 12;
+opts_bode.PhaseVisible = 'off';
+opts_bode.Grid = 'on';

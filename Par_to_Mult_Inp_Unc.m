@@ -179,14 +179,14 @@ Delta_I_Gd = [Delta_I_Gd_el.delta_Gd11,Delta_I_Gd_el.delta_Gd21,Delta_I_Gd_el.de
               
 %}
 %%
-% bound_G = 0.3;
-% Delta_I_G = ultidyn('Delta_I_G',[3,3],'Bound',bound_G);
+bound_G = 0.4;
+Delta_I_G = ultidyn('Delta_I_G',[3,3],'Bound',bound_G);
 
 Gp_app = G*(eye(3) + Delta_I_G*W_I_G_ss);
 Gp_app = minreal(Gp_app);
 
-% bound_Gd = 0.3;
-% Delta_I_Gd = ultidyn('Delta_I_Gd',[6,3],'Bound',bound_Gd);
+bound_Gd = 0.3;
+Delta_I_Gd = ultidyn('Delta_I_Gd',[6,3],'Bound',bound_Gd);
 
 Gd_p_app = Gd*(eye(6) + Delta_I_Gd*W_I_Gd_ss);
 Gd_p_app = minreal(Gd_p_app);

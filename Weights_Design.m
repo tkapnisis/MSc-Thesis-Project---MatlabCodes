@@ -76,11 +76,11 @@ Gact_i_n = 1/(tau_s_n*s + 1);
 Gact = blkdiag(Gact_i_n,Gact_i_n,Gact_i_n);
 % Gact = ss(eye(3));
 
-tau_s_p = ureal('tau_s',0.1,'Range',[0, 0.2]); 
+tau_s_p = ureal('tau_s',0.1,'Range',[0, 0.11]); 
 Gact_i_p = 1/(tau_s_p*s + 1);
 Gact_p = blkdiag(Gact_i_p,Gact_i_p,Gact_i_p);
 
-tau_s_max = 0.2; 
+tau_s_max = 0.11; 
 Wact_i = (tau_s_max*s)/(tau_s_max*s + 1);
 Wact = blkdiag(Wact_i,Wact_i,Wact_i);
 

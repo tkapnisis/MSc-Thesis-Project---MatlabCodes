@@ -1,0 +1,10 @@
+opts_sigma = sigmaoptions;
+opts_sigma.MagScale = 'log';
+opts_sigma.MagUnits = 'abs';
+opts_sigma.InputLabels.FontSize = 10;
+opts_sigma.OutputLabels.FontSize = 10;
+opts_sigma.XLabel.FontSize = 11;
+opts_sigma.YLabel.FontSize = 11;
+opts_sigma.TickLabel.FontSize = 10;
+opts_sigma.Title.FontSize = 12;
+opts_sigma.Grid = 'on';

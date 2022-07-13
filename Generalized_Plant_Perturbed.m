@@ -94,8 +94,7 @@ Gp_app = minreal(Gp_app);
 Gd_p_app = Gd*(eye(6) + Delta_I_Gd*W_I_Gd_ss);
 Gd_p_app = minreal(Gd_p_app);
 
-
-
+% Weights for controller synthesis
 Wp.u = 'v';
 Wp.y = 'z1';
 Wu.u = 'u';
@@ -104,12 +103,14 @@ Wd.u = 'd';
 Wd.y = 'dw';
 Wr.u = 'r';
 Wr.y = 'rw';
+% Multiplicative input uncertainties
 Wact.u = 'u';
 Wact.y = 'y_Delta_act';
 W_I_G_ss.u = 'u';
 W_I_G_ss.y = 'y_Delta_G';
 W_I_Gd_ss.u = 'dw';
 W_I_Gd_ss.y = 'y_Delta_Gd';
+% Perturbation blocks
 Delta_I_G.u = 'y_Delta_G';
 Delta_I_G.y = 'u_Delta_G';
 Delta_I_Gd.u = 'y_Delta_Gd';
@@ -119,18 +120,16 @@ Delta_act.y = 'u_Delta_act';
 
 sum_u = sumblk('u_un = u + u_Delta_act + u_Delta_G',3);
 sum_d = sumblk('d_un = dw + u_Delta_Gd',6);
-inputs = {'u_Delta_G','u_Delta_Gd','u_Delta_act','r','d','u'};
-outputs = {'y_Delta_G','y_Delta_Gd','y_Delta_act','z1','z2','v'};
+inputs = {'u_Delta_act','u_Delta_G','u_Delta_Gd','r','d','u'};
+outputs = {'y_Delta_act','y_Delta_G','y_Delta_Gd','z1','z2','v'};
 sum_err = sumblk('v = rw - y',3);
 
 P_aug = connect(G_aug,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wr,Wd,Wact,sum_u,sum_d,sum_err,inputs,outputs);
 disp('Minimal Realization of Perturbed Generalized Plant')
 P_aug = minreal(P_aug);
  
-Delta_aug = append(Delta_I_G, Delta_I_Gd,Delta_act);
+Delta_aug = append(Delta_act,Delta_I_G, Delta_I_Gd);
 P_Delta = lft(Delta_aug,P_aug);
 P_Delta = minreal(P_Delta);
-
-
 
 end
