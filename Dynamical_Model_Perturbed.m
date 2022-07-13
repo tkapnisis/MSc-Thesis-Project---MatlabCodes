@@ -7,6 +7,9 @@ clc
 clear all
 close all
 
+addpath('Plotting Functions')
+addpath('Data Files')
+
 load('LTI_Symbolic_Matrices.mat')
 run Define_Parameters_Uncertainties.m
 
@@ -33,4 +36,4 @@ Gd_p = ss(A_u,Bd_u,C_u,Dd_u,...
         'statename',states,'inputname',disturbances,'outputname',outputs);
 Gd_p = simplify(Gd_p,'full');
 
-save('LTI_Perturbed_Plant.mat')
+save('Data Files/LTI_Perturbed_Plant.mat')

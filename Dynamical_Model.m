@@ -227,7 +227,7 @@ param.theta_s_f0 = theta_s_f0;  % Operating angle of servo motors for the fore h
 param.theta_s_ap0 = theta_s_ap0; % Operating angle of servo motors for the aft port hydrofoil
 param.theta_s_as0 = theta_s_as0; % Operating angle of servo motors for the aft starboard hydrofoil
 
-save('Parameters_Nominal.mat','theta_s_f0','alpha_s_f0','theta_s_ap0',...
+save('Data Files/Parameters_Nominal.mat','theta_s_f0','alpha_s_f0','theta_s_ap0',...
      'alpha_s_ap0','theta_s_as0','alpha_s_as0','param','-append')
 
 %% Linearized dynamical model with symbolic variables
@@ -244,7 +244,7 @@ D_s = zeros(3,3);
 
 Dd_s = zeros(3,6);
 
-save('LTI_Symbolic_Matrices.mat','A_s','B_s','Bd_s','C_s','D_s','Dd_s')
+save('Data Files/LTI_Symbolic_Matrices.mat','A_s','B_s','Bd_s','C_s','D_s','Dd_s')
 %}
 %% Linearized dynamical model with numerical values
 
@@ -305,7 +305,7 @@ zs = tzero(G);
 % pzmap(G)
 % grid on
 
-save('LTI_Nominal_Plant.mat','G','Gd','foil_loc')
+save('Data Files/LTI_Nominal_Plant.mat','G','Gd','foil_loc')
 %% Matrices in CSV files for the report
 %{
 cd CSV_files

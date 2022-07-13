@@ -8,6 +8,8 @@ clear all
 close all
 
 addpath('Plotting Functions')
+addpath('Data Files')
+
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
@@ -23,142 +25,15 @@ ncont = 3; % number of inputs
 
 run Bode_options.m
 run Sigma_options.m
-%% Pole-zero map of the open-loops of nominal and perturbed plant
-%{
-% Pole-zero map of the open-loop G(s)
-figure
-pzplot(G,'b');
-hold on
-grid on
-set(findall(gcf,'Type','line'),'MarkerSize',15)
-pzplot(Gp,'r')
-legend('Nominal plant G(s)','Perturbed plant Gp(s)','Location','best','FontSize',11)
-% MIMO poles and zeros of G
-ps = pole(Gp);
-zs = tzero(Gp);
 
-figure
-pzplot(G,'b');
-hold on
-grid on
-set(findall(gcf,'Type','line'),'MarkerSize',15)
-pzplot(Gp_out_mult,'r')
-legend('Nominal plant G(s)','Simplified Perturbed plant Gp_app(s)','Location','best','FontSize',11)
-%}
-%% Nyquist
-%{
-res = usample(Gp_app,1);
-figure
-w = logspace(-1,1,20);
-nyquist(res);
-%}
-%% Bodeplot of the open-loops of nominal and perturbed plant
-%{
-opts_bode = bodeoptions;
-opts_bode.MagScale = 'log';
-opts_bode.MagUnits = 'abs';
-opts_bode.InputLabels.Interpreter = 'none';
-opts_bode.InputLabels.FontSize = 10;
-opts_bode.OutputLabels.FontSize = 10;
-opts_bode.XLabel.FontSize = 11;
-opts_bode.YLabel.FontSize = 11;
-opts_bode.TickLabel.FontSize = 10;
-opts_bode.Title.FontSize = 12;
-% opts_bode.XLimMode = 'manual';
-% opts_bode.Xlim = [1e-3 1e2];
-opts_bode.PhaseVisible = 'off';
-opts_bode.Grid = 'on';
-%%
-figure
-bodeplot(Gp_app,G,opts_bode)
-set(findall(gcf,'Type','line'),'LineWidth',1.2)
-legend('Perturbed plant Gp(s)','Nominal plant G(s)','Location','best','FontSize',11)
-title('Gp_app')
+% Time duration of simulations
+dt = 0.05; % sampling time
+tend = 30; % duration of simulation in seconds
+t = 0:dt:tend;
 
-figure
-bodeplot(Gp_out_mult,G,opts_bode)
-set(findall(gcf,'Type','line'),'LineWidth',1.2)
-legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location','best','FontSize',11)
-title('Gp_cor')
-%%
-figure
-bodeplot(Gp_app,G,opts_bode)
-set(findall(gcf,'Type','line'),'LineWidth',1.2)
-legend('Approximated Perturbed plant Gp_app(s)','Nominal plant G(s)','Location','best','FontSize',11)
-title('Gp')
-%}
-%% Singular values and gamma analysis
-%{
-opts_sigma = sigmaoptions;
-opts_sigma.MagScale = 'log';
-opts_sigma.MagUnits = 'abs';
-opts_sigma.InputLabels.FontSize = 10;
-opts_sigma.OutputLabels.FontSize = 10;
-opts_sigma.XLabel.FontSize = 11;
-opts_sigma.YLabel.FontSize = 11;
-opts_sigma.TickLabel.FontSize = 10;
-opts_sigma.Title.FontSize = 12;
-opts_sigma.Grid = 'on';
-
-figure
-sigma(Gp_app,G,opts_sigma);
-legend('\boldmath{$\sigma(Gp_app)$}','\boldmath{$\sigma(G)$}','interpreter','latex','FontSize',15)
-%%
-figure
-sigma(Gp,G,opts_sigma);
-legend('\boldmath{$\sigma(Gp)$}','\boldmath{$\sigma(G)$}','interpreter','latex','FontSize',15)
-%}
-%{
-% RGA
-omega1 = 1e-2;
-Gf1 = freqresp(G,omega1);
-RGAw_1(:,:) = Gf1.*inv(Gf1)';
-
-omega2 = 1*2*pi;
-Gf2 = freqresp(G,omega2);
-RGAw_2(:,:) = Gf2.*inv(Gf2)';
-
-[U1,S1,V1]=svd(Gf1);
-sv1=diag(S1);
-gamma1=sv1(1)/sv1(2);
-
-[U2,S2,V2]=svd(Gf2);
-sv2=diag(S2);
-gamma2=sv2(1)/sv2(2);
-
-[sv,wout] = sigma(Gp,{1e-3 1e2});
-figure
-loglog(wout(:,1),sv(1,:))
-hold on
-loglog(wout(:,1),sv(3,:))
-YScale = 'log';
-legend('$\bar{\sigma}(G)$','$\underline{\sigma}(G)$',...
-        'interpreter','latex','FontSize',15)
-grid on
-xlabel('Frequency [rad/s]')
-ylabel('Singular Values (abs)')
-title('Singular Values')
-
-% for i=1:size(sv,2)
-%     gamma(i) = sv(1,i)/sv(3,i);
-% end    
-% figure 
-% plot(gamma)
-%}
-%% Scaling matrices
-%{
-De = diag([0.1,0.1,0.1]);
-Du = diag([0.5,0.5,0.5]);
-Dr = diag([0.1,0.1,0.1]);
-Dd = diag([0.05,0.1,0.05,0.1,0.05,0.1]);
-
-G_sc = inv(De)*G*Du;
-Gd_sc = inv(De)*Gd*Dd;
-R = inv(De)*Dr;
-%}
 %% Mixed-sensitivity Hinf controller Design
-%% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Weights_Design();
+% Define the Weighting Functions for the Hinf controller
+[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Design_Weights();
 
 % Generalized Plant - Nominal
 P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
@@ -225,8 +100,49 @@ disp('----------- mu-synthesis controller-Perturbed Plant --------------')
 mu_opts = musynOptions('FitOrder',[5 5],'MaxIter',20);
 tic;
 % mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
-[mu_syn.K,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont);%,mu_opts); 
+[mu_syn.K_full,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont);%,mu_opts); 
 timerun = toc;
+
+%% Order reduction of the controller
+%
+figure
+ncfmr(mu_syn.K_full)
+fprintf('Give the required order of the controller for error less than 1e-3: \n')
+pause
+order = input("");
+mu_syn.K = ncfmr(mu_syn.K_full,order);
+
+mu_syn.loops_full = loopsens(G*Gact,mu_syn.K_full);
+mu_syn.L_full = mu_syn.loops_full.Lo;
+mu_syn.T_full = mu_syn.loops_full.To;
+mu_syn.S_full = mu_syn.loops_full.So;
+
+mu_syn.loops = loopsens(G*Gact,mu_syn.K);
+mu_syn.L = mu_syn.loops.Lo;
+mu_syn.T = mu_syn.loops.To;
+mu_syn.S = mu_syn.loops.So;
+
+% Simulations with square signal on heave for comparison of the reduced
+% order controller
+
+ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
+
+mu_syn.y_ref = lsim(mu_syn.T,ref,t);
+mu_syn.y_ref_full = lsim(mu_syn.T_full,ref,t);
+
+figure('Name','Response of the Closed-Loop System in Regular Waves - Nominal');
+fig1 = plot_ss_states(t,mu_syn.y_ref,param.z_n0, 1,'-','#D95319');
+fig2 = plot_ss_states(t,mu_syn.y_ref_full,param.z_n0, 1.5,'--','#0072BD');
+
+subplot(3,1,1)
+grid minor
+subplot(3,1,2)
+grid minor
+subplot(3,1,3)
+grid minor
+
+legend([fig1,fig2],'Reduced order - 40 states','Full order - 214 states')
+
 %%
 hinf.loops_p_app = loopsens(Gp_app,hinf.K);
 hinf.L_p_app = hinf.loops_p_app.Lo;
@@ -249,7 +165,7 @@ mu_syn.T_p = mu_syn.loops_p.To;
 mu_syn.S_p = mu_syn.loops_p.So;
 
 % Select which case you want to use to plot the singular values
-select = 1;
+select = 3;
 
 switch select
     case 1  % Nominal system with mu-synthesis controller
@@ -340,10 +256,6 @@ sigma(K_mu*S_*Gd_,opts_sigma);
 legend('\boldmath{$\sigma(K S G_d)$}','interpreter','latex','FontSize',15)
 
 %% Simulations with square signal on heave
-dt = 0.05; % sampling time
-tend = 30; % duration of simulation in seconds
-t = 0:dt:tend;
-
 ref = [-0.05*square(0.5*t);0*ones(size(t));0*ones(size(t))];
 
 figure
@@ -367,7 +279,7 @@ legend('\boldmath{$h_{\infty}$} \textbf{ controller-Multiplicative}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller-Parametric}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller-Nominal}','interpreter','latex')
 grid on
-
+%%
 figure
 lsim(mu_syn.T_p,'b--',ref,t)
 hold on
@@ -376,7 +288,7 @@ title('Response of the Closed-Loop System - Parametric Uncertainty')
 legend('\boldmath{$\mu$} \textbf{-synthesis controller}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller}','interpreter','latex')
 grid on
-
+%%
 figure
 lsim(mu_syn.T,ref,t)
 hold on
@@ -431,9 +343,9 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
 % Number of samples for simulating the uncertain systems
-samples = 10;
+samples = 5;
 
-
+% Calculation of the outputs
 mu_syn.y_p_app_dist = lsim_uss(mu_syn.S_p_app*Gd_p_app,dw,t,samples);
 mu_syn.y_p_dist = lsim_uss(mu_syn.S_p*Gd_p,dw,t,samples);
 mu_syn.y_dist = lsim(mu_syn.S*Gd,dw,t);
@@ -442,6 +354,16 @@ hinf.y_p_app_dist = lsim_uss(hinf.S_p_app*Gd_p_app,dw,t,samples);
 hinf.y_p_dist = lsim_uss(hinf.S_p*Gd_p,dw,t,samples);
 hinf.y_dist = lsim(hinf.S*Gd,dw,t);
 
+% Calculation of the control inputs
+mu_syn.u_p_app_dist = lsim_uss(-mu_syn.K*mu_syn.S_p_app*Gd_p_app,dw,t,samples);
+mu_syn.u_p_dist = lsim_uss(-mu_syn.K*mu_syn.S_p*Gd_p,dw,t,samples);
+mu_syn.u_dist = lsim(-mu_syn.K*mu_syn.S*Gd,dw,t);
+
+hinf.u_p_app_dist = lsim_uss(-hinf.K*hinf.S_p_app*Gd_p_app,dw,t,samples);
+hinf.u_p_dist = lsim_uss(-hinf.K*hinf.S_p*Gd_p,dw,t,samples);
+hinf.u_dist = lsim(-hinf.K*hinf.S*Gd,dw,t);
+
+%%
 figure('Name','Response of the Closed-Loop System in Regular Waves');
 fig1 = plot_uss_states(t,mu_syn.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
 fig2 = plot_uss_states(t,mu_syn.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');
@@ -490,28 +412,46 @@ legend([fig1,fig2],'\boldmath{$\mu$} \textbf{-synthesis controller}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller}','interpreter','latex')
 
 %%
-
-[y,~,x] = lsim(S_*Gd_,dw,t);
-
-plot_ss_states(t,y,param.z_n0)
-
 u_eq = [param.theta_s_f0,param.theta_s_ap0,param.theta_s_as0];
-u_in = lsim(-mu_syn.K*mu_syn.S*Gd_,dw,t);
-plot_ss_inputs(t,u_in,u_eq)
-
-u_in = lsim_uss(-mu_syn.K*mu_syn.S_p_app*Gd_p_app,dw,t,samples);
-plot_uss_inputs(t,u_in,u_eq,samples)
-
-
-%}
-%% Order reduction of the controller
-%{
 figure
-ncfmr(K_mu)
-[~,info] = ncfmr(K_mu);
-[marg,freq] = ncfmargin(G,K_mu);
-K_mu_red = ncfmr(K_mu,20,info);
-%}
+subplot(2,1,1)
+plot_ss_inputs(t,mu_syn.u_dist,u_eq)
+title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis}','interpreter','latex','FontSize',12)
+subplot(2,1,2)
+plot_ss_inputs(t,hinf.u_dist,u_eq)
+title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}}','interpreter','latex','FontSize',12)
+
+figure
+subplot(2,1,1)
+plot_uss_inputs(t,mu_syn.u_p_dist,u_eq,samples)
+title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Parametric Uncertainty}',...
+      'interpreter','latex','FontSize',12)
+subplot(2,1,2)
+plot_uss_inputs(t,mu_syn.u_p_app_dist,u_eq,samples)
+title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Multiplicative Uncertainty}',...
+      'interpreter','latex','FontSize',12)
+
+figure
+subplot(2,1,1)
+plot_uss_inputs(t,hinf.u_p_dist,u_eq,samples)
+title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Parametric Uncertainty}',...
+      'interpreter','latex','FontSize',12)
+subplot(2,1,2)
+plot_uss_inputs(t,hinf.u_p_app_dist,u_eq,samples)
+title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Multiplicative Uncertainty}',...
+      'interpreter','latex','FontSize',12)
+
+figure
+subplot(2,1,1)
+plot_uss_inputs(t,mu_syn.u_p_dist,u_eq,samples)
+title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Parametric Uncertainty}',...
+      'interpreter','latex','FontSize',12)
+subplot(2,1,2)
+plot_uss_inputs(t,hinf.u_p_dist,u_eq,samples)
+title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Parametric Uncertainty}',...
+      'interpreter','latex','FontSize',12)
+
+
 %% Discrete time step response
 %{
 h = 0.05;
@@ -529,5 +469,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-% save('Controller_mu_synthesis.mat')
-load('Controller_mu_synthesis.mat')
+% save('Data Files/Controller_mu_synthesis.mat')
+% load('Controller_mu_synthesis.mat')
