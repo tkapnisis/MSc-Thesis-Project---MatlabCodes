@@ -91,16 +91,16 @@ legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
 %}
 %% Generalized Plant - Perturbed
 % Upper bound of the absolute value for the complex perturbations
-bound_G = 0.2;
-bound_Gd = 0.2;
+bound_G = 0.3;
+bound_Gd = 0.3;
 [P_Delta,P_aug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
                 (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Wact);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
-mu_opts = musynOptions('FitOrder',[5 5],'MaxIter',20);
+opts_mu = musynOptions('MaxIter',20);
 tic;
 % mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
-[mu_syn.K_full,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont);%,mu_opts); 
+[mu_syn.K_full,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont,opts_mu); 
 timerun = toc;
 
 %% Order reduction of the controller
@@ -343,7 +343,7 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
 % Number of samples for simulating the uncertain systems
-samples = 5;
+samples = 20;
 
 % Calculation of the outputs
 mu_syn.y_p_app_dist = lsim_uss(mu_syn.S_p_app*Gd_p_app,dw,t,samples);
@@ -363,7 +363,6 @@ hinf.u_p_app_dist = lsim_uss(-hinf.K*hinf.S_p_app*Gd_p_app,dw,t,samples);
 hinf.u_p_dist = lsim_uss(-hinf.K*hinf.S_p*Gd_p,dw,t,samples);
 hinf.u_dist = lsim(-hinf.K*hinf.S*Gd,dw,t);
 
-%%
 figure('Name','Response of the Closed-Loop System in Regular Waves');
 fig1 = plot_uss_states(t,mu_syn.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
 fig2 = plot_uss_states(t,mu_syn.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');
@@ -411,7 +410,6 @@ grid minor
 legend([fig1,fig2],'\boldmath{$\mu$} \textbf{-synthesis controller}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller}','interpreter','latex')
 
-%%
 u_eq = [param.theta_s_f0,param.theta_s_ap0,param.theta_s_as0];
 figure
 subplot(2,1,1)
@@ -451,7 +449,6 @@ plot_uss_inputs(t,hinf.u_p_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
 
-
 %% Discrete time step response
 %{
 h = 0.05;
@@ -469,5 +466,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-% save('Data Files/Controller_mu_synthesis.mat')
+save('Data Files/Controller_mu_synthesis_0.3.mat')
 % load('Controller_mu_synthesis.mat')
