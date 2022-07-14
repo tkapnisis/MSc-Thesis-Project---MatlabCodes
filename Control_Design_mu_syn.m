@@ -94,12 +94,12 @@ legend('\boldmath{$\sigma(KSGd)$}','interpreter','latex','FontSize',15)
 bound_G = 0.3;
 bound_Gd = 0.3;
 [P_Delta,P_aug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
-                (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Wact);
+                (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Wact,Gact_p);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
-opts_mu = musynOptions('MaxIter',20);
+opts_mu = musynOptions('MixedMU','on','MaxIter',20);
 tic;
-% mu_opts = musynOptions('Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
+% mu_opts = musynOptions('MixedMU','on','Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
 [mu_syn.K_full,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont,opts_mu); 
 timerun = toc;
 
@@ -188,7 +188,7 @@ end
 
 % Robust stability of uncertain system
 [stabmarg,wcu,info] = robstab(T_)
-
+%%
 % [stabmarg,destabunc,report,info] = robuststab(Tp)
 % Generalized feedback interconnection of P block K block in order to
 % obtain the N tranfer matrix
@@ -343,7 +343,7 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
 % Number of samples for simulating the uncertain systems
-samples = 20;
+samples = 10;
 
 % Calculation of the outputs
 mu_syn.y_p_app_dist = lsim_uss(mu_syn.S_p_app*Gd_p_app,dw,t,samples);
@@ -466,5 +466,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-save('Data Files/Controller_mu_synthesis_0.3.mat')
+save('Data Files/Controller_mu_synthesis_par_act_mix_mu_on.mat')
 % load('Controller_mu_synthesis.mat')
