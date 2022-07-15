@@ -6,9 +6,6 @@ s = zpk('s');
 Ms1 = 1.5;
 Ms2 = 1.5;
 Ms3 = 1.5;
-% omega_b1 = 0.25*2*pi;
-% omega_b2 = 0.4*2*pi;
-% omega_b3 = 0.4*2*pi;
 omega_b1 = 2;
 omega_b2 = 2;
 omega_b3 = 2;
@@ -25,9 +22,6 @@ Wp = blkdiag(Wp11, Wp22 , Wp33);
 Mu1 = 1e2;
 Mu2 = 1e2;
 Mu3 = 1e2;
-% omega_bc1 = 20*2*pi;
-% omega_bc2 = 20*2*pi;
-% omega_bc3 = 20*2*pi;
 omega_bc1 = 40;
 omega_bc2 = 40;
 omega_bc3 = 40;
@@ -48,14 +42,12 @@ Wu = blkdiag(Wu11, Wu22 , Wu33);
 
 omega_w_low = 0.1; 
 omega_w_high = 5;
-% k_waves = 2e2;
 k_waves = 1e2; % gain that is used to increase the magnitude of the filter
 LPF_w = omega_w_low/(s + omega_w_low);
 HPF_w = s/(s + omega_w_high);
 BPF_w = k_waves*LPF_w*HPF_w;
 
 Wd = blkdiag(BPF_w,BPF_w,BPF_w,BPF_w,BPF_w,BPF_w);
-% Wd = zpk(5*eye(6));
 
 % Design low-pass filters for the frequency content of the reference
 % signals
@@ -70,21 +62,17 @@ Wr22 = mag_phi_ref/(tau_phi_ref*s + 1);
 Wr33 = mag_theta_ref/(tau_theta_ref*s + 1);
 Wr = blkdiag(Wr11, Wr22 , Wr33);
 
-% Wr = zpk(blkdiag(1,0.1,0.1));
 tau_s_n = 0.05; 
 Gact_i_n = 1/(tau_s_n*s + 1);
 Gact = blkdiag(Gact_i_n,Gact_i_n,Gact_i_n);
-% Gact = ss(eye(3));
 
-% tau_s_p = ureal('tau_s',0.05,'Range',[0, 0.1]); 
-tau_s_p = ureal('tau_s',0.05,'Range',[0.025, 0.1]);
+tau_s_p = ureal('tau_s',0.05,'Range',[0.025, 0.075]);
 % Gact_i_p = 1/(tau_s_p*s + 1);
-Gact_i_p = ss(-1/tau_s_p,1/tau_s_p,1,0);
+Gact_i_p = ss(-1/tau_s_p,1/tau_s_p,1,0); % state space of low pass filter (check website)
 Gact_p = blkdiag(Gact_i_p,Gact_i_p,Gact_i_p);
 
 tau_s_max = 0.1; 
 Wact_i = (tau_s_max*s)/(tau_s_max*s + 1);
 Wact = blkdiag(Wact_i,Wact_i,Wact_i);
-
 
 end
