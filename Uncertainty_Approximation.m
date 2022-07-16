@@ -10,7 +10,7 @@ addpath('Plotting Functions')
 addpath('Data Files')
 
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
-% load('Multiplicative_Input_Uncertainty.mat')
+load('Multiplicative_Input_Uncertainty.mat')
 
 opts_bode = bodeoptions;
 opts_bode.MagScale = 'log';
@@ -35,10 +35,6 @@ opts_sigma.YLabel.FontSize = 11;
 opts_sigma.TickLabel.FontSize = 10;
 opts_sigma.Title.FontSize = 12;
 opts_sigma.Grid = 'on';
-% opts_sigma.XLimMode = 'manual';
-% opts_sigma.XLim = [1e-3,1e3];
-% opts_sigma.YLimMode = 'manual';
-% opts_sigma.YLim = [1e-6,1e8];
 
 %% Calculate weighting functions for multiplicative uncertanties
 %{
@@ -107,81 +103,8 @@ saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Relative Difference
 %% Define the Perturbed Plant and the Disturbance Transfer Matrix
 % Multiplicative Input Uncertainty
 % Define the Delta matrices with fully individual ultidyn elements
-%
-clear bound_G 
-bound_G.delta_G11 = 0.2;
-bound_G.delta_G12 = 0.2;
-bound_G.delta_G13 = 0.2;
-bound_G.delta_G21 = 0.2;
-bound_G.delta_G22 = 0.2;
-bound_G.delta_G23 = 0.2;
-bound_G.delta_G31 = 0.2;
-bound_G.delta_G32 = 0.2;
-bound_G.delta_G33 = 0.2;
 
-Delta_I_G_el.delta_G11 = ultidyn('delta_G11',[1,1],'Bound',bound_G.delta_G11);
-Delta_I_G_el.delta_G12 = ultidyn('delta_G12',[1,1],'Bound',bound_G.delta_G12);
-Delta_I_G_el.delta_G13 = ultidyn('delta_G13',[1,1],'Bound',bound_G.delta_G13);
-Delta_I_G_el.delta_G21 = ultidyn('delta_G21',[1,1],'Bound',bound_G.delta_G21);
-Delta_I_G_el.delta_G22 = ultidyn('delta_G22',[1,1],'Bound',bound_G.delta_G22);
-Delta_I_G_el.delta_G23 = ultidyn('delta_G23',[1,1],'Bound',bound_G.delta_G23);
-Delta_I_G_el.delta_G31 = ultidyn('delta_G31',[1,1],'Bound',bound_G.delta_G31);
-Delta_I_G_el.delta_G32 = ultidyn('delta_G32',[1,1],'Bound',bound_G.delta_G32);
-Delta_I_G_el.delta_G33 = ultidyn('delta_G33',[1,1],'Bound',bound_G.delta_G33);
-
-Delta_I_G = [Delta_I_G_el.delta_G11,Delta_I_G_el.delta_G12,Delta_I_G_el.delta_G13;...
-             Delta_I_G_el.delta_G21,Delta_I_G_el.delta_G22,Delta_I_G_el.delta_G23;
-             Delta_I_G_el.delta_G31,Delta_I_G_el.delta_G32,Delta_I_G_el.delta_G33];
-
-clear bound_Gd 
-bound_Gd.delta_Gd11 = 0.2;
-bound_Gd.delta_Gd12 = 0.2;
-bound_Gd.delta_Gd13 = 0.2;
-bound_Gd.delta_Gd14 = 0.2;
-bound_Gd.delta_Gd15 = 0.2;
-bound_Gd.delta_Gd16 = 0.2;
-bound_Gd.delta_Gd21 = 0.2;
-bound_Gd.delta_Gd22 = 0.2;
-bound_Gd.delta_Gd23 = 0.2;
-bound_Gd.delta_Gd24 = 0.2;
-bound_Gd.delta_Gd25 = 0.2;
-bound_Gd.delta_Gd26 = 0.2;
-bound_Gd.delta_Gd31 = 0.2;
-bound_Gd.delta_Gd32 = 0.2;
-bound_Gd.delta_Gd33 = 0.2;
-bound_Gd.delta_Gd34 = 0.2;
-bound_Gd.delta_Gd35 = 0.2;
-bound_Gd.delta_Gd36 = 0.2;
-
-Delta_I_Gd_el.delta_Gd11 = ultidyn('delta_Gd11',[1,1],'Bound',bound_Gd.delta_Gd11);
-Delta_I_Gd_el.delta_Gd12 = ultidyn('delta_Gd12',[1,1],'Bound',bound_Gd.delta_Gd12);
-Delta_I_Gd_el.delta_Gd13 = ultidyn('delta_Gd13',[1,1],'Bound',bound_Gd.delta_Gd13);
-Delta_I_Gd_el.delta_Gd14 = ultidyn('delta_Gd14',[1,1],'Bound',bound_Gd.delta_Gd14);
-Delta_I_Gd_el.delta_Gd15 = ultidyn('delta_Gd15',[1,1],'Bound',bound_Gd.delta_Gd15);
-Delta_I_Gd_el.delta_Gd16 = ultidyn('delta_Gd16',[1,1],'Bound',bound_Gd.delta_Gd16);
-Delta_I_Gd_el.delta_Gd21 = ultidyn('delta_Gd21',[1,1],'Bound',bound_Gd.delta_Gd21);
-Delta_I_Gd_el.delta_Gd22 = ultidyn('delta_Gd22',[1,1],'Bound',bound_Gd.delta_Gd22);
-Delta_I_Gd_el.delta_Gd23 = ultidyn('delta_Gd23',[1,1],'Bound',bound_Gd.delta_Gd23);
-Delta_I_Gd_el.delta_Gd24 = ultidyn('delta_Gd24',[1,1],'Bound',bound_Gd.delta_Gd24);
-Delta_I_Gd_el.delta_Gd25 = ultidyn('delta_Gd25',[1,1],'Bound',bound_Gd.delta_Gd25);
-Delta_I_Gd_el.delta_Gd26 = ultidyn('delta_Gd26',[1,1],'Bound',bound_Gd.delta_Gd26);
-Delta_I_Gd_el.delta_Gd31 = ultidyn('delta_Gd31',[1,1],'Bound',bound_Gd.delta_Gd31);
-Delta_I_Gd_el.delta_Gd32 = ultidyn('delta_Gd32',[1,1],'Bound',bound_Gd.delta_Gd32);
-Delta_I_Gd_el.delta_Gd33 = ultidyn('delta_Gd33',[1,1],'Bound',bound_Gd.delta_Gd33);
-Delta_I_Gd_el.delta_Gd34 = ultidyn('delta_Gd34',[1,1],'Bound',bound_Gd.delta_Gd34);
-Delta_I_Gd_el.delta_Gd35 = ultidyn('delta_Gd35',[1,1],'Bound',bound_Gd.delta_Gd35);
-Delta_I_Gd_el.delta_Gd36 = ultidyn('delta_Gd36',[1,1],'Bound',bound_Gd.delta_Gd36);
-
-Delta_I_Gd = [Delta_I_Gd_el.delta_Gd11,Delta_I_Gd_el.delta_Gd21,Delta_I_Gd_el.delta_Gd31;...
-              Delta_I_Gd_el.delta_Gd12,Delta_I_Gd_el.delta_Gd22,Delta_I_Gd_el.delta_Gd32;...
-              Delta_I_Gd_el.delta_Gd13,Delta_I_Gd_el.delta_Gd23,Delta_I_Gd_el.delta_Gd33;...
-              Delta_I_Gd_el.delta_Gd14,Delta_I_Gd_el.delta_Gd24,Delta_I_Gd_el.delta_Gd34;...
-              Delta_I_Gd_el.delta_Gd15,Delta_I_Gd_el.delta_Gd25,Delta_I_Gd_el.delta_Gd35;...
-              Delta_I_Gd_el.delta_Gd16,Delta_I_Gd_el.delta_Gd26,Delta_I_Gd_el.delta_Gd36];
-              
-%}
-%%
-bound_G = 0.4;
+bound_G = 0.3;
 Delta_I_G = ultidyn('Delta_I_G',[3,3],'Bound',bound_G);
 
 Gp_app = G*(eye(3) + Delta_I_G*W_I_G_ss);

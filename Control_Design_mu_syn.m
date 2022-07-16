@@ -13,7 +13,7 @@ load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 load('Multiplicative_Input_Uncertainty.mat','W_I_G_ss','W_I_Gd_ss')
-load('Controllers.mat','hinf_data')
+load('Controller_hinf.mat')
 
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
@@ -25,11 +25,6 @@ ncont = 3; % number of inputs
 
 run Bode_options.m
 run Sigma_options.m
-
-% Time duration of simulations
-dt = 0.05; % sampling time
-tend = 20; % duration of simulation in seconds
-t = 0:dt:tend;
 
 % Define the Weighting Functions for the mu-synthesis controller (same as
 % hinf design for the nominal plant
@@ -43,11 +38,10 @@ bound_Gd = 0.4;
                 (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Gact_p);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
-opts_mu = musynOptions('MixedMU','on','MaxIter',20);
+opts_mu = musynOptions('MixedMU','on');
 tic;
-% mu_opts = musynOptions('MixedMU','on','Display','full','TargetPerf',1,'FullDG',false);%,'FrequencyGrid',[1e-1,1e1]);
-[mu_syn_data.K_full,CL_mu,info_mu] = musyn(P_Delta,nmeas,ncont,opts_mu); 
-timerun = toc;
+[mu_syn_data.K_full,CL_mu,mu_syn_data.info_mu] = musyn(P_Delta,nmeas,ncont,opts_mu); 
+mu_syn_data.timerun = toc;
 
 %% Order reduction of the controller
 figure
@@ -70,18 +64,14 @@ mu_syn_data.S = mu_syn_data.loops.So;
 
 % Comparison of the reduced-order with the full-order controller with the
 % singular value plot
+mu_syn_data.K_size = size(mu_syn_data.K.A,1);
+mu_syn_data.K_full_size = size(mu_syn_data.K_full.A,1);
 
 [mu_syn_data.sv_K,mu_syn_data.wout_K] = sigma(mu_syn_data.K);
 [mu_syn_data.sv_K_full,mu_syn_data.wout_K_full] = sigma(mu_syn_data.K_full);
 
-figure
-loglog(mu_syn_data.wout_K_full,mu_syn_data.sv_K_full,'r-','LineWidth',1.5)
-hold on
-fig1 = loglog(mu_syn_data.wout_K_full(1,1),mu_syn_data.sv_K_full(1,1),'r-','LineWidth',1.5);
-loglog(mu_syn_data.wout_K,mu_syn_data.sv_K,'b--','LineWidth',1)
-fig2 = loglog(mu_syn_data.wout_K(1,1),mu_syn_data.sv_K(1,1),'b--','LineWidth',1);
-grid on
-xlim([min(mu_syn_data.wout_K_full),max(mu_syn_data.wout_K_full)])
+[fig1,fig2,~] = loglog_custom(mu_syn_data.sv_K,mu_syn_data.wout_K,...
+           mu_syn_data.sv_K_full,mu_syn_data.wout_K_full,[],[],2);
 
 legend([fig1,fig2],strcat('Reduced-order:', num2str(mu_syn_data.K_size),' states'),...
     strcat('Full-order:', num2str(mu_syn_data.K_full_size),' states'))
@@ -109,9 +99,9 @@ mu_syn_data.Sp = mu_syn_data.loops_p.So;
 
 %% Check the Robustness of the mu-synthesis controller
 
-opts_robstab = robOptions('VaryFrequency','on','Display','on','Sensitivity','on',...
-                          'MussvOptions','a');
-omega=logspace(-4,4,100);
+opts_robstab = robOptions('VaryFrequency','on','Display','on','Sensitivity','on');
+% ,...       'MussvOptions','a'
+omega=logspace(-4,3,100);
 
 Ndk=minreal(lft(P_Delta,mu_syn_data.K));
 
@@ -129,9 +119,9 @@ xlabel('Frequency')
 legend('Lower bound','Upper bound')
 
 %%
-[perfmarg,wcu,info_robgain] = robgain(Ndk,1,opts_robstab);
+gamma = 1;
+[perfmarg,wcu,info_robgain] = robgain(Ndk,gamma,omega,opts_robstab);
 
-%%
 figure
 loglog(info_robgain.Frequency,info_robgain.Bounds(:,1),'r-','LineWidth',1.5)
 hold on
@@ -142,7 +132,6 @@ ylabel('Margin')
 xlabel('Frequency')
 legend('Lower bound','Upper bound')
 %%
-% [stabmarg,destabunc,report,info] = robuststab(Tp)
 % Generalized feedback interconnection of P block K block in order to
 % obtain the N tranfer matrix
 [M,~,Blkstruct] = lftdata(P_Delta);
@@ -158,7 +147,7 @@ Nfdk=frd(Ndk,omega);
 
 % Nominal stability
 maxeigNdk=max(real(eig(Ndk))); 
-%%
+
 % Nominal performance
 [mubnds,~]=mussv(Nfdk(10:15,13:21),Blkstruct(4));
 muNPdk=mubnds(:,1);
@@ -174,7 +163,7 @@ muRSdk=mubnds(:,1);
 muRPdk=mubnds(:,1);
 [muRPinfDK, muRPwDK]=norm(muRPdk,inf); 
 %% Frequency response of the structured singular values for NP, RS and RP
-%%
+
 figure
 loglog(omega,muNPdk.ResponseData(:),'LineWidth',1.5)
 hold on
@@ -206,5 +195,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-save('Data Files/Controllers.mat','mu_syn_data','hinf_data','Gd_p_app','-append')
-% load('Controller_mu_synthesis.mat')
+save('Data Files/Controller_mu_syn2.mat','mu_syn_data','Gp_app','Gd_p_app')
+save('Data Files/Controller_hinf.mat','hinf_data','-append')

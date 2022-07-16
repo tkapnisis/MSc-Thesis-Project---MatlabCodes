@@ -15,10 +15,6 @@ Delta_I_G = ultidyn('Delta_I_G',[3,3],'Bound',bound_G);
 
 Delta_I_Gd = ultidyn('Delta_I_Gd',[6,3],'Bound',bound_Gd);
 
-Delta_act = blkdiag(ultidyn('Delta_Act1',[1,1],'Bound',1),...
-                    ultidyn('Delta_Act2',[1,1],'Bound',1),...
-                    ultidyn('Delta_Act3',[1,1],'Bound',1));
-
 Gp_app = G*(eye(3) + Delta_I_G*W_I_G_ss)*Gact_p;
 Gp_app = minreal(Gp_app);
 

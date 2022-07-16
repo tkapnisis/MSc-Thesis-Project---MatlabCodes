@@ -164,7 +164,7 @@ figure
 plot_ss_inputs(t,u_in,u_eq)
 
 %% Save data
-save('Data Files/Controllers','hinf_data')
+save('Data Files/Controller_hinf','hinf_data')
 %% Discretization of the controller time step response
 %{
 dt = 1/100;
