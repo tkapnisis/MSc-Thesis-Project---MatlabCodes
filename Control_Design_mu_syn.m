@@ -28,7 +28,7 @@ run Sigma_options.m
 
 % Define the Weighting Functions for the mu-synthesis controller (same as
 % hinf design for the nominal plant
-[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Design_Weights();
+[Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights();
 
 %% Generalized Plant - Perturbed
 % Upper bound of the absolute value for the complex perturbations
@@ -51,16 +51,6 @@ pause
 order = input("");
 % mu_syn_data.K = ncfmr(mu_syn_data.K_full,order);
 mu_syn_data.K = bstmr(mu_syn_data.K_full,order);
-
-mu_syn_data.loops_full = loopsens(G*Gact,mu_syn_data.K_full);
-mu_syn_data.L_full = mu_syn_data.loops_full.Lo;
-mu_syn_data.T_full = mu_syn_data.loops_full.To;
-mu_syn_data.S_full = mu_syn_data.loops_full.So;
-
-mu_syn_data.loops = loopsens(G*Gact,mu_syn_data.K);
-mu_syn_data.L = mu_syn_data.loops.Lo;
-mu_syn_data.T = mu_syn_data.loops.To;
-mu_syn_data.S = mu_syn_data.loops.So;
 
 % Comparison of the reduced-order with the full-order controller with the
 % singular value plot
@@ -106,7 +96,7 @@ omega=logspace(-4,3,100);
 Ndk=minreal(lft(P_Delta,mu_syn_data.K));
 
 % Robust stability of uncertain system
-[stabmarg,wcu,info_robstab] = robstab(Ndk,omega,opts_robstab);
+[stabmarg,wcu,info_robstab] = robstab(Ndk,opts_robstab);
 
 figure
 loglog(info_robstab.Frequency,info_robstab.Bounds(:,1),'r-','LineWidth',1.5)
@@ -120,7 +110,7 @@ legend('Lower bound','Upper bound')
 
 %%
 gamma = 1;
-[perfmarg,wcu,info_robgain] = robgain(Ndk,gamma,omega,opts_robstab);
+[perfmarg,wcu,info_robgain] = robgain(Ndk,gamma,opts_robstab);
 
 figure
 loglog(info_robgain.Frequency,info_robgain.Bounds(:,1),'r-','LineWidth',1.5)
@@ -141,7 +131,7 @@ Blkstruct(4).Type = 'ultidyn';
 Blkstruct(4).Occurrences = 1;
 Blkstruct(4).Simplify = 2;
 Ndk=minreal(lft(M,mu_syn_data.K));
-omega=logspace(-4,4,400);
+omega=logspace(-4,4,200);
 
 Nfdk=frd(Ndk,omega);
 
@@ -195,5 +185,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-save('Data Files/Controller_mu_syn2.mat','mu_syn_data','Gp_app','Gd_p_app')
+save('Data Files/Controller_mu_syn.mat','mu_syn_data','Gp_app','Gd_p_app')
 save('Data Files/Controller_hinf.mat','hinf_data','-append')

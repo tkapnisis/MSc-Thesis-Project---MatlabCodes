@@ -13,7 +13,7 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-load('Controller_mu_syn2.mat')
+load('Controller_mu_syn_0_4.mat')
 load('Controller_hinf.mat')
 
 % Nominal plant G(s)

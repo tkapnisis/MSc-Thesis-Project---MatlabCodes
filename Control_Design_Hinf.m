@@ -25,7 +25,7 @@ run Bode_options.m
 run Sigma_options.m
 
 % Time duration of simulations
-dt = 0.05; % sampling time
+dt = 0.02; % sampling time
 tend = 20; % duration of simulation in seconds
 t = 0:dt:tend;
 
@@ -60,7 +60,7 @@ sigmaplot(G,opts_sigma)
 title('Plant Singular Values');
 %}
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Design_Weights();
+[Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights();
 
 % Generalized Plant - Nominal
 P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
@@ -135,7 +135,7 @@ ref = [-0.05*square(2*pi/10*t);0*ones(size(t));0*ones(size(t))];
 [y,~,~] = lsim(hinf_data.T,ref,t);
 
 figure
-plot_ss_states(t,y,ref,param.z_n0,[],[],[],'ref');
+plot_ss_states(t,y,ref,param.z_n0,1,'-','blue','ref');
 
 u_in = lsim(hinf_data.K*hinf_data.S,ref,t);
 

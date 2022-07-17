@@ -1,4 +1,4 @@
-function [Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Design_Weights()
+function [Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights()
 
 s = zpk('s');
 
@@ -6,9 +6,9 @@ s = zpk('s');
 Ms1 = 1.5;
 Ms2 = 1.5;
 Ms3 = 1.5;
-omega_b1 = 2;
-omega_b2 = 2;
-omega_b3 = 2;
+omega_b1 = 1;
+omega_b2 = 1;
+omega_b3 = 1;
 A_1 = 1e-4;
 A_2 = 1e-4;
 A_3 = 1e-4;
@@ -67,12 +67,7 @@ Gact_i_n = 1/(tau_s_n*s + 1);
 Gact = blkdiag(Gact_i_n,Gact_i_n,Gact_i_n);
 
 tau_s_p = ureal('tau_s',0.05,'Range',[0.025, 0.075]);
-% Gact_i_p = 1/(tau_s_p*s + 1);
 Gact_i_p = ss(-1/tau_s_p,1/tau_s_p,1,0); % state space of low pass filter (check website)
 Gact_p = blkdiag(Gact_i_p,Gact_i_p,Gact_i_p);
-
-tau_s_max = 0.1; 
-Wact_i = (tau_s_max*s)/(tau_s_max*s + 1);
-Wact = blkdiag(Wact_i,Wact_i,Wact_i);
 
 end

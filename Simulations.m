@@ -83,9 +83,9 @@ hinf_data.u_p_app_ref = lsim_uss(hinf_data.K*hinf_data.Sp_app,ref,t,samples);
 hinf_data.u_p_ref = lsim_uss(hinf_data.K*hinf_data.Sp,ref,t,samples);
 
 figure
-fig1 = plot_uss_states(t,mu_syn_data.y_p_app_ref,samples,param.z_n0,0.5,'-','#0072BD');
-fig2 = plot_uss_states(t,mu_syn_data.y_p_ref,samples,param.z_n0,0.5,'-.','#77AC30');
-[fig3,fig4] = plot_ss_states(t,mu_syn_data.y_ref,ref,param.z_n0,1,'--','red','ref');
+fig1 = plot_uss_states(t,mu_syn_data.y_p_app_ref,samples,param.z_n0,0.5,'-.','blue');
+fig2 = plot_uss_states(t,mu_syn_data.y_p_ref,samples,param.z_n0,1,'--','#77AC30');
+[fig3,fig4] = plot_ss_states(t,mu_syn_data.y_ref,ref,param.z_n0,1,'-','red','ref');
 
 legend([fig1,fig2,fig3,fig4],'\boldmath{$\mu$} \textbf{-synthesis-Multiplicative}',...
        '\boldmath{$\mu$} \textbf{-synthesis-Parametric}',...
@@ -93,9 +93,9 @@ legend([fig1,fig2,fig3,fig4],'\boldmath{$\mu$} \textbf{-synthesis-Multiplicative
        'interpreter','latex','FontSize',10)
 
 figure
-fig1 = plot_uss_states(t,hinf_data.y_p_app_ref,samples,param.z_n0,0.5,'-','#0072BD');
-fig2 = plot_uss_states(t,hinf_data.y_p_ref,samples,param.z_n0,0.5,'--','#77AC30');
-[fig3,fig4] = plot_ss_states(t,hinf_data.y_ref,ref,param.z_n0, 1,'--','red','ref');
+fig1 = plot_uss_states(t,hinf_data.y_p_app_ref,samples,param.z_n0,0.5,'-.','blue');
+fig2 = plot_uss_states(t,hinf_data.y_p_ref,samples,param.z_n0,1,'--','#77AC30');
+[fig3,fig4] = plot_ss_states(t,hinf_data.y_ref,ref,param.z_n0, 1,'-','red','ref');
 
 legend([fig1,fig2,fig3,fig4],'\boldmath{$h_{\infty}$} \textbf{ controller-Multiplicative}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller-Parametric}',...
@@ -149,8 +149,8 @@ t = 0:dt:tend;
 %  Calculation of waves velocity profile for each hydrofoil
 
 % Parameters of long-crested regular wave
-wave_param.omega_0 = 1;  % Wave frequency [rad/s]
-wave_param.lambda = 0.5;   % Wave length [m]
+wave_param.omega_0 = 1.5;  % Wave frequency [rad/s]
+wave_param.lambda = 2;   % Wave length [m]
 wave_param.zeta_0 = 0.1;  % Wave amplitude [m]
 wave_param.beta = pi;      % Encounter angle (beta=0 for following waves) [rad] 
 
