@@ -4,7 +4,7 @@
 
 clc
 clear all
-% close all
+close all
 
 addpath('Plotting Functions')
 addpath('Data Files')
@@ -81,7 +81,7 @@ mu_syn_data.u_p_ref = lsim_uss(mu_syn_data.K*mu_syn_data.Sp,ref,t,samples);
 
 hinf_data.u_p_app_ref = lsim_uss(hinf_data.K*hinf_data.Sp_app,ref,t,samples);
 hinf_data.u_p_ref = lsim_uss(hinf_data.K*hinf_data.Sp,ref,t,samples);
-
+%%
 figure
 fig1 = plot_uss_states(t,mu_syn_data.y_p_app_ref,samples,param.z_n0,0.5,'-.','blue');
 fig2 = plot_uss_states(t,mu_syn_data.y_p_ref,samples,param.z_n0,1,'--','#77AC30');
@@ -205,7 +205,7 @@ mu_syn_data.u_p_dist = lsim_uss(-mu_syn_data.K*mu_syn_data.Sp*Gd_p,dw,t,samples)
 hinf_data.u_p_app_dist = lsim_uss(-hinf_data.K*hinf_data.Sp_app*Gd_p_app,dw,t,samples);
 hinf_data.u_p_dist = lsim_uss(-hinf_data.K*hinf_data.Sp*Gd_p,dw,t,samples);
 
-%%
+
 figure
 fig1 = plot_uss_states(t,mu_syn_data.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
 fig2 = plot_uss_states(t,mu_syn_data.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');

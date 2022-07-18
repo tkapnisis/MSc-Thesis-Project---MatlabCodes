@@ -60,14 +60,15 @@ sigmaplot(G,opts_sigma)
 title('Plant Singular Values');
 %}
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wi,Wref,Gact,Gact_p] = Design_Weights();
+[Wp,Wu,Wd,Wi,Gact,Gact_p] = Design_Weights();
 
 % Generalized Plant - Nominal
-P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wi,Wref,Gact);
+P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wi,Gact);
 
 % Hinf Controller synthesis - Nominal Plant
 [hinf_data.K,~,gamma,~] = hinfsyn(P,nmeas,ncont);
 gamma
+
 
 hinf_data.loops = loopsens(G*Gact,hinf_data.K);
 hinf_data.L = hinf_data.loops.Lo;
@@ -132,6 +133,7 @@ title('Step Response with Hinf Controller')
 grid minor
 %%
 ref = [-0.05*square(2*pi/10*t);0*ones(size(t));0*ones(size(t))];
+% ref = [0*ones(size(t));0*ones(size(t));-0.2*sin(2*pi/4*t)];
 [y,~,~] = lsim(hinf_data.T,ref,t);
 
 figure
@@ -153,16 +155,33 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
-[y,~,x] = lsim(hinf_data.S*Gd,dw,t);
+select = 1;
 
-figure
-plot_ss_states(t,y,[],param.z_n0,1.5,'-','#0072BD','dist');
+switch select
+    case 1
+    [y,~,x] = lsim(hinf_data.S*Gd,dw,t);
+    u_in = lsim(-hinf_data.K*hinf_data.S*Gd,dw,t);
 
-u_in = lsim(-hinf_data.K*hinf_data.S*Gd,dw,t);
+    figure
+    plot_ss_states(t,y,[],param.z_n0,1.5,'-','#0072BD','dist');
+    figure
+    plot_ss_inputs(t,u_in,u_eq)
+    
+    case 2
+        [yd,~,x] = lsim(hinf_data.S*Gd,dw,t);
+        ref = [wave_param.zeta_0*sin(wave_param.omega_e*t);0*ones(size(t));0*ones(size(t))];
+        [yr,~,~] = lsim(hinf_data.T,ref,t);
+        y = yd + yr;
 
-figure
-plot_ss_inputs(t,u_in,u_eq)
-
+        figure
+        [fig1,fig2] = plot_ss_states(t,y,ref,param.z_n0,1,'-','#0072BD','dist_ref');
+        legend([fig1,fig2],'Response','Reference','Location','best','FontSize',10)
+        u_in_r = lsim(hinf_data.K*hinf_data.S,ref,t);
+        u_in_d = lsim(-hinf_data.K*hinf_data.S*Gd,dw,t);
+        u_in = u_in_r + u_in_d;
+        figure
+        plot_ss_inputs(t,u_in,u_eq)
+end
 %% Save data
 save('Data Files/Controller_hinf','hinf_data')
 %% Discretization of the controller time step response

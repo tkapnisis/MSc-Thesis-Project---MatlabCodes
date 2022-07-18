@@ -32,8 +32,8 @@ run Sigma_options.m
 
 %% Generalized Plant - Perturbed
 % Upper bound of the absolute value for the complex perturbations
-bound_G = 0.4;
-bound_Gd = 0.4;
+bound_G = 0.30;
+bound_Gd = 0.30;
 [P_Delta,P_aug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
                 (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Gact_p);
 %% mu-synthesis of Hinf Controller - Perturbed Plant

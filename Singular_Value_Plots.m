@@ -144,3 +144,19 @@ omega=logspace(-5,3,200);
 legend([fig1,fig2],'\boldmath{$\sigma(SGd):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(SGd):h_{\infty}$}','interpreter','latex','FontSize',12,...
        'Location','best')
+
+%% K (Controller)
+% figure
+% sigma(hinf_data.K,mu_syn_data.K,opts_sigma);
+% legend('\boldmath{$\sigma(K)$}','interpreter','latex','FontSize',15)
+
+omega=logspace(-6,6,200);
+[mu_syn_data.sv_K,mu_syn_data.wout_K] = sigma(mu_syn_data.K,omega);
+[hinf_data.sv_K,hinf_data.wout_K] = sigma(hinf_data.K,omega);
+
+[fig1,fig2,~] = loglog_custom(mu_syn_data.sv_K,mu_syn_data.wout_K,...
+           hinf_data.sv_K,hinf_data.wout_K,[],[],2);
+
+legend([fig1,fig2],'\boldmath{$\sigma(K):\mu-$}\textbf{synthesis}',...
+       '\boldmath{$\sigma(K):h_{\infty}$}','interpreter','latex','FontSize',12,...
+       'Location','best')

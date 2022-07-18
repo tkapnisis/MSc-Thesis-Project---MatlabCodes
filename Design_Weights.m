@@ -1,4 +1,4 @@
-function [Wp,Wu,Wd,Wi,Wref,Gact,Gact_p] = Design_Weights()
+function [Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights()
 
 s = zpk('s');
 
@@ -46,41 +46,26 @@ k_waves = 1e2; % gain that is used to increase the magnitude of the filter
 LPF_w = omega_w_low/(s + omega_w_low);
 HPF_w = s/(s + omega_w_high);
 BPF_w = k_waves*LPF_w*HPF_w;
-
 Wd = blkdiag(BPF_w,BPF_w,BPF_w,BPF_w,BPF_w,BPF_w);
 
 % Design low-pass filters for the frequency content of the reference
 % signals
-tau_z_ref = 5;
-tau_phi_ref = 5;
-tau_theta_ref = 5;
-mag_z_ref = 10.1;
-mag_phi_ref = 10.1;
-mag_theta_ref = 10.1;
-Wi11 = mag_z_ref/(tau_z_ref*s + 1);
-Wi22 = mag_phi_ref/(tau_phi_ref*s + 1);
-Wi33 = mag_theta_ref/(tau_theta_ref*s + 1);
-Wi = blkdiag(Wi11, Wi22 , Wi33);
-
-% Wi = ss(blkdiag(0.5,0.5,0.5));
-
-zeta_1 = 1;
-omega_n1 = 2;
-zeta_2 = 1;
-omega_n2 = 4;
-zeta_3 = 1;
-omega_n3 = 4;
-Ts1 = 4/(zeta_1*omega_n1);
-Wref11 = omega_n1^2/(s^2 + 2*zeta_1*omega_n1*s + omega_n1^2);
-Wref22 = omega_n2^2/(s^2 + 2*zeta_2*omega_n2*s + omega_n2^2);
-Wref33 = omega_n3^2/(s^2 + 2*zeta_3*omega_n3*s + omega_n3^2);
-Wref = blkdiag(Wref11, Wref22 , Wref33);
+tau_r1 = 0.5;
+tau_r2 = 0.5;
+tau_r3 = 0.5;
+mag_r1 = 0.1;
+mag_r2 = 0.1;
+mag_r3 = 0.1;
+Wr11 = mag_r1/(tau_r1*s + 1);
+Wr22 = mag_r2/(tau_r2*s + 1);
+Wr33 = mag_r3/(tau_r3*s + 1);
+Wr = blkdiag(Wr11, Wr22 , Wr33);
 
 tau_s_n = 0.05; 
 Gact_i_n = 1/(tau_s_n*s + 1);
 Gact = blkdiag(Gact_i_n,Gact_i_n,Gact_i_n);
 
-tau_s_p = ureal('tau_s',0.05,'Range',[0.025, 0.075]);
+tau_s_p = ureal('tau_s',0.05,'Percentage',[-25, 25]);
 Gact_i_p = ss(-1/tau_s_p,1/tau_s_p,1,0); % state space of low pass filter (check website)
 Gact_p = blkdiag(Gact_i_p,Gact_i_p,Gact_i_p);
 
