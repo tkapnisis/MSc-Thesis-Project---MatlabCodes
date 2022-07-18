@@ -13,7 +13,7 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-load('Controller_mu_syn_0_4.mat')
+load('Controller_mu_syn.mat')
 load('Controller_hinf.mat')
 
 % Nominal plant G(s)
@@ -25,8 +25,29 @@ run Bode_options.m
 run Sigma_options.m
 
 % Define the Weighting Functions for the controller synthesis
-[Wp,Wu,Wd,Wr,Gact,Gact_p,Wact] = Design_Weights();
+[Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights();
 
+%% RGA 
+%{ 
+omega1 = 0.1;
+Gf1 = freqresp(G,omega1);
+RGAw_1(:,:) = Gf1.*inv(Gf1)'
+
+omega2 = 5;
+Gf2 = freqresp(G,omega2);
+RGAw_2(:,:) = Gf2.*inv(Gf2)'
+%}
+%% Open-loop Plant Sigma plots
+%{
+[sv_G,wout_G] = sigma(G);
+[sv_Gd,wout_Gd] = sigma(Gd);
+
+[fig1,fig2,~] = loglog_custom(sv_G,wout_G,...
+           sv_Gd,wout_Gd,[],[],2);
+
+legend([fig1,fig2],'\boldmath{$\sigma(G)$}','\boldmath{$\sigma(G_d)$}',...
+       'interpreter','latex','FontSize',12,'Location','best')
+%}
 %% Sensitivity
 % figure
 % sigma(hinf_data.S,mu_syn_data.S,inv(Wp),opts_sigma);

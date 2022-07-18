@@ -1,4 +1,4 @@
-function [Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights()
+function [Wp,Wu,Wd,Wi,Wref,Gact,Gact_p] = Design_Weights()
 
 s = zpk('s');
 
@@ -6,9 +6,9 @@ s = zpk('s');
 Ms1 = 1.5;
 Ms2 = 1.5;
 Ms3 = 1.5;
-omega_b1 = 1;
-omega_b2 = 1;
-omega_b3 = 1;
+omega_b1 = 2;
+omega_b2 = 2;
+omega_b3 = 2;
 A_1 = 1e-4;
 A_2 = 1e-4;
 A_3 = 1e-4;
@@ -51,16 +51,30 @@ Wd = blkdiag(BPF_w,BPF_w,BPF_w,BPF_w,BPF_w,BPF_w);
 
 % Design low-pass filters for the frequency content of the reference
 % signals
-tau_z_ref = 2;
-tau_phi_ref = 2;
-tau_theta_ref = 2;
-mag_z_ref = 0.1;
-mag_phi_ref = 0.1;
-mag_theta_ref = 0.1;
-Wr11 = mag_z_ref/(tau_z_ref*s + 1);
-Wr22 = mag_phi_ref/(tau_phi_ref*s + 1);
-Wr33 = mag_theta_ref/(tau_theta_ref*s + 1);
-Wr = blkdiag(Wr11, Wr22 , Wr33);
+tau_z_ref = 5;
+tau_phi_ref = 5;
+tau_theta_ref = 5;
+mag_z_ref = 10.1;
+mag_phi_ref = 10.1;
+mag_theta_ref = 10.1;
+Wi11 = mag_z_ref/(tau_z_ref*s + 1);
+Wi22 = mag_phi_ref/(tau_phi_ref*s + 1);
+Wi33 = mag_theta_ref/(tau_theta_ref*s + 1);
+Wi = blkdiag(Wi11, Wi22 , Wi33);
+
+% Wi = ss(blkdiag(0.5,0.5,0.5));
+
+zeta_1 = 1;
+omega_n1 = 2;
+zeta_2 = 1;
+omega_n2 = 4;
+zeta_3 = 1;
+omega_n3 = 4;
+Ts1 = 4/(zeta_1*omega_n1);
+Wref11 = omega_n1^2/(s^2 + 2*zeta_1*omega_n1*s + omega_n1^2);
+Wref22 = omega_n2^2/(s^2 + 2*zeta_2*omega_n2*s + omega_n2^2);
+Wref33 = omega_n3^2/(s^2 + 2*zeta_3*omega_n3*s + omega_n3^2);
+Wref = blkdiag(Wref11, Wref22 , Wref33);
 
 tau_s_n = 0.05; 
 Gact_i_n = 1/(tau_s_n*s + 1);

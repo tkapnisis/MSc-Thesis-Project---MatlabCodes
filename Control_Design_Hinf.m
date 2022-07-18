@@ -60,10 +60,10 @@ sigmaplot(G,opts_sigma)
 title('Plant Singular Values');
 %}
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights();
+[Wp,Wu,Wd,Wi,Wref,Gact,Gact_p] = Design_Weights();
 
 % Generalized Plant - Nominal
-P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
+P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wi,Wref,Gact);
 
 % Hinf Controller synthesis - Nominal Plant
 [hinf_data.K,~,gamma,~] = hinfsyn(P,nmeas,ncont);
@@ -130,7 +130,7 @@ figure
 step(hinf_data.T)
 title('Step Response with Hinf Controller')
 grid minor
-
+%%
 ref = [-0.05*square(2*pi/10*t);0*ones(size(t));0*ones(size(t))];
 [y,~,~] = lsim(hinf_data.T,ref,t);
 

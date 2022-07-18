@@ -12,9 +12,9 @@ if num==2
     fig3 = [];
     grid on
     xlim([min(wout1),max(wout1)])
-    xlabel('Frequency (rad/s)')
-    ylabel('Singular Values (abs)')
-    title('Singular Values')
+    xlabel('Frequency (rad/s)','FontSize',12)
+    ylabel('Singular Values (abs)','FontSize',12)
+    title('Singular Values','FontSize',12)
     
 elseif num==3
     loglog(wout3,sv3,'Color','#77AC30','LineStyle','-','LineWidth',1.5)
@@ -26,7 +26,7 @@ elseif num==3
     fig2 = loglog(wout2(1,1),sv2(1,1),'Color','blue','LineStyle','--','LineWidth',1);
     grid on
     xlim([min(wout1),max(wout1)])
-    xlabel('Frequency (rad/s)')
-    ylabel('Singular Values (abs)')
-    title('Singular Values')
+    xlabel('Frequency (rad/s)','FontSize',11)
+    ylabel('Singular Values (abs)','FontSize',11)
+    title('Singular Values','FontSize',12)
 end
