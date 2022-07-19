@@ -12,9 +12,10 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-load('Controller_mu_syn.mat')
+load('Controller_mu_syn_act.mat')
 load('Controller_hinf.mat')
 
+% load('Simulations_Results.mat')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -66,7 +67,7 @@ title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}}','interpreter','latex',
 
 %% Perturbed system
 % Number of samples for simulating the uncertain systems
-samples = 15;
+samples = 2;
 
 % Calculation of the outputs for the perturbed system
 mu_syn_data.y_p_app_ref = lsim_uss(mu_syn_data.Tp_app,ref,t,samples);
@@ -189,7 +190,7 @@ title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}-synthesis}','interpreter
 
 %%
 % Number of samples for simulating the uncertain systems
-samples = 20;
+samples = 5;
 
 % Calculation of the outputs
 mu_syn_data.y_p_app_dist = lsim_uss(mu_syn_data.Sp_app*Gd_p_app,dw,t,samples);
@@ -204,7 +205,7 @@ mu_syn_data.u_p_dist = lsim_uss(-mu_syn_data.K*mu_syn_data.Sp*Gd_p,dw,t,samples)
 
 hinf_data.u_p_app_dist = lsim_uss(-hinf_data.K*hinf_data.Sp_app*Gd_p_app,dw,t,samples);
 hinf_data.u_p_dist = lsim_uss(-hinf_data.K*hinf_data.Sp*Gd_p,dw,t,samples);
-
+%%
 
 figure
 fig1 = plot_uss_states(t,mu_syn_data.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
@@ -214,7 +215,7 @@ fig2 = plot_uss_states(t,mu_syn_data.y_p_dist,samples,param.z_n0,0.5,'-','#77AC3
 legend([fig1,fig2,fig3],'\boldmath{$\mu$} \textbf{-synthesis-Multiplicative}',...
        '\boldmath{$\mu$} \textbf{-synthesis-Parametric}',...
        '\boldmath{$\mu$} \textbf{-synthesis-Nominal}','interpreter','latex')
-%%
+
 figure
 fig1 = plot_uss_states(t,hinf_data.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
 fig2 = plot_uss_states(t,hinf_data.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');
@@ -223,7 +224,7 @@ fig3 = plot_ss_states(t,hinf_data.y_dist,[],param.z_n0, 1,'--','red','dist');
 legend([fig1,fig2,fig3],'\boldmath{$h_{\infty}$} \textbf{ controller-Multiplicative}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller-Parametric}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller-Nominal}','interpreter','latex')
-%%
+
 figure
 fig1 = plot_uss_states(t,mu_syn_data.y_p_dist,samples,param.z_n0,0.5,'-','blue');
 fig2 = plot_uss_states(t,hinf_data.y_p_dist,samples,param.z_n0,0.5,'-','red');
@@ -236,7 +237,7 @@ subplot(3,1,3)
 grid minor
 legend([fig1,fig2],'\boldmath{$\mu$} \textbf{-synthesis}',...
        '\boldmath{$h_{\infty}$}','interpreter','latex')
-%%
+
 figure
 subplot(2,1,1)
 plot_uss_inputs(t,mu_syn_data.u_p_dist,u_eq,samples)
@@ -246,7 +247,7 @@ subplot(2,1,2)
 plot_uss_inputs(t,mu_syn_data.u_p_app_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Multiplicative Uncertainty}',...
       'interpreter','latex','FontSize',12)
-%%
+
 figure
 subplot(2,1,1)
 plot_uss_inputs(t,hinf_data.u_p_dist,u_eq,samples)
@@ -256,7 +257,7 @@ subplot(2,1,2)
 plot_uss_inputs(t,hinf_data.u_p_app_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Multiplicative Uncertainty}',...
       'interpreter','latex','FontSize',12)
-%%
+
 figure
 subplot(2,1,1)
 plot_uss_inputs(t,mu_syn_data.u_p_dist,u_eq,samples)
@@ -266,3 +267,6 @@ subplot(2,1,2)
 plot_uss_inputs(t,hinf_data.u_p_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
+
+%% Save data
+save('Data Files/Simulations_Results','hinf_data','mu_syn_data')

@@ -13,8 +13,10 @@ load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 load('Multiplicative_Input_Uncertainty.mat','W_I_G_ss','W_I_Gd_ss')
+load('Multiplicative_Input_Uncertainty_Act.mat','W_I_Gact_ss')
 load('Controller_hinf.mat')
 
+% load('Controller_mu_syn_act.mat')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -32,13 +34,14 @@ run Sigma_options.m
 
 %% Generalized Plant - Perturbed
 % Upper bound of the absolute value for the complex perturbations
-bound_G = 0.30;
-bound_Gd = 0.30;
+bound_G = 0.4;
+bound_Gd = 0.4;
 [P_Delta,P_aug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
-                (G,Gd,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,Wp,Wu,Wd,Wr,Gact_p);
+                (G,Gd,Gact,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,W_I_Gact_ss,...
+                 Wp,Wu,Wd,Wr);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
-opts_mu = musynOptions('MixedMU','on');
+opts_mu = musynOptions('MixedMU','off');
 tic;
 [mu_syn_data.K_full,CL_mu,mu_syn_data.info_mu] = musyn(P_Delta,nmeas,ncont,opts_mu); 
 mu_syn_data.timerun = toc;
@@ -185,5 +188,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-save('Data Files/Controller_mu_syn.mat','mu_syn_data','Gp_app','Gd_p_app')
+save('Data Files/Controller_mu_syn_act.mat','mu_syn_data','Gp_app','Gd_p_app')
 save('Data Files/Controller_hinf.mat','hinf_data','-append')

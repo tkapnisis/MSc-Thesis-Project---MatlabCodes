@@ -60,11 +60,10 @@ sigmaplot(G,opts_sigma)
 title('Plant Singular Values');
 %}
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wi,Gact,Gact_p] = Design_Weights();
+[Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights();
 
 % Generalized Plant - Nominal
-P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wi,Gact);
-
+P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
 % Hinf Controller synthesis - Nominal Plant
 [hinf_data.K,~,gamma,~] = hinfsyn(P,nmeas,ncont);
 gamma

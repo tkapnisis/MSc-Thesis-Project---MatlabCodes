@@ -37,7 +37,7 @@ opts_sigma.Title.FontSize = 12;
 opts_sigma.Grid = 'on';
 
 %% Calculate weighting functions for multiplicative uncertanties
-%{
+%
 % Approximate the parametric uncertainties as multiplicative uncertainties
 % for each channel of the perturbed plant
 omega = logspace(-2,4,200);
@@ -155,4 +155,4 @@ legend('\boldmath{$G_{d,p}$}\textbf{-Parametric Uncertainty}',...
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Sigma Plot Gd.png'])
 %% Save results
-% save('Data Files/tiplicative_Input_Uncertainty.mat')
+% save('Data Files/Multiplicative_Input_Uncertainty.mat')
