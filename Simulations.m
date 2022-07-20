@@ -12,7 +12,7 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-load('Controller_mu_syn_act.mat')
+load('Controller_mu_syn_last.mat')
 load('Controller_hinf.mat')
 
 % load('Simulations_Results.mat')
@@ -26,11 +26,10 @@ u_eq = [param.theta_s_f0,param.theta_s_ap0,param.theta_s_as0];
 %% Simulations for reference tracking with square signal on heave
 % Time duration of simulations
 dt = 0.02; % sampling time
-tend = 4; % duration of simulation in seconds
+tend = 3; % duration of simulation in seconds
 t = 0:dt:tend;
 
 step_z = 0.1;
-
 ref = [max(0,min(step_z*t,step_z));0*ones(size(t));0*ones(size(t))];
 % ref = [-step_z*square(2*pi/10*t);0*ones(size(t));0*ones(size(t))];
 %% Nominal system
@@ -190,7 +189,7 @@ title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}-synthesis}','interpreter
 
 %%
 % Number of samples for simulating the uncertain systems
-samples = 5;
+samples = 15;
 
 % Calculation of the outputs
 mu_syn_data.y_p_app_dist = lsim_uss(mu_syn_data.Sp_app*Gd_p_app,dw,t,samples);
@@ -205,7 +204,7 @@ mu_syn_data.u_p_dist = lsim_uss(-mu_syn_data.K*mu_syn_data.Sp*Gd_p,dw,t,samples)
 
 hinf_data.u_p_app_dist = lsim_uss(-hinf_data.K*hinf_data.Sp_app*Gd_p_app,dw,t,samples);
 hinf_data.u_p_dist = lsim_uss(-hinf_data.K*hinf_data.Sp*Gd_p,dw,t,samples);
-%%
+
 
 figure
 fig1 = plot_uss_states(t,mu_syn_data.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');

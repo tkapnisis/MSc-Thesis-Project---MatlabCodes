@@ -104,8 +104,8 @@ sigma(T_,opts_sigma);
 legend('\boldmath{$\sigma(T)$}','interpreter','latex','FontSize',15)
 
 figure
-sigma(hinf_data.K*S_,inv(Wu),opts_sigma);
-legend('\boldmath{$\sigma(KS)$}','\boldmath{$W_u^{-1}$}','interpreter','latex','FontSize',15)
+sigma(hinf_data.K*S_*Wr,inv(Wu),opts_sigma);
+legend('\boldmath{$\sigma(KSWr)$}','\boldmath{$W_u^{-1}$}','interpreter','latex','FontSize',15)
 
 figure
 sigma(G_*hinf_data.K,opts_sigma);
@@ -127,10 +127,10 @@ legend('\boldmath{$\sigma(K)$}','interpreter','latex','FontSize',15)
 %% Simulation of the closed loop system with the Hinf controller
 
 figure
-step(hinf_data.T)
+step(hinf_data.T,3)
 title('Step Response with Hinf Controller')
 grid minor
-%%
+
 ref = [-0.05*square(2*pi/10*t);0*ones(size(t));0*ones(size(t))];
 % ref = [0*ones(size(t));0*ones(size(t));-0.2*sin(2*pi/4*t)];
 [y,~,~] = lsim(hinf_data.T,ref,t);

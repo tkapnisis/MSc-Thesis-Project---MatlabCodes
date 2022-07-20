@@ -3,12 +3,12 @@ function [Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights()
 s = zpk('s');
 
 % Performance weighting functions for the sensitivity
-Ms1 = 1.5;
-Ms2 = 1.5;
-Ms3 = 1.5;
-omega_b1 = 2;
-omega_b2 = 2;
-omega_b3 = 2;
+Ms1 = 1;
+Ms2 = 1;
+Ms3 = 1;
+omega_b1 = 1.5;
+omega_b2 = 1.5;
+omega_b3 = 1.5;
 A_1 = 1e-4;
 A_2 = 1e-4;
 A_3 = 1e-4;
@@ -19,9 +19,9 @@ Wp33 = (s/Ms3 + omega_b3)/(s + omega_b3*A_3);
 Wp = blkdiag(Wp11, Wp22 , Wp33);
 
 % Control input weighting functions 
-Mu1 = 1e2;
-Mu2 = 1e2;
-Mu3 = 1e2;
+Mu1 = 1e3;
+Mu2 = 1e3;
+Mu3 = 1e3;
 omega_bc1 = 40;
 omega_bc2 = 40;
 omega_bc3 = 40;
@@ -41,19 +41,27 @@ Wu = blkdiag(Wu11, Wu22 , Wu33);
 % filter (see Ogata p.493)
 % https://www.analog.com/en/analog-dialogue/articles/band-pass-response-in-active-filters.html
 
-omega_w_low = 0.1; 
-omega_w_high = 5;
-k_waves = 1e2; % gain that is used to increase the magnitude of the filter
-LPF_w = omega_w_low/(s + omega_w_low);
-HPF_w = s/(s + omega_w_high);
-BPF_w = k_waves*LPF_w*HPF_w;
+% omega_w_low = 0.33; 
+% omega_w_high = 3.63;
+% k_waves = 2e1; % gain that is used to increase the magnitude of the filter
+% LPF_w = omega_w_low/(s + omega_w_low);
+% HPF_w = s/(s + omega_w_high);
+% BPF_w = k_waves*LPF_w*HPF_w;
+
+omega_L = 0.33;
+omega_H = 3.63;
+omega_0 = sqrt(omega_H*omega_L);
+Q = omega_0/(omega_H-omega_L);
+H0 = 2;
+BPF_w = (H0*(omega_0/Q)*s)/(s^2 + omega_0/Q*s + omega_0^2);
+
 Wd = blkdiag(BPF_w,BPF_w,BPF_w,BPF_w,BPF_w,BPF_w);
 
 % Design low-pass filters for the frequency content of the reference
 % signals
-tau_r1 = 0.5;
-tau_r2 = 0.5;
-tau_r3 = 0.5;
+tau_r1 = 2;
+tau_r2 = 2;
+tau_r3 = 2;
 mag_r1 = 0.1;
 mag_r2 = 0.1;
 mag_r3 = 0.1;
@@ -61,6 +69,7 @@ Wr11 = mag_r1/(tau_r1*s + 1);
 Wr22 = mag_r2/(tau_r2*s + 1);
 Wr33 = mag_r3/(tau_r3*s + 1);
 Wr = blkdiag(Wr11, Wr22 , Wr33);
+
 
 tau_s_n = 0.05; 
 Gact_i_n = 1/(tau_s_n*s + 1);

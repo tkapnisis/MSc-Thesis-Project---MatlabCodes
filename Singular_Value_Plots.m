@@ -13,8 +13,8 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-load('Controller_mu_syn.mat')
-% load('Controller_mu_syn_act.mat')
+% load('Controller_mu_syn.mat')
+load('Controller_mu_syn_last.mat')
 load('Controller_hinf.mat')
 
 % Nominal plant G(s)
@@ -90,14 +90,14 @@ legend([fig1,fig2],'\boldmath{$\sigma(T):\mu-$}\textbf{synthesis}',...
 
 omega=logspace(-3,6,200);
 [weights.sv_Wu,weights.wout_Wu] = sigma(inv(Wu),omega);
-[mu_syn_data.sv_KS,mu_syn_data.wout_KS] = sigma(mu_syn_data.K*mu_syn_data.S,omega);
-[hinf_data.sv_KS,hinf_data.wout_KS] = sigma(hinf_data.K*hinf_data.S,omega);
+[mu_syn_data.sv_KS,mu_syn_data.wout_KS] = sigma(mu_syn_data.K*mu_syn_data.S*Wr,omega);
+[hinf_data.sv_KS,hinf_data.wout_KS] = sigma(hinf_data.K*hinf_data.S*Wr,omega);
 
 [fig1,fig2,fig3] = loglog_custom(mu_syn_data.sv_KS,mu_syn_data.wout_KS,...
            hinf_data.sv_KS,hinf_data.wout_KS,weights.sv_Wu,weights.wout_Wu,3);
 
-legend([fig1,fig2,fig3],'\boldmath{$\sigma(KS):\mu-$}\textbf{synthesis}',...
-       '\boldmath{$\sigma(KS):h_{\infty}$}','\boldmath{$\sigma(W_u^{-1})$}',...
+legend([fig1,fig2,fig3],'\boldmath{$\sigma(KSWr):\mu-$}\textbf{synthesis}',...
+       '\boldmath{$\sigma(KSWr):h_{\infty}$}','\boldmath{$\sigma(W_u^{-1})$}',...
        'interpreter','latex','FontSize',12,'Location','best')
 %% Loop Tranfer Function Matrix
 % figure
@@ -121,14 +121,15 @@ legend([fig1,fig2],'\boldmath{$\sigma(L):\mu-$}\textbf{synthesis}',...
 % legend('\boldmath{$\sigma(K S G_d)$}','interpreter','latex','FontSize',15)
 
 omega=logspace(-5,4,200);
-[mu_syn_data.sv_KSGd,mu_syn_data.wout_KSGd] = sigma(mu_syn_data.K*mu_syn_data.S*Gd,omega);
-[hinf_data.sv_KSGd,hinf_data.wout_KSGd] = sigma(hinf_data.K*hinf_data.S*Gd,omega);
+[weights.sv_Wu,weights.wout_Wu] = sigma(inv(Wu),omega);
+[mu_syn_data.sv_KSGd,mu_syn_data.wout_KSGd] = sigma(mu_syn_data.K*mu_syn_data.S*Gd*Wd,omega);
+[hinf_data.sv_KSGd,hinf_data.wout_KSGd] = sigma(hinf_data.K*hinf_data.S*Gd*Wd,omega);
 
-[fig1,fig2,~] = loglog_custom(mu_syn_data.sv_KSGd,mu_syn_data.wout_KSGd,...
-           hinf_data.sv_KSGd,hinf_data.wout_KSGd,[],[],2);
+[fig1,fig2,fig3] = loglog_custom(mu_syn_data.sv_KSGd,mu_syn_data.wout_KSGd,...
+           hinf_data.sv_KSGd,hinf_data.wout_KSGd,weights.sv_Wu,weights.wout_Wu,3);
 
-legend([fig1,fig2],'\boldmath{$\sigma(KSGd):\mu-$}\textbf{synthesis}',...
-       '\boldmath{$\sigma(KSGd):h_{\infty}$}','interpreter','latex','FontSize',12,...
+legend([fig1,fig2,fig3],'\boldmath{$\sigma(KSGdWd):\mu-$}\textbf{synthesis}',...
+       '\boldmath{$\sigma(KSGdWd):h_{\infty}$}','\boldmath{$\sigma(W_u^{-1})$}','interpreter','latex','FontSize',12,...
        'Location','best')
 %% SGd (Contribution of disturbance to the error)
 % figure
@@ -161,3 +162,23 @@ omega=logspace(-6,6,200);
 legend([fig1,fig2],'\boldmath{$\sigma(K):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(K):h_{\infty}$}','interpreter','latex','FontSize',12,...
        'Location','best')
+
+
+%% Controller multiplied by Sensitivity (Contribution of reference to the control signal)
+% figure
+% sigma(hinf_data.K*hinf_data.S,mu_syn_data.K*mu_syn_data.S,inv(Wu),opts_sigma);
+% legend('\boldmath{$\sigma(KS)$}','interpreter','latex','FontSize',15)
+
+omega=logspace(-4,6,200);
+[weights.sv_Wu,weights.wout_Wu] = sigma(inv(Wu),omega);
+[mu_syn_data.sv_KS,mu_syn_data.wout_KS] = sigma(mu_syn_data.K*mu_syn_data.S,omega);
+[hinf_data.sv_KS,hinf_data.wout_KS] = sigma(hinf_data.K*hinf_data.S,omega);
+[mu_syn_data.sv_KSGd,mu_syn_data.wout_KSGd] = sigma(mu_syn_data.K*mu_syn_data.S*Gd,omega);
+[hinf_data.sv_KSGd,hinf_data.wout_KSGd] = sigma(hinf_data.K*hinf_data.S*Gd,omega);
+
+[fig1,fig2,fig3] = loglog_custom(mu_syn_data.sv_KS+mu_syn_data.sv_KSGd,mu_syn_data.wout_KS,...
+           hinf_data.sv_KS+hinf_data.sv_KSGd,hinf_data.wout_KS,weights.sv_Wu,weights.wout_Wu,3);
+
+legend([fig1,fig2,fig3],'\boldmath{$\sigma(KS):\mu-$}\textbf{synthesis}',...
+       '\boldmath{$\sigma(KS):h_{\infty}$}','\boldmath{$\sigma(W_u^{-1})$}',...
+       'interpreter','latex','FontSize',12,'Location','best')

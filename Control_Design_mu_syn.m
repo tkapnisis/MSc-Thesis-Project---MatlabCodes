@@ -188,5 +188,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-save('Data Files/Controller_mu_syn_act.mat','mu_syn_data','Gp_app','Gd_p_app')
+save('Data Files/Controller_mu_syn_last.mat','mu_syn_data','Gp_app','Gd_p_app')
 save('Data Files/Controller_hinf.mat','hinf_data','-append')
