@@ -10,11 +10,11 @@ clear all
 addpath('Plotting Functions')
 addpath('Data Files')
 
-load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
+load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p')
 load('Parameters_Nominal.mat','param')
-load('LTI_Nominal_Plant.mat','foil_loc')
-% load('Controller_mu_syn.mat')
-load('Controller_mu_syn_last.mat')
+load('LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
+
+load('Controller_mu_syn.mat')
 load('Controller_hinf.mat')
 
 % Nominal plant G(s)
@@ -26,7 +26,7 @@ run Bode_options.m
 run Sigma_options.m
 
 % Define the Weighting Functions for the controller synthesis
-[Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights();
+[Wp,Wu,Wd,Wr] = Design_Weights();
 
 %% RGA 
 %{ 

@@ -9,15 +9,17 @@ close all
 addpath('Plotting Functions')
 addpath('Data Files')
 
-load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
+load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p')
 load('Parameters_Nominal.mat','param')
-load('LTI_Nominal_Plant.mat','foil_loc')
+save('LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
 load('Multiplicative_Input_Uncertainty.mat','W_I_G_ss','W_I_Gd_ss')
 load('Multiplicative_Input_Uncertainty_Act.mat','W_I_Gact_ss')
 load('Controller_hinf.mat')
 
-% Nominal plant G(s)
-% Disturbances transfer matrix Gd(s)
+% load('Controller_mu_syn_act.mat')
+% Nominal plant model G(s)
+% Nominal disturbance model Gd(s)
+% Nominal actuators 
 % Perturbed plant with uncertain parameters Gp(s)
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
 
@@ -29,14 +31,14 @@ run Sigma_options.m
 
 % Define the Weighting Functions for the mu-synthesis controller (same as
 % hinf design for the nominal plant
-[Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights();
+[Wp,Wu,Wd,Wr] = Design_Weights();
 
 %% Generalized Plant - Perturbed
 % Upper bound of the absolute value for the complex perturbations
 bound_G = 0.4;
 bound_Gd = 0.4;
 [P_Delta,P_aug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
-                (G,Gd,Gact,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,W_I_Gact_ss,...
+                (G,Gd,Gsm,bound_G,bound_Gd,W_I_G_ss,W_I_Gd_ss,W_I_Gact_ss,...
                  Wp,Wu,Wd,Wr);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
@@ -74,7 +76,7 @@ hinf_data.Lp_app = hinf_data.loops_p_app.Lo;
 hinf_data.Tp_app = hinf_data.loops_p_app.To;
 hinf_data.Sp_app = hinf_data.loops_p_app.So;
 
-mu_syn_data.loops = loopsens(G*Gact,mu_syn_data.K);
+mu_syn_data.loops = loopsens(G*Gsm,mu_syn_data.K);
 mu_syn_data.L = mu_syn_data.loops.Lo;
 mu_syn_data.T = mu_syn_data.loops.To;
 mu_syn_data.S = mu_syn_data.loops.So;
@@ -84,7 +86,7 @@ mu_syn_data.Lp_app = mu_syn_data.loops_p_app.Lo;
 mu_syn_data.Tp_app = mu_syn_data.loops_p_app.To;
 mu_syn_data.Sp_app = mu_syn_data.loops_p_app.So;
 
-mu_syn_data.loops_p = loopsens(Gp*Gact_p,mu_syn_data.K);
+mu_syn_data.loops_p = loopsens(Gp*Gsm_p,mu_syn_data.K);
 mu_syn_data.Lp = mu_syn_data.loops_p.Lo;
 mu_syn_data.Tp = mu_syn_data.loops_p.To;
 mu_syn_data.Sp = mu_syn_data.loops_p.So;
@@ -187,5 +189,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-save('Data Files/Controller_mu_syn_act.mat','mu_syn_data','Gp_app','Gd_p_app')
+save('Data Files/Controller_mu_syn.mat','mu_syn_data','Gp_app','Gd_p_app')
 save('Data Files/Controller_hinf.mat','hinf_data','-append')

@@ -4,7 +4,7 @@ function [P_Delta,P_aug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
 
 states = {'z', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
 inputs = {'u_in_un(1)';'u_in_un(2)';'u_in_un(3)'};
-disturbances = {'dw_un(1)';'dw_un(2)';'dw_un(3)';'dw_un(4)';'dw_un(5)';'dw_un(6)'};
+disturbances = {'dw_w_un(1)';'dw_w_un(2)';'dw_w_un(3)';'dw_w_un(4)';'dw_w_un(5)';'dw_w_un(6)'};
 outputs = {'y(1)';'y(2)';'y(3)'};
 G_aug = ss(G.A,[G.B,Gd.B],G.C,[G.D,Gd.D],'statename',states,'inputname',...
                                [inputs;disturbances],'outputname',outputs);

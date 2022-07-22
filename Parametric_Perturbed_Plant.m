@@ -1,4 +1,4 @@
-function [A_u,B_u,Bd_u,C_u,D_u,Dd_u,Gsm,Gsm_p] = Parametric_Perturbed_Plant(param,A_s,B_s,Bd_s,C_s,D_s,Dd_s)
+function [A_u,B_u,Bd_u,C_u,D_u,Dd_u,Gsm_p,g_sm_p_i] = Parametric_Perturbed_Plant(param,A_s,B_s,Bd_s,C_s,D_s,Dd_s)
 
 m = param.m;    % Mass kg 
 g = param.g;    % Gravity acceleration [m/s^2]
@@ -83,16 +83,11 @@ C_u = C_s;
 D_u = D_s;
 Dd_u =  Dd_s;
 
-% State space of the nominal actuators model
-Gsm_f = ss(-1/param.tau_d_f.NominalValue,1/param.tau_d_f.NominalValue,1,0); 
-Gsm_ap = ss(-1/param.tau_d_ap.NominalValue,1/param.tau_d_ap.NominalValue,1,0); 
-Gsm_as = ss(-1/param.tau_d_as.NominalValue,1/param.tau_d_as.NominalValue,1,0); 
-Gsm = blkdiag(Gsm_f,Gsm_ap,Gsm_as);
-
-% State space of the nominal actuators model
-Gsm_f_p = ss(-1/param.tau_d_f,1/param.tau_d_f,1,0); 
-Gsm_ap_p = ss(-1/param.tau_d_ap,1/param.tau_d_ap,1,0); 
-Gsm_as_p = ss(-1/param.tau_d_as,1/param.tau_d_as,1,0); 
-Gsm_p = blkdiag(Gsm_f_p,Gsm_ap_p,Gsm_as_p);
+% State space of the perturbed actuator model
+g_sm_f_p = ss(-1/param.tau_d_f,1/param.tau_d_f,1,0); 
+g_sm_ap_p = ss(-1/param.tau_d_ap,1/param.tau_d_ap,1,0); 
+g_sm_as_p = ss(-1/param.tau_d_as,1/param.tau_d_as,1,0); 
+g_sm_p_i = g_sm_f_p;
+Gsm_p = blkdiag(g_sm_f_p,g_sm_ap_p,g_sm_as_p);
 
 end

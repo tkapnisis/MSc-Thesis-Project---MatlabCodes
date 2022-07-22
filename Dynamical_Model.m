@@ -233,10 +233,13 @@ save('Data Files/Parameters_Nominal.mat','delta_s_f0','alpha_s_f0','delta_s_ap0'
 %% Linearized dynamical model with symbolic variables
 
 A_s = [zeros(3,3), eye(3); M_3_inv*(C_x + tau_f_x + tau_ap_x + tau_as_x)];
+% A_s = simplify(A_s);
 
 B_s = [zeros(3,3); M_3_inv*[tau_f_u, tau_ap_u, tau_as_u]];
+% B_s = simplify(B_s);
 
 Bd_s = [zeros(3,6); M_3_inv*[tau_f_w, tau_ap_w, tau_as_w]];
+% Bd_s = simplify(Bd_s);
 
 C_s = [eye(3), zeros(3,3)];
 
@@ -285,34 +288,35 @@ Dd = zeros(3,6);
 
 % Definitons of the state space
 states = {'z_n', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
-inputs = {'delta_s_f';'delta_s_ap';'delta_s_as'};
+act_inputs = {'delta_sf';'delta_sap';'delta_sas'}; % Actual angles of servo motors
+com_inputs = {'delta_sfc';'delta_sapc';'delta_sasc'}; % Commanded angles of servo motors
 outputs = {'z_n'; 'phi'; 'theta'};
 disturbances = {'u_w_f';'w_w_f';'u_w_ap';'w_w_ap';'u_w_as';'w_w_as'};
 
 % State space of the nominal plant model
-G = ss(A,B,C,D,'statename',states,'inputname',inputs,'outputname',outputs); 
+G = ss(A,B,C,D,'statename',states,'inputname',act_inputs,'outputname',outputs); 
 % State space of the disturbance model
 Gd = ss(A,Bd,C,Dd,'statename',states,'inputname',disturbances,'outputname',outputs); 
 
 % State space of the nominal actuators model
 % state space of low pass filter (http://www.mbstudent.com/control-theory-state-space-representation-RC-circuit-example.html)
-Gsm_f = ss(-1/tau_d_f,1/tau_d_f,1,0); 
-Gsm_ap = ss(-1/tau_d_ap,1/tau_d_ap,1,0); 
-Gsm_as = ss(-1/tau_d_as,1/tau_d_as,1,0); 
-Gsm = blkdiag(Gsm_f,Gsm_ap,Gsm_as);
+g_sm_f = ss(-1/tau_d_f,1/tau_d_f,1,0); 
+g_sm_ap = ss(-1/tau_d_ap,1/tau_d_ap,1,0); 
+g_sm_as = ss(-1/tau_d_as,1/tau_d_as,1,0); 
+g_sm_i = g_sm_f;
+Gsm = blkdiag(g_sm_f,g_sm_ap,g_sm_as);
+Gsm = ss(Gsm.A,Gsm.B,Gsm.C,Gsm.D,'statename',act_inputs,'inputname',com_inputs,'outputname',act_inputs);
 
-% Checking if the system is controlable
+% Checking if the system is controlable and observable
 Controlability=rank(ctrb(A,B));
 Observability=rank(obsv(A,C));
 
 % MIMO poles and zeros of G
 ps = pole(G);
 zs = tzero(G);
-% figure
-% pzmap(G)
-% grid on
 
-save('Data Files/LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
+
+save('Data Files/LTI_Nominal_Plant.mat','G','Gd','Gsm','g_sm_i','foil_loc')
 %% Matrices in CSV files for the report
 %{
 cd CSV_files

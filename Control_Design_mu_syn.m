@@ -9,18 +9,20 @@ close all
 addpath('Plotting Functions')
 addpath('Data Files')
 
-load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p','Gsm','Gsm_p')
+load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p')
 load('Parameters_Nominal.mat','param')
-load('LTI_Nominal_Plant.mat','foil_loc')
+load('LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
 load('Multiplicative_Input_Uncertainty.mat','W_I_G_ss','W_I_Gd_ss')
 load('Multiplicative_Input_Uncertainty_Act.mat','W_I_Gact_ss')
 load('Controller_hinf.mat')
 
 % load('Controller_mu_syn_act.mat')
-% Nominal plant G(s)
-% Disturbances transfer matrix Gd(s)
-% Perturbed plant with uncertain parameters Gp(s)
-% Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
+% Nominal plant model G(s)
+% Nominal disturbance model Gd(s)
+% Nominal actuator model Gsm(s)
+% Perturbed plant model with uncertain parameters Gp(s)
+% Perturbed disturbance model with uncertain parameters Gd_p(s)
+% Perturbed actuator model with uncertain parameters Gsm_p(s)
 
 nmeas = 3; % number of outputs 
 ncont = 3; % number of inputs
@@ -188,5 +190,5 @@ grid on
 title('Step response - Reference tracking with PD controller')
 %}
 %% Save data
-save('Data Files/Controller_mu_syn_lastlast.mat','mu_syn_data','Gp_app','Gd_p_app')
+save('Data Files/Controller_mu_syn.mat','mu_syn_data','Gp_app','Gd_p_app')
 save('Data Files/Controller_hinf.mat','hinf_data','-append')

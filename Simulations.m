@@ -9,10 +9,11 @@ close all
 addpath('Plotting Functions')
 addpath('Data Files')
 
-load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
+
+load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p')
 load('Parameters_Nominal.mat','param')
-load('LTI_Nominal_Plant.mat','foil_loc')
-load('Controller_mu_syn_lastlast.mat')
+load('LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
+load('Controller_mu_syn.mat')
 load('Controller_hinf.mat')
 
 % load('Simulations_Results.mat')
@@ -26,7 +27,7 @@ u_eq = [param.delta_s_f0,param.delta_s_ap0,param.delta_s_as0];
 %% Simulations for reference tracking with square signal on heave
 % Time duration of simulations
 dt = 0.02; % sampling time
-tend = 3; % duration of simulation in seconds
+tend = 4; % duration of simulation in seconds
 t = 0:dt:tend;
 
 step_z = 0.1;
@@ -66,19 +67,19 @@ title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}}','interpreter','latex',
 
 %% Perturbed system
 % Number of samples for simulating the uncertain systems
-samples = 2;
+samples = 10;
 
 % Calculation of the outputs for the perturbed system
 mu_syn_data.y_p_app_ref = lsim_uss(mu_syn_data.Tp_app,ref,t,samples);
 mu_syn_data.y_p_ref = lsim_uss(mu_syn_data.Tp,ref,t,samples);
-
+1
 hinf_data.y_p_app_ref = lsim_uss(hinf_data.Tp_app,ref,t,samples);
 hinf_data.y_p_ref = lsim_uss(hinf_data.Tp,ref,t,samples);
-
+2
 % Calculation of the control inputs for the perturbed system
 mu_syn_data.u_p_app_ref = lsim_uss(mu_syn_data.K*mu_syn_data.Sp_app,ref,t,samples);
 mu_syn_data.u_p_ref = lsim_uss(mu_syn_data.K*mu_syn_data.Sp,ref,t,samples);
-
+3
 hinf_data.u_p_app_ref = lsim_uss(hinf_data.K*hinf_data.Sp_app,ref,t,samples);
 hinf_data.u_p_ref = lsim_uss(hinf_data.K*hinf_data.Sp,ref,t,samples);
 %%
@@ -149,9 +150,9 @@ t = 0:dt:tend;
 %  Calculation of waves velocity profile for each hydrofoil
 
 % Parameters of long-crested regular wave
-wave_param.omega_0 = 1.5;  % Wave frequency [rad/s]
-wave_param.lambda = 2;   % Wave length [m]
-wave_param.zeta_0 = 0.1;  % Wave amplitude [m]
+wave_param.omega_0 = 0.8;  % Wave frequency [rad/s]
+wave_param.lambda = 0.5;   % Wave length [m]
+wave_param.zeta_0 = 0.15;  % Wave amplitude [m]
 wave_param.beta = pi;      % Encounter angle (beta=0 for following waves) [rad] 
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
