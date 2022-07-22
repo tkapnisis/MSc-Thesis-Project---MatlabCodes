@@ -12,7 +12,7 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
-load('Controller_mu_syn_last.mat')
+load('Controller_mu_syn_lastlast.mat')
 load('Controller_hinf.mat')
 
 % load('Simulations_Results.mat')
@@ -22,7 +22,7 @@ load('Controller_hinf.mat')
 % Perturbed disturbances transfer matrix with uncertain parameters Gd_p(s)
 
 % Equilibrium input
-u_eq = [param.theta_s_f0,param.theta_s_ap0,param.theta_s_as0];
+u_eq = [param.delta_s_f0,param.delta_s_ap0,param.delta_s_as0];
 %% Simulations for reference tracking with square signal on heave
 % Time duration of simulations
 dt = 0.02; % sampling time

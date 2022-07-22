@@ -9,9 +9,9 @@ close all
 
 syms u v r w q p                        % Velocities for the 6 DOF model
 syms x_n y_n z_n phi theta psi          % Positions for the 6 DOF model
-syms theta_s theta_s_f theta_s_ap theta_s_as  % Inputs
+syms delta_s delta_s_f delta_s_ap delta_s_as  % Inputs
 syms z_n0 U_0                           % Operating point of states
-syms theta_s0 theta_s_f0 theta_s_ap0 theta_s_as0 % Operating point of inputs
+syms delta_s0 delta_s_f0 delta_s_ap0 delta_s_as0 % Operating point of inputs
 syms m I_x I_y I_z I_xy I_xz I_yz       % Mass and moment of inertia
 syms g rho                              % Environment parameters
 syms A_h C_L0 C_La C_D0 C_Da            % Hydrofoil parameters
@@ -87,7 +87,7 @@ g_x = subs(g_x,x,x_eq);
 % Swinging angle of the hydrofoil (pitching angle of the hydrofoil with
 % respect to craft body) defined as the angle between the chord line of the
 % hydrofoil and the x_f axis.
-alpha_s = -l_s/h_h*theta_s;   
+alpha_s = -l_s/h_h*delta_s;   
 
 % Total x distance between the centre of pressure of each hydrofoil and CG
 l_x = l_xj + sin(gamma_0 + alpha_s )*l_b;
@@ -155,28 +155,28 @@ tau_i3 = L * tau_i;
 
 % Nonlinear equations for the reduced-order vector for hydrodynamic forces
 % of each hydrofoil
-tau_f3 = subs(tau_i3,[l_xj,l_y, l_zj, theta_s],[l_xj_f, l_y_f, l_zj_f, theta_s_f]);
-tau_ap3 = subs(tau_i3,[l_xj,l_y, l_zj, theta_s],[l_xj_ap, l_y_ap, l_zj_ap, theta_s_ap]);
-tau_as3 = subs(tau_i3,[l_xj,l_y, l_zj, theta_s],[l_xj_as, l_y_as, l_zj_as, theta_s_as]);
+tau_f3 = subs(tau_i3,[l_xj,l_y, l_zj, delta_s],[l_xj_f, l_y_f, l_zj_f, delta_s_f]);
+tau_ap3 = subs(tau_i3,[l_xj,l_y, l_zj, delta_s],[l_xj_ap, l_y_ap, l_zj_ap, delta_s_ap]);
+tau_as3 = subs(tau_i3,[l_xj,l_y, l_zj, delta_s],[l_xj_as, l_y_as, l_zj_as, delta_s_as]);
 
 % Linearization
 % Partial derivative about x
 tau_i_x = jacobian(tau_i3,x);
-tau_i_x = subs(tau_i_x,[x,theta_s,u_w,w_w],[x_eq,theta_s0,0,0]);
+tau_i_x = subs(tau_i_x,[x,delta_s,u_w,w_w],[x_eq,delta_s0,0,0]);
 
 % Partial derivative about u
-tau_i_u = jacobian(tau_i3,theta_s);
-tau_i_u = subs(tau_i_u,[x,theta_s,u_w,w_w],[x_eq,theta_s0,0,0]);
+tau_i_u = jacobian(tau_i3,delta_s);
+tau_i_u = subs(tau_i_u,[x,delta_s,u_w,w_w],[x_eq,delta_s0,0,0]);
 
 % Partial derivative about wave disturbances
 tau_i_w = jacobian(tau_i3,[u_w,w_w]);
-tau_i_w = subs(tau_i_w,[x,theta_s,u_w,w_w],[x_eq,theta_s0,0,0]);
+tau_i_w = subs(tau_i_w,[x,delta_s,u_w,w_w],[x_eq,delta_s0,0,0]);
 
 % Parameters that are different for each hydrofoil
-h_param = [l_xj,l_y, l_zj, theta_s0];
-h_param_f = [l_xj_f, l_y_f, l_zj_f, theta_s_f0]; 
-h_param_ap = [l_xj_ap, l_y_ap, l_zj_ap, theta_s_ap0];
-h_param_as = [l_xj_as, l_y_as, l_zj_as, theta_s_as0];
+h_param = [l_xj,l_y, l_zj, delta_s0];
+h_param_f = [l_xj_f, l_y_f, l_zj_f, delta_s_f0]; 
+h_param_ap = [l_xj_ap, l_y_ap, l_zj_ap, delta_s_ap0];
+h_param_as = [l_xj_as, l_y_as, l_zj_as, delta_s_as0];
 
 % % Linearized hydrodynamic force matrices for each hydrofoil
 tau_f_x = subs(tau_i_x,h_param,h_param_f);
@@ -192,7 +192,7 @@ tau_ap_w = subs(tau_i_w,h_param,h_param_ap);
 tau_as_w = subs(tau_i_w,h_param,h_param_as);
 
 % Linearized locations and submergence for each hydrofoil
-h_param = [l_xj,l_y, l_zj, theta_s];
+h_param = [l_xj,l_y, l_zj, delta_s];
 l_x_f = subs(l_x,h_param,h_param_f);
 l_x_ap = subs(l_x,h_param,h_param_ap);
 l_x_as = subs(l_x,h_param,h_param_as);
@@ -212,23 +212,23 @@ load Parameters_Nominal.mat
 xdot_xeq = subs(xdot_xeq_sym);
 xdot_xeq_eq = xdot_xeq == 0;
 
-u_eq = vpasolve(xdot_xeq_eq, [theta_s_f, theta_s_ap, theta_s_as]);
+u_eq = vpasolve(xdot_xeq_eq, [delta_s_f, delta_s_ap, delta_s_as]);
 
-theta_s_f0 = double(u_eq.theta_s_f);
-alpha_s_f0 = rad2deg(-l_s/h_h*theta_s_f0);
+delta_s_f0 = double(u_eq.delta_s_f);
+alpha_s_f0 = rad2deg(-l_s/h_h*delta_s_f0);
 
-theta_s_ap0 = double(u_eq.theta_s_ap);
-alpha_s_ap0 = rad2deg(-l_s/h_h*theta_s_ap0);
+delta_s_ap0 = double(u_eq.delta_s_ap);
+alpha_s_ap0 = rad2deg(-l_s/h_h*delta_s_ap0);
 
-theta_s_as0 = double(u_eq.theta_s_as);
-alpha_s_as0 = rad2deg(-l_s/h_h*theta_s_as0);
+delta_s_as0 = double(u_eq.delta_s_as);
+alpha_s_as0 = rad2deg(-l_s/h_h*delta_s_as0);
 
-param.theta_s_f0 = theta_s_f0;  % Operating angle of servo motors for the fore hydrofoil
-param.theta_s_ap0 = theta_s_ap0; % Operating angle of servo motors for the aft port hydrofoil
-param.theta_s_as0 = theta_s_as0; % Operating angle of servo motors for the aft starboard hydrofoil
+param.delta_s_f0 = delta_s_f0;  % Operating angle of servo motors for the fore hydrofoil
+param.delta_s_ap0 = delta_s_ap0; % Operating angle of servo motors for the aft port hydrofoil
+param.delta_s_as0 = delta_s_as0; % Operating angle of servo motors for the aft starboard hydrofoil
 
-save('Data Files/Parameters_Nominal.mat','theta_s_f0','alpha_s_f0','theta_s_ap0',...
-     'alpha_s_ap0','theta_s_as0','alpha_s_as0','param','-append')
+save('Data Files/Parameters_Nominal.mat','delta_s_f0','alpha_s_f0','delta_s_ap0',...
+     'alpha_s_ap0','delta_s_as0','alpha_s_as0','param','-append')
 
 %% Linearized dynamical model with symbolic variables
 
@@ -245,7 +245,7 @@ D_s = zeros(3,3);
 Dd_s = zeros(3,6);
 
 save('Data Files/LTI_Symbolic_Matrices.mat','A_s','B_s','Bd_s','C_s','D_s','Dd_s')
-%}
+
 %% Linearized dynamical model with numerical values
 
 M_3_inv_n = double(subs(M_3_inv));
@@ -285,7 +285,7 @@ Dd = zeros(3,6);
 
 % Definitons of the state space
 states = {'z_n', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
-inputs = {'theta_s_f';'theta_s_ap';'theta_s_as'};
+inputs = {'delta_s_f';'delta_s_ap';'delta_s_as'};
 outputs = {'z_n'; 'phi'; 'theta'};
 disturbances = {'u_w_f';'w_w_f';'u_w_ap';'w_w_ap';'u_w_as';'w_w_as'};
 
@@ -293,6 +293,13 @@ disturbances = {'u_w_f';'w_w_f';'u_w_ap';'w_w_ap';'u_w_as';'w_w_as'};
 G = ss(A,B,C,D,'statename',states,'inputname',inputs,'outputname',outputs); 
 % State space of the disturbance model
 Gd = ss(A,Bd,C,Dd,'statename',states,'inputname',disturbances,'outputname',outputs); 
+
+% State space of the nominal actuators model
+% state space of low pass filter (http://www.mbstudent.com/control-theory-state-space-representation-RC-circuit-example.html)
+Gsm_f = ss(-1/tau_d_f,1/tau_d_f,1,0); 
+Gsm_ap = ss(-1/tau_d_ap,1/tau_d_ap,1,0); 
+Gsm_as = ss(-1/tau_d_as,1/tau_d_as,1,0); 
+Gsm = blkdiag(Gsm_f,Gsm_ap,Gsm_as);
 
 % Checking if the system is controlable
 Controlability=rank(ctrb(A,B));
@@ -305,7 +312,7 @@ zs = tzero(G);
 % pzmap(G)
 % grid on
 
-save('Data Files/LTI_Nominal_Plant.mat','G','Gd','foil_loc')
+save('Data Files/LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
 %% Matrices in CSV files for the report
 %{
 cd CSV_files

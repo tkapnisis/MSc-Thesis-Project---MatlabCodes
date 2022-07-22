@@ -9,7 +9,7 @@ close all
 addpath('Plotting Functions')
 addpath('Data Files')
 
-load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p')
+load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p','Gsm','Gsm_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','foil_loc')
 
@@ -30,7 +30,7 @@ tend = 20; % duration of simulation in seconds
 t = 0:dt:tend;
 
 % Equilibrium input
-u_eq = [param.theta_s_f0,param.theta_s_ap0,param.theta_s_as0];
+u_eq = [param.delta_s_f0,param.delta_s_ap0,param.delta_s_as0];
 %% Pole-zero map of the open-loops of nominal and perturbed plant
 %{
 % Pole-zero map of the open-loop G(s)
@@ -60,26 +60,26 @@ sigmaplot(G,opts_sigma)
 title('Plant Singular Values');
 %}
 %% Define the Weighting Functions for the Hinf controller
-[Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights();
+[Wp,Wu,Wd,Wr] = Design_Weights();
 
 % Generalized Plant - Nominal
-P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gact);
+P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gsm);
 % Hinf Controller synthesis - Nominal Plant
 [hinf_data.K,~,gamma,~] = hinfsyn(P,nmeas,ncont);
 gamma
 
 
-hinf_data.loops = loopsens(G*Gact,hinf_data.K);
+hinf_data.loops = loopsens(G*Gsm,hinf_data.K);
 hinf_data.L = hinf_data.loops.Lo;
 hinf_data.T = hinf_data.loops.To;
 hinf_data.S = hinf_data.loops.So;
 
-hinf_data.loops_p = loopsens(Gp*Gact_p,hinf_data.K);
+hinf_data.loops_p = loopsens(Gp*Gsm_p,hinf_data.K);
 hinf_data.Lp = hinf_data.loops_p.Lo;
 hinf_data.Tp = hinf_data.loops_p.To;
 hinf_data.Sp = hinf_data.loops_p.So;
 
-select = 1;
+select = 2;
 switch select
     case 1
         T_ = hinf_data.T;
@@ -97,7 +97,8 @@ end
 %
 figure
 sigma(S_,inv(Wp),opts_sigma);
-legend('\boldmath{$\sigma(S)$}','\boldmath{$W_p^{-1}$}','interpreter','latex','FontSize',15)
+legend('\boldmath{$\sigma(S)$}','\boldmath{$W_p^{-1}$}','interpreter','latex','FontSize',15,...
+       'location','best')
 
 figure
 sigma(T_,opts_sigma);
@@ -127,10 +128,11 @@ legend('\boldmath{$\sigma(K)$}','interpreter','latex','FontSize',15)
 %% Simulation of the closed loop system with the Hinf controller
 
 figure
-step(hinf_data.T,3)
+step(hinf_data.T,T_,5)
 title('Step Response with Hinf Controller')
 grid minor
 
+%%
 ref = [-0.05*square(2*pi/10*t);0*ones(size(t));0*ones(size(t))];
 % ref = [0*ones(size(t));0*ones(size(t));-0.2*sin(2*pi/4*t)];
 [y,~,~] = lsim(hinf_data.T,ref,t);

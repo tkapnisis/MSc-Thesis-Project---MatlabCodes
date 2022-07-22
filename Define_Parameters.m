@@ -55,6 +55,11 @@ l_zj_ap = 0.006;     % z distance between the hinge of aft port hydrofoil
 l_zj_as = 0.006;     % z distance between the hinge of aft starport
                      % hydrofoil and CG [m]
 
+% Time constant of servo motors first-order model                     
+tau_d_f = 0.05;      % Fore foil [s]
+tau_d_ap = 0.05;     % Aft port foil [s]
+tau_d_as = 0.05;     % Aft starboard foil [s]
+
 %%%%%%%%%%%%%%%% Define all the parameters with a structure %%%%%%%%%%%%%%%                   
 
 % Enviromnent conditions
@@ -104,4 +109,9 @@ param.l_zj_ap = l_zj_ap; % z distance between the hinge of aft port hydrofoil
 param.l_zj_as = l_zj_as; % z distance between the hinge of aft starboard
                          % hydrofoil and CG [m]      
 
-save('Parameters_Nominal.mat')                         
+% Time constant of servo motors first-order model                     
+param.tau_d_f = tau_d_f;    %Fore foil 
+param.tau_d_ap = tau_d_ap;  % Aft port foil
+param.tau_d_as = tau_d_as;  % Aft starboard foil
+  
+save('Data Files/Parameters_Nominal.mat')                         

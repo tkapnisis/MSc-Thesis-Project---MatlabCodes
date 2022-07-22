@@ -1,14 +1,14 @@
-function [Wp,Wu,Wd,Wr,Gact,Gact_p] = Design_Weights()
+function [Wp,Wu,Wd,Wr] = Design_Weights()
 
 s = zpk('s');
 
 % Performance weighting functions for the sensitivity
-Ms1 = 1;
-Ms2 = 1;
-Ms3 = 1;
-omega_b1 = 1.5;
-omega_b2 = 1.5;
-omega_b3 = 1.5;
+Ms1 = 1.5;
+Ms2 = 1.5;
+Ms3 = 1.5;
+omega_b1 = 1;
+omega_b2 = 2;
+omega_b3 = 2;
 A_1 = 1e-4;
 A_2 = 1e-4;
 A_3 = 1e-4;
@@ -22,9 +22,9 @@ Wp = blkdiag(Wp11, Wp22 , Wp33);
 Mu1 = 1e3;
 Mu2 = 1e3;
 Mu3 = 1e3;
-omega_bc1 = 40;
-omega_bc2 = 40;
-omega_bc3 = 40;
+omega_bc1 = 30;
+omega_bc2 = 30;
+omega_bc3 = 30;
 Ac_1 = 1e-3;
 Ac_2 = 1e-3;
 Ac_3 = 1e-3;
@@ -52,16 +52,16 @@ omega_L = 0.33;
 omega_H = 3.63;
 omega_0 = sqrt(omega_H*omega_L);
 Q = omega_0/(omega_H-omega_L);
-H0 = 2;
+H0 = 3;
 BPF_w = (H0*(omega_0/Q)*s)/(s^2 + omega_0/Q*s + omega_0^2);
 
 Wd = blkdiag(BPF_w,BPF_w,BPF_w,BPF_w,BPF_w,BPF_w);
 
 % Design low-pass filters for the frequency content of the reference
 % signals
-tau_r1 = 2;
-tau_r2 = 2;
-tau_r3 = 2;
+tau_r1 = 1;
+tau_r2 = 1;
+tau_r3 = 1;
 mag_r1 = 0.1;
 mag_r2 = 0.1;
 mag_r3 = 0.1;
@@ -69,14 +69,5 @@ Wr11 = mag_r1/(tau_r1*s + 1);
 Wr22 = mag_r2/(tau_r2*s + 1);
 Wr33 = mag_r3/(tau_r3*s + 1);
 Wr = blkdiag(Wr11, Wr22 , Wr33);
-
-
-tau_s_n = 0.05; 
-Gact_i_n = 1/(tau_s_n*s + 1);
-Gact = blkdiag(Gact_i_n,Gact_i_n,Gact_i_n);
-
-tau_s_p = ureal('tau_s',0.05,'Percentage',[-25, 25]);
-Gact_i_p = ss(-1/tau_s_p,1/tau_s_p,1,0); % state space of low pass filter (check website)
-Gact_p = blkdiag(Gact_i_p,Gact_i_p,Gact_i_p);
 
 end
