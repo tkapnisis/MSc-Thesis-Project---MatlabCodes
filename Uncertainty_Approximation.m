@@ -12,7 +12,7 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p','g_sm_p_i')
 load('LTI_Nominal_Plant.mat','G','Gd','Gsm','g_sm_i','foil_loc')
 
-% load('Uncertainty_Weighting_Functions.mat')
+load('Uncertainty_Weighting_Functions.mat')
 
 run Bode_options.m
 run Sigma_options.m
@@ -45,7 +45,6 @@ g_sm_p_frd = frd(g_sm_samples,omega);
 W_I_G = ss([]);
 W_I_Gd = ss([]);
 
-%%
 order = 3;
 for i=1:size(G,1)
     for j=1:size(G,2)
@@ -77,7 +76,7 @@ w_I_g_sm = Info.W1;
 rel_dif_g_sm = (g_sm_p_frd - g_sm_frd)/g_sm_frd;
 disp('Finish ucover g_sm_i')
 disp('-----------------')
-
+%%
 figure
 title('Relative error for each channel for the plant model')
 bodeplot(rel_dif_G,'b--',W_I_G,'r',omega,opts_bode);
@@ -97,7 +96,7 @@ legend('\boldmath{$|(G_{d,p}(j\omega)-G_d(j\omega))/G_d(j\omega)|$}',...
 
 figure
 title('Relative error for the actuator model')
-bodeplot(rel_dif_g_sm,'b-',w_I_g_sm,'r--',omega,opts_bode);
+bodeplot(rel_dif_g_sm,'b--',w_I_g_sm,'r',omega,opts_bode);
 legend('\boldmath{$|(g_{sm,p}^i(j\omega)-g_{sm}^i(j\omega))/g_{sm}^i(j\omega)|$}','\boldmath{$|w_{I,g_{sm}^i}(j\omega)|$}',...
        'interpreter','latex','FontSize',12)
 % set(gcf, 'WindowState', 'maximized');
