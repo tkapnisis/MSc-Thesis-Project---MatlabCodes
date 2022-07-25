@@ -12,7 +12,7 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p','g_sm_p_i')
 load('LTI_Nominal_Plant.mat','G','Gd','Gsm','g_sm_i','foil_loc')
 
-load('Uncertainty_Weighting_Functions.mat')
+% load('Uncertainty_Weighting_Functions.mat')
 
 run Bode_options.m
 run Sigma_options.m
@@ -70,8 +70,8 @@ end
 disp('Finish ucover Gd_p')
 disp('-----------------')
 
-order = 2;
-[~,Info] = ucover(g_sm_p_frd,g_sm_i,order,'InputMult');
+order = 1;
+[~,Info] = ucover(g_sm_p_frd,g_sm_i,order,'OutputMult');
 w_I_g_sm = Info.W1;
 rel_dif_g_sm = (g_sm_p_frd - g_sm_frd)/g_sm_frd;
 disp('Finish ucover g_sm_i')
@@ -80,8 +80,8 @@ disp('-----------------')
 figure
 title('Relative error for each channel for the plant model')
 bodeplot(rel_dif_G,'b--',W_I_G,'r',omega,opts_bode);
-legend('\boldmath{$|(G_p(j\omega)-G(j\omega))/G(j\omega)|$}','\boldmath{$|W_I_G(j\omega)|$}',...
-       'interpreter','latex','FontSize',12)
+legend('\boldmath{$|\frac{g_{ij,p}(j\omega)-g_{ij}(j\omega)}{g_{ij}(j\omega)}|$}','\boldmath{$|w_{I,ij,G}(j\omega)|$}',...
+       'interpreter','latex','FontSize',13)
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Relative Differences G.png'])
 
@@ -89,83 +89,104 @@ figure
 title('Relative error for each channel for the disturbance model')
 bodeplot(rel_dif_Gd,'b--',W_I_Gd,'r',omega,opts_bode);
 grid on
-legend('\boldmath{$|(G_{d,p}(j\omega)-G_d(j\omega))/G_d(j\omega)|$}',...
-       '\boldmath{$|W_I_Gd(j\omega)|$}','interpreter','latex','FontSize',12)
+legend('\boldmath{$|\frac{g_{d,ij,p}(j\omega)-g_{d,ij}(j\omega)}{g_{d,ij}(j\omega)}|$}','\boldmath{$|w_{I,ij,G_d}(j\omega)|$}',...
+       'interpreter','latex','FontSize',13)
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Relative Differences Gd.png'])
 
 figure
 title('Relative error for the actuator model')
 bodeplot(rel_dif_g_sm,'b--',w_I_g_sm,'r',omega,opts_bode);
-legend('\boldmath{$|(g_{sm,p}^i(j\omega)-g_{sm}^i(j\omega))/g_{sm}^i(j\omega)|$}','\boldmath{$|w_{I,g_{sm}^i}(j\omega)|$}',...
-       'interpreter','latex','FontSize',12)
+legend('\boldmath{$|\frac{g_{sm,p}^i(j\omega)-g_{sm}^i(j\omega)}{g_{sm}^i(j\omega)}|$}','\boldmath{$|w_{I,g_{sm}^i}(j\omega)|$}',...
+       'interpreter','latex','FontSize',18)
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Relative Differences G.png'])
 
-
-%% 
 %% Define the Perturbed Plant and the Disturbance Transfer Matrix
 % Multiplicative Input Uncertainty
 % Define the Delta matrices with fully individual ultidyn elements
 
-bound_G = 0.8;
+bound_G = 0.5;
 Delta_I_G = ultidyn('Delta_I_G',[3,3],'Bound',bound_G);
 
 Gp_app = G*(eye(3) + Delta_I_G*W_I_G);
 Gp_app = minreal(Gp_app);
-%%
-bound_G = 0.5;
-Delta_I_G = [ultidyn('Delta_I_G1',[3,1],'Bound',bound_G),...
-    ultidyn('Delta_I_G2',[3,1],'Bound',bound_G),...
-    ultidyn('Delta_I_G3',[3,1],'Bound',bound_G)];
 
-Gp_app = G*(eye(3) + Delta_I_G*W_I_G);
-Gp_app = minreal(Gp_app);
-%%
-bound_Gd = 0.3;
+bound_Gd = 0.5;
 Delta_I_Gd = ultidyn('Delta_I_Gd',[6,3],'Bound',bound_Gd);
 
-Gd_p_app = Gd*(eye(6) + Delta_I_Gd*W_I_G);
+Gd_p_app = Gd*(eye(6) + Delta_I_Gd*W_I_Gd);
 Gd_p_app = minreal(Gd_p_app);
 
+W_I_Gsm = blkdiag(w_I_g_sm,w_I_g_sm,w_I_g_sm);
+
+Delta_I_Gsm = blkdiag(ultidyn('delta_I_g_sm_f',[1,1],'Bound',1),...
+                      ultidyn('delta_I_g_sm_f',[1,1],'Bound',1),...
+                      ultidyn('delta_I_g_sm_f',[1,1],'Bound',1));
+
+Gsm_p_app = Gsm*(eye(3) + Delta_I_Gsm*W_I_Gsm);
+Gsm_p_app = minreal(Gsm_p_app);
+
+
+%%
+%
 % Bode plot
 omega = logspace(-3,3,100);
 figure
 bodeplot(Gp,'r--',Gp_app,'g-.',G,'b-',omega,opts_bode)
-title('Plant Bode Plot');
+title('Plant Model Bode Plot');
 legend('\boldmath{$G_p$}\textbf{-Parametric Uncertainty}',...
-       '\boldmath{$G_{p,app}$}\textbf{-Multiplicative Input Uncertainty}',...
+       '\boldmath{$G_{p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
        '\boldmath{$G$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Bode Plot G.png'])
 
 figure
 bodeplot(Gd_p,'r--',Gd_p_app,'g-.',Gd,'b-',omega,opts_bode)
-title('Disturbance Tranfer Function Matrix Bode Plot');
+title('Disturbance Model Bode Plot');
 legend('\boldmath{$G_{d,p}$}\textbf{-Parametric Uncertainty}',...
-       '\boldmath{$G_{d,p,app}$}\textbf{-Multiplicative Input Uncertainty}',...
-       '\boldmath{$G_d$}\textbf{-Nominal Disturbance Tranfer Matrix}','interpreter','latex','FontSize',10)
+       '\boldmath{$G_{d,p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
+       '\boldmath{$G_d$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Bode Plot Gd.png'])
+
+figure
+bodeplot(Gsm_p,'r--',Gsm_p_app,'g-.',Gsm,'b-',omega,opts_bode)
+title('Actuator Model Bode Plot');
+legend('\boldmath{$G_{sm,p}$}\textbf{-Parametric Uncertainty}',...
+       '\boldmath{$G_{sm,p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
+       '\boldmath{$G_d$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
+
 %%
 % Singular Values Plot
 figure
-sigmaplot(Gp,'r--',usys,'g.',G,'b-',omega,opts_sigma)
-% sigmaplot(Gp,'r--',Gp_app,'g.',G,'b-',omega,opts_sigma)
-title('Plant Singular Values');
+sigmaplot(Gp,'r--',Gp_app,'g-.',G,'b-',omega,opts_sigma)
+title('Plant Model Singular Values');
 legend('\boldmath{$G_p$}\textbf{-Parametric Uncertainty}',...
-       '\boldmath{$G_{p,app}$}\textbf{-Multiplicative Input Uncertainty}',...
+       '\boldmath{$G_{p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
        '\boldmath{$G$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Sigma Plot G.png'])
-%%
+
 figure
-sigmaplot(Gd_p,'r--',Gd_p_app,'g.',Gd,'b-',omega,opts_sigma)
-title('Disturbance Tranfer Function Matrix Bode Plot');
+sigmaplot(Gd_p,'r--',Gd_p_app,'g-.',Gd,'b-',omega,opts_sigma)
+title('Disturbance Model Singular Values');
 legend('\boldmath{$G_{d,p}$}\textbf{-Parametric Uncertainty}',...
-       '\boldmath{$G_{d,p,app}$}\textbf{-Multiplicative Input Uncertainty}',...
-       '\boldmath{$G_d$}\textbf{-Nominal Disturbance Tranfer Matrix}','interpreter','latex','FontSize',10)
+       '\boldmath{$G_{d,p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
+       '\boldmath{$G_d$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Sigma Plot Gd.png'])
+%%
+omega = logspace(-1,3,100);
+figure
+sigmaplot(Gsm_p,'r--',Gsm_p_app,'g-.',Gsm,'b-',omega,opts_sigma)
+title('Actuator Model Singular Values');
+legend('\boldmath{$G_{sm,p}$}\textbf{-Parametric Uncertainty}',...
+       '\boldmath{$G_{sm,p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
+       '\boldmath{$G_{sm}$}\textbf{-Nominal}','interpreter','latex','FontSize',11,...
+       'location','best')
+%}
 %% Save results
-save('Data Files/Uncertainty_Weighting_Functions.mat')
+save('Data Files/Uncertainty_Weighting_Functions.mat','W_I_G','W_I_Gd','W_I_Gsm',...
+     'rel_dif_G','rel_dif_Gd','rel_dif_g_sm','omega','samples','Gp_app','Gd_p_app',...
+     'Gsm_p_app')

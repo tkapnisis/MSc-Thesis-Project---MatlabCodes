@@ -13,9 +13,9 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p')
 load('Parameters_Nominal.mat','param')
 load('LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
-
 load('Controller_mu_syn.mat')
 load('Controller_hinf.mat')
+load('Uncertainty_Weighting_Functions.mat')
 
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
@@ -28,16 +28,30 @@ run Sigma_options.m
 % Define the Weighting Functions for the controller synthesis
 [Wp,Wu,Wd,Wr] = Design_Weights();
 
-%% RGA 
-%{ 
-omega1 = 0.1;
-Gf1 = freqresp(G,omega1);
-RGAw_1(:,:) = Gf1.*inv(Gf1)'
+%%
+%% Define the Perturbed Plant and the Disturbance Transfer Matrix
+% Multiplicative Input Uncertainty
+% Define the Delta matrices with fully individual ultidyn elements
 
-omega2 = 5;
-Gf2 = freqresp(G,omega2);
-RGAw_2(:,:) = Gf2.*inv(Gf2)'
-%}
+bound_G = 1;
+Delta_I_G = ultidyn('Delta_I_G',[3,3],'Bound',bound_G);
+
+Gp_app = G*(eye(3) + Delta_I_G*W_I_G);
+Gp_app = minreal(Gp_app);
+
+bound_Gd = 1;
+Delta_I_Gd = ultidyn('Delta_I_Gd',[6,3],'Bound',bound_Gd);
+
+Gd_p_app = Gd*(eye(6) + Delta_I_Gd*W_I_Gd);
+Gd_p_app = minreal(Gd_p_app);
+
+Delta_I_Gsm = blkdiag(ultidyn('delta_I_g_sm_f',[1,1],'Bound',1),...
+                      ultidyn('delta_I_g_sm_f',[1,1],'Bound',1),...
+                      ultidyn('delta_I_g_sm_f',[1,1],'Bound',1));
+
+Gsm_p_app = Gsm*(eye(3) + Delta_I_Gsm*W_I_Gsm);
+Gsm_p_app = minreal(Gsm_p_app);
+
 %% Open-loop Plant Sigma plots
 %{
 [sv_G,wout_G] = sigma(G);
@@ -49,6 +63,50 @@ RGAw_2(:,:) = Gf2.*inv(Gf2)'
 legend([fig1,fig2],'\boldmath{$\sigma(G)$}','\boldmath{$\sigma(G_d)$}',...
        'interpreter','latex','FontSize',12,'Location','best')
 %}
+
+%% Uncertainty Approximation Sigma Plots
+
+% Plant model
+omega=logspace(-1,3,100);
+samples = 25;
+unc_app.sv_G = sigma(G,omega);
+unc_app.sv_Gp = sigma_uss(Gp,omega,samples);
+unc_app.sv_Gp_app = sigma_uss(Gp_app,omega,samples);
+
+[fig1,fig2,fig3] = loglog_uss(unc_app.sv_Gp,omega,unc_app.sv_Gp_app,omega,...
+                              unc_app.sv_G,omega,samples,3);
+
+legend([fig1,fig2,fig3],'\boldmath{$\sigma(G_{p})$}','\boldmath{$\sigma(G_{p}^a)$}',...
+       '\boldmath{$\sigma(G)$}','interpreter','latex','FontSize',12,'Location','best')
+%%
+% Disturbance model
+omega=logspace(-1,3,100);
+samples = 25;
+unc_app.sv_Gd = sigma(Gd,omega);
+unc_app.sv_Gd_p = sigma_uss(Gd_p,omega,samples);
+unc_app.sv_Gd_p_app = sigma_uss(Gd_p_app,omega,samples);
+
+[fig1,fig2,fig3] = loglog_uss(unc_app.sv_Gd_p,omega,unc_app.sv_Gd_p_app,omega,...
+                              unc_app.sv_Gd,omega,samples,3);
+
+legend([fig1,fig2,fig3],'\boldmath{$\sigma(G_{d,p})$}','\boldmath{$\sigma(G_{d,p}^a)$}',...
+       '\boldmath{$\sigma(G_d)$}','interpreter','latex','FontSize',12,'Location','best')
+
+%%
+% Actuator model
+omega=logspace(-1,3,100);
+samples = 25;
+unc_app.sv_Gsm = sigma(Gsm,omega);
+unc_app.sv_Gsm_p = sigma_uss(Gsm_p,omega,samples);
+unc_app.sv_Gsm_p_app = sigma_uss(Gsm_p_app,omega,samples);
+
+[fig1,fig2,fig3] = loglog_uss(unc_app.sv_Gsm_p,omega,unc_app.sv_Gsm_p_app,omega,...
+                              unc_app.sv_Gsm,omega,samples,3);
+
+legend([fig1,fig2,fig3],'\boldmath{$\sigma(G_{sm,p})$}','\boldmath{$\sigma(G_{sm,p}^a)$}',...
+       '\boldmath{$\sigma(G_{sm})$}','interpreter','latex','FontSize',12,'Location','best')
+
+
 %% Sensitivity
 % figure
 % sigma(hinf_data.S,mu_syn_data.S,inv(Wp),opts_sigma);

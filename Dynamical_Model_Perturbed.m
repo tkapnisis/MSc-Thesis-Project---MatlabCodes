@@ -14,10 +14,11 @@ run Define_Uncertain_Parameters.m
 
 [A_u,B_u,Bd_u,C_u,D_u,Dd_u,Gsm_p,g_sm_p_i] = Parametric_Perturbed_Plant(param,A_s,B_s,Bd_s,C_s,D_s,Dd_s);
 
-states = {'z', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
-act_inputs = {'delta_sf';'delta_sap';'delta_sas'}; % Actual angles of servo motors
-com_inputs = {'delta_sfc';'delta_sapc';'delta_sasc'};
-outputs = {'z'; 'phi'; 'theta'};
+% Definitons of the state space
+states = {'z_n', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
+act_inputs = {'delta_s_f';'delta_s_ap';'delta_s_as'}; % Actual angles of servo motors
+com_inputs = {'delta_s_f_c';'delta_s_ap_c';'delta_s_as_c'}; % Commanded angles of servo motors
+outputs = {'z_n'; 'phi'; 'theta'};
 disturbances = {'u_w_f';'w_w_f';'u_w_ap';'w_w_ap';'u_w_as';'w_w_as'};
 
 %% Define the tranfer function matrices with uncertainties

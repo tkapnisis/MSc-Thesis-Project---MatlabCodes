@@ -288,8 +288,8 @@ Dd = zeros(3,6);
 
 % Definitons of the state space
 states = {'z_n', 'phi', 'theta', 'z_dot', 'phi_dot', 'theta_dot'};
-act_inputs = {'delta_sf';'delta_sap';'delta_sas'}; % Actual angles of servo motors
-com_inputs = {'delta_sfc';'delta_sapc';'delta_sasc'}; % Commanded angles of servo motors
+act_inputs = {'delta_s_f';'delta_s_ap';'delta_s_as'}; % Actual angles of servo motors
+com_inputs = {'delta_s_f_c';'delta_s_ap_c';'delta_s_as_c'}; % Commanded angles of servo motors
 outputs = {'z_n'; 'phi'; 'theta'};
 disturbances = {'u_w_f';'w_w_f';'u_w_ap';'w_w_ap';'u_w_as';'w_w_as'};
 

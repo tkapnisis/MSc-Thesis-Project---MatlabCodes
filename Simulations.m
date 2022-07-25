@@ -67,22 +67,22 @@ title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}}','interpreter','latex',
 
 %% Perturbed system
 % Number of samples for simulating the uncertain systems
-samples = 10;
+samples = 20;
 
 % Calculation of the outputs for the perturbed system
 mu_syn_data.y_p_app_ref = lsim_uss(mu_syn_data.Tp_app,ref,t,samples);
 mu_syn_data.y_p_ref = lsim_uss(mu_syn_data.Tp,ref,t,samples);
-1
+
 hinf_data.y_p_app_ref = lsim_uss(hinf_data.Tp_app,ref,t,samples);
 hinf_data.y_p_ref = lsim_uss(hinf_data.Tp,ref,t,samples);
-2
+
 % Calculation of the control inputs for the perturbed system
 mu_syn_data.u_p_app_ref = lsim_uss(mu_syn_data.K*mu_syn_data.Sp_app,ref,t,samples);
 mu_syn_data.u_p_ref = lsim_uss(mu_syn_data.K*mu_syn_data.Sp,ref,t,samples);
-3
+
 hinf_data.u_p_app_ref = lsim_uss(hinf_data.K*hinf_data.Sp_app,ref,t,samples);
 hinf_data.u_p_ref = lsim_uss(hinf_data.K*hinf_data.Sp,ref,t,samples);
-%%
+
 figure
 fig1 = plot_uss_states(t,mu_syn_data.y_p_app_ref,samples,param.z_n0,0.5,'-.','blue');
 fig2 = plot_uss_states(t,mu_syn_data.y_p_ref,samples,param.z_n0,1,'--','#77AC30');
@@ -150,9 +150,9 @@ t = 0:dt:tend;
 %  Calculation of waves velocity profile for each hydrofoil
 
 % Parameters of long-crested regular wave
-wave_param.omega_0 = 0.8;  % Wave frequency [rad/s]
-wave_param.lambda = 0.5;   % Wave length [m]
-wave_param.zeta_0 = 0.15;  % Wave amplitude [m]
+wave_param.omega_0 = 1.5;  % Wave frequency [rad/s]
+wave_param.lambda = 2;   % Wave length [m]
+wave_param.zeta_0 = 0.1;  % Wave amplitude [m]
 wave_param.beta = pi;      % Encounter angle (beta=0 for following waves) [rad] 
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
@@ -190,7 +190,7 @@ title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}-synthesis}','interpreter
 
 %%
 % Number of samples for simulating the uncertain systems
-samples = 15;
+samples = 20;
 
 % Calculation of the outputs
 mu_syn_data.y_p_app_dist = lsim_uss(mu_syn_data.Sp_app*Gd_p_app,dw,t,samples);
