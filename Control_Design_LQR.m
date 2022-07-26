@@ -2,6 +2,9 @@ clc
 clear all
 close all
 
+addpath('Plotting Functions')
+addpath('Data Files')
+
 load('LTI_Nominal_Plant.mat')
 load('Parameters_Nominal.mat','param')
 load('LTI_Perturbed_Plant.mat','Gp')
@@ -123,13 +126,13 @@ ylabel('\boldmath{$\theta$} \textbf{[deg]}','interpreter','latex')
 legend('Response','Reference Signal','Location','best')
 grid minor
 
-eq_input = [param.theta_s_f0;param.theta_s_ap0;param.theta_s_as0];
+eq_input = [param.delta_s_f0;param.delta_s_ap0;param.delta_s_as0];
 u = Lc*ref - K*x' + eq_input;
 figure
 plot(t,rad2deg(u),'LineWidth', 1.5)
 title('Servo motor angles - Control inputs')
 grid minor
-ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
+ylabel('\boldmath{$\delta_s$} \textbf{[deg]}','interpreter','latex')
 xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
@@ -139,7 +142,7 @@ Step_info = stepinfo(sys_CL);
 
 % Calculation of waves velocity profile for each hydrofoil
 % Parameters of long-crested regular wave
-wave_param.omega_0 = 1.5;   % Wave frequency [rad/s]
+wave_param.omega_0 = 1;   % Wave frequency [rad/s]
 wave_param.lambda = 2;    % Wave length [m]
 wave_param.zeta_0 = 0.10;  % Wave amplitude [m]
 wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad] 
@@ -178,7 +181,7 @@ figure
 plot(t,rad2deg(u_waves),'LineWidth', 1.5)
 title('Servo motor angles - Control inputs')
 grid minor
-ylabel('\boldmath{$\theta_s$} \textbf{[deg]}','interpreter','latex')
+ylabel('\boldmath{$\delta_s$} \textbf{[deg]}','interpreter','latex')
 xlabel('\textbf{time [s]}','interpreter','latex')
 legend('Fore hydrofoil', 'Aft port hydrofoil', 'Aft starboard hydrofoil')
 
