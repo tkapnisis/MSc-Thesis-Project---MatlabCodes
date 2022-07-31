@@ -12,7 +12,7 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p','g_sm_p_i')
 load('LTI_Nominal_Plant.mat','G','Gd','Gsm','g_sm_i','foil_loc')
 
-% load('Uncertainty_Weighting_Functions.mat')
+load('Uncertainty_Weighting_Functions.mat')
 
 run Bode_options.m
 run Sigma_options.m
@@ -80,8 +80,8 @@ disp('-----------------')
 figure
 title('Relative error for each channel for the plant model')
 bodeplot(rel_dif_G,'b--',W_I_G,'r',omega,opts_bode);
-legend('\boldmath{$|\frac{g_{ij,p}(j\omega)-g_{ij}(j\omega)}{g_{ij}(j\omega)}|$}','\boldmath{$|w_{I,ij,G}(j\omega)|$}',...
-       'interpreter','latex','FontSize',13)
+legend('\boldmath{$|\frac{g_p^{ij}(j\omega)-g^{ij}(j\omega)}{g^{ij}(j\omega)}|$}','\boldmath{$|w_{I,G^{ij}}(j\omega)|$}',...
+       'interpreter','latex','FontSize',15)
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Relative Differences G.png'])
 
@@ -89,14 +89,14 @@ figure
 title('Relative error for each channel for the disturbance model')
 bodeplot(rel_dif_Gd,'b--',W_I_Gd,'r',omega,opts_bode);
 grid on
-legend('\boldmath{$|\frac{g_{d,ij,p}(j\omega)-g_{d,ij}(j\omega)}{g_{d,ij}(j\omega)}|$}','\boldmath{$|w_{I,ij,G_d}(j\omega)|$}',...
-       'interpreter','latex','FontSize',13)
+legend('\boldmath{$|\frac{g_{d,p}^{ij}(j\omega)-g_d^{ij}(j\omega)}{g_d^{ij}(j\omega)}|$}','\boldmath{$|w_{I,G_d^{ij}}(j\omega)|$}',...
+       'interpreter','latex','FontSize',15)
 % set(gcf, 'WindowState', 'maximized');
 % saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Relative Differences Gd.png'])
 
 figure
 title('Relative error for the actuator model')
-bodeplot(rel_dif_g_sm,'b--',w_I_g_sm,'r',omega,opts_bode);
+bodeplot(rel_dif_g_sm,'b--',W_I_Gsm(1,1),'r',omega,opts_bode);
 legend('\boldmath{$|\frac{g_{sm,p}^i(j\omega)-g_{sm}^i(j\omega)}{g_{sm}^i(j\omega)}|$}','\boldmath{$|w_{I,g_{sm}^i}(j\omega)|$}',...
        'interpreter','latex','FontSize',18)
 % set(gcf, 'WindowState', 'maximized');

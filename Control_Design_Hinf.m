@@ -9,9 +9,9 @@ close all
 addpath('Plotting Functions')
 addpath('Data Files')
 
-load('LTI_Perturbed_Plant.mat','G','Gd','Gp','Gd_p','Gsm','Gsm_p')
+load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p')
 load('Parameters_Nominal.mat','param')
-load('LTI_Nominal_Plant.mat','foil_loc')
+load('LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
 
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
@@ -65,8 +65,8 @@ title('Plant Singular Values');
 % Generalized Plant - Nominal
 P = Generalized_Plant_Nominal(G,Gd,Wp,Wu,Wd,Wr,Gsm);
 % Hinf Controller synthesis - Nominal Plant
-[hinf_data.K,~,gamma,~] = hinfsyn(P,nmeas,ncont);
-gamma
+[hinf_data.K,~,hinf_data.gamma,~] = hinfsyn(P,nmeas,ncont);
+gamma = hinf_data.gamma
 
 
 hinf_data.loops = loopsens(G*Gsm,hinf_data.K);
@@ -79,7 +79,7 @@ hinf_data.Lp = hinf_data.loops_p.Lo;
 hinf_data.Tp = hinf_data.loops_p.To;
 hinf_data.Sp = hinf_data.loops_p.So;
 
-select = 2;
+select = 1;
 switch select
     case 1
         T_ = hinf_data.T;
@@ -128,7 +128,7 @@ legend('\boldmath{$\sigma(K)$}','interpreter','latex','FontSize',15)
 %% Simulation of the closed loop system with the Hinf controller
 
 figure
-step(hinf_data.T,T_,5)
+step(hinf_data.T,5)
 title('Step Response with Hinf Controller')
 grid minor
 
@@ -156,7 +156,7 @@ wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad]
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
-select = 1;
+select = 2;
 
 switch select
     case 1

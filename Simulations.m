@@ -236,7 +236,7 @@ grid minor
 subplot(3,1,3)
 grid minor
 legend([fig1,fig2],'\boldmath{$\mu$} \textbf{-synthesis}',...
-       '\boldmath{$h_{\infty}$}','interpreter','latex')
+       '\boldmath{$h_{\infty}$}','interpreter','latex','FontSize',12)
 
 figure
 subplot(2,1,1)

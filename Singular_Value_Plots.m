@@ -130,7 +130,8 @@ legend([fig1,fig2,fig3],'\boldmath{$\sigma(S):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(S):h_{\infty}$}','\boldmath{$\sigma(W_p^{-1})$}',...
        'interpreter','latex','FontSize',12,'Location','best')
 title('Sensitivity - Perturbed Plant with Parametric Uncertainties')
-%% Sensitivity - Perturbed Plant with Multiplicative Input Uncertainties
+
+% Sensitivity - Perturbed Plant with Multiplicative Input Uncertainties
 samples = 20;
 omega = logspace(-5,3,100);
 [weights_res.sv_Wp,~] = sigma(inv(Wp),omega);
