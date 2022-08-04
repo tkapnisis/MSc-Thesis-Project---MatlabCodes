@@ -15,7 +15,7 @@ load('LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
 load('Uncertainty_Weighting_Functions.mat','W_I_G','W_I_Gd','W_I_Gsm')
 
 load('Controller_hinf.mat')
-
+% load('Controller_mu_syn.mat')
 load('Controller_mu_syn.mat')
 
 % Nominal plant model G(s)
@@ -55,7 +55,8 @@ fprintf('Give the required order of the controller for error less than 1e-3: \n'
 pause
 order = input("");
 % mu_syn_data.K = ncfmr(mu_syn_data.K_full,order);
-mu_syn_data.K = bstmr(mu_syn_data.K_full,order);
+% mu_syn_data.K = bstmr(mu_syn_data.K_full,order);
+mu_syn_data.K = balancmr(mu_syn_data.K_full,order);
 
 % Comparison of the reduced-order with the full-order controller with the
 % singular value plot
@@ -71,6 +72,9 @@ mu_syn_data.K_full_size = size(mu_syn_data.K_full.A,1);
 legend([fig1,fig2],strcat('Reduced-order:', num2str(mu_syn_data.K_size),' states'),...
     strcat('Full-order:', num2str(mu_syn_data.K_full_size),' states'))
 
+% Modify this code to plot only the error instead of plotting the
+% individual sigma plots of the full and the reduced-order controller
+% sigma(mu_syn_data.K-mu_syn_data.K_full,opts_sigma)
 %% Define all the loop transfer matrices for mu-synthesis controller and hinf controller
 hinf_data.loops_p_app = loopsens(Gp_app,hinf_data.K);
 hinf_data.Lp_app = hinf_data.loops_p_app.Lo;
