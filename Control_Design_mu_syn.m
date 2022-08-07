@@ -15,7 +15,6 @@ load('LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
 load('Uncertainty_Weighting_Functions.mat','W_I_G','W_I_Gd','W_I_Gsm')
 
 load('Controller_hinf.mat')
-% load('Controller_mu_syn.mat')
 load('Controller_mu_syn.mat')
 
 % Nominal plant model G(s)
@@ -49,15 +48,32 @@ tic;
 mu_syn_data.timerun = toc;
 
 %% Order reduction of the controller
-figure
-ncfmr(mu_syn_data.K_full)
-fprintf('Give the required order of the controller for error less than 1e-3: \n')
+% Balance realization of the high-order mu-synthesis controller
+[mu_syn_data.K_bal,mu_syn_data.K_g] = balreal(mu_syn_data.K_full);
+% Hankel Singular Values
+hankelsv(mu_syn_data.K_bal,'add','log')
+grid minor
+title('Hankel Singular Values','FontSize',12)
+ylabel('\boldmath{$\sigma_i(K_{bal})$}','interpreter','latex')
+xlabel('\textbf{Order }\boldmath{$k$}','interpreter','latex')
+ax=gca;
+ax.XAxis.FontSize = 12;
+ax.YAxis.FontSize = 12;
+
+fprintf('Give the desired order of the controller: \n')
 pause
 order = input("");
-% mu_syn_data.K = ncfmr(mu_syn_data.K_full,order);
-% mu_syn_data.K = bstmr(mu_syn_data.K_full,order);
-mu_syn_data.K = balancmr(mu_syn_data.K_full,order);
+mu_syn_data.K = balancmr(mu_syn_data.K_bal,order);
+mu_syn_data.K_error = norm(mu_syn_data.K-mu_syn_data.K_full,Inf);
 
+figure
+sigma(mu_syn_data.K-mu_syn_data.K_full,opts_sigma)
+legend('\boldmath{$\sigma(|K(s) - K_a^{40}(s)|)$}','interpreter','latex',...
+    'FontSize',12,'Location','best')
+ax=gca;
+ax.XAxis.FontSize = 12;
+ax.YAxis.FontSize = 12;
+%%
 % Comparison of the reduced-order with the full-order controller with the
 % singular value plot
 mu_syn_data.K_size = size(mu_syn_data.K.A,1);
