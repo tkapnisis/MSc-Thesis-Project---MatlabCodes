@@ -35,12 +35,12 @@ ref = [max(0,min(step_z*t,step_z));0*ones(size(t));0*ones(size(t))];
 % ref = [-step_z*square(2*pi/10*t);0*ones(size(t));0*ones(size(t))];
 %% Nominal system
 % Calculation of the outputs for the nominal system
-mu_syn_data.y_ref = lsim(mu_syn_data.T,ref,t);
-hinf_data.y_ref = lsim(hinf_data.T,ref,t);
+mu_syn_res.y_ref = lsim(mu_syn_data.T,ref,t);
+hinf_res.y_ref = lsim(hinf_data.T,ref,t);
 
 figure
-[fig1,fig3] = plot_ss_states(t,mu_syn_data.y_ref,ref,param.z_n0, 1,'-','#D95319','ref');
-[fig2,~] = plot_ss_states(t,hinf_data.y_ref,ref,param.z_n0, 1,'-','#0072BD','ref');
+[fig1,fig3] = plot_ss_states(t,mu_syn_res.y_ref,ref,param.z_n0, 1,'-','#D95319','ref');
+[fig2,~] = plot_ss_states(t,hinf_res.y_ref,ref,param.z_n0, 1,'-','#0072BD','ref');
 
 subplot(3,1,1)
 grid minor
@@ -54,90 +54,119 @@ legend([fig1,fig2,fig3],'\boldmath{$\mu$} \textbf{-synthesis controller}',...
        'interpreter','latex','Location','best','FontSize',10)
 
 % Calculation of the control inputs for the nominal system
-mu_syn_data.u_ref = lsim(mu_syn_data.K*mu_syn_data.S,ref,t);
-hinf_data.u_ref = lsim(hinf_data.K*hinf_data.S,ref,t);
+mu_syn_res.u_ref = lsim(mu_syn_data.K*mu_syn_data.S,ref,t);
+hinf_res.u_ref = lsim(hinf_data.K*hinf_data.S,ref,t);
 
 figure
-subplot(2,1,1)
-plot_ss_inputs(t,mu_syn_data.u_ref,u_eq)
-title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis}','interpreter','latex','FontSize',12)
-subplot(2,1,2)
-plot_ss_inputs(t,hinf_data.u_ref,u_eq)
-title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}}','interpreter','latex','FontSize',12)
+plot_ss_inputs(t,mu_syn_res.u_ref,hinf_res.u_ref,u_eq)
+title('Control Inputs - Servo Motor Angles','FontSize',12)
+legend('\boldmath{$\mu$} \textbf{-synthesis controller: Fore}', '\boldmath{$\mu$} \textbf{-synthesis controller: Aft port}',...
+       '\boldmath{$\mu$} \textbf{-synthesis controller: Aft starboard}','\boldmath{$h_{\infty}$} \textbf{controller: Fore}',...
+       '\boldmath{$h_{\infty}$} \textbf{controller: Aft port}','\boldmath{$h_{\infty}$} \textbf{controller: Aft starboard}',...
+       'interpreter','latex','FontSize',10)
 
 %% Perturbed system
 % Number of samples for simulating the uncertain systems
 samples = 20;
 
 % Calculation of the outputs for the perturbed system
-mu_syn_data.y_p_app_ref = lsim_uss(mu_syn_data.Tp_app,ref,t,samples);
-mu_syn_data.y_p_ref = lsim_uss(mu_syn_data.Tp,ref,t,samples);
+mu_syn_res.y_p_app_ref = lsim_uss(mu_syn_data.Tp_app,ref,t,samples);
+mu_syn_res.y_p_ref = lsim_uss(mu_syn_data.Tp,ref,t,samples);
 
-hinf_data.y_p_app_ref = lsim_uss(hinf_data.Tp_app,ref,t,samples);
-hinf_data.y_p_ref = lsim_uss(hinf_data.Tp,ref,t,samples);
+hinf_res.y_p_app_ref = lsim_uss(hinf_data.Tp_app,ref,t,samples);
+hinf_res.y_p_ref = lsim_uss(hinf_data.Tp,ref,t,samples);
 
 % Calculation of the control inputs for the perturbed system
-mu_syn_data.u_p_app_ref = lsim_uss(mu_syn_data.K*mu_syn_data.Sp_app,ref,t,samples);
-mu_syn_data.u_p_ref = lsim_uss(mu_syn_data.K*mu_syn_data.Sp,ref,t,samples);
+mu_syn_res.u_p_app_ref = lsim_uss(mu_syn_data.K*mu_syn_data.Sp_app,ref,t,samples);
+mu_syn_res.u_p_ref = lsim_uss(mu_syn_data.K*mu_syn_data.Sp,ref,t,samples);
 
-hinf_data.u_p_app_ref = lsim_uss(hinf_data.K*hinf_data.Sp_app,ref,t,samples);
-hinf_data.u_p_ref = lsim_uss(hinf_data.K*hinf_data.Sp,ref,t,samples);
-
-figure
-fig1 = plot_uss_states(t,mu_syn_data.y_p_app_ref,samples,param.z_n0,0.5,'-.','blue');
-fig2 = plot_uss_states(t,mu_syn_data.y_p_ref,samples,param.z_n0,1,'--','#77AC30');
-[fig3,fig4] = plot_ss_states(t,mu_syn_data.y_ref,ref,param.z_n0,1,'-','red','ref');
-
-legend([fig1,fig2,fig3,fig4],'\boldmath{$\mu$} \textbf{-synthesis-Multiplicative}',...
-       '\boldmath{$\mu$} \textbf{-synthesis-Parametric}',...
-       '\boldmath{$\mu$} \textbf{-synthesis-Nominal}','\textbf{Reference Signal}',...
-       'interpreter','latex','FontSize',10)
+hinf_res.u_p_app_ref = lsim_uss(hinf_data.K*hinf_data.Sp_app,ref,t,samples);
+hinf_res.u_p_ref = lsim_uss(hinf_data.K*hinf_data.Sp,ref,t,samples);
+%%
 
 figure
-fig1 = plot_uss_states(t,hinf_data.y_p_app_ref,samples,param.z_n0,0.5,'-.','blue');
-fig2 = plot_uss_states(t,hinf_data.y_p_ref,samples,param.z_n0,1,'--','#77AC30');
-[fig3,fig4] = plot_ss_states(t,hinf_data.y_ref,ref,param.z_n0, 1,'-','red','ref');
+fig1 = plot_uss_states(t,mu_syn_res.y_p_ref,samples,param.z_n0,0.75,'--','green');
+fig2 = plot_uss_states(t,hinf_res.y_p_ref,samples,param.z_n0,0.75,'--','#EDB120');
+[fig3,fig4] = plot_ss_states(t,mu_syn_res.y_ref,ref,param.z_n0, 1,'-','blue','ref');
+[fig5,~] = plot_ss_states(t,hinf_res.y_ref,ref,param.z_n0, 1,'-','red','ref');
 
-legend([fig1,fig2,fig3,fig4],'\boldmath{$h_{\infty}$} \textbf{ controller-Multiplicative}',...
-       '\boldmath{$h_{\infty}$} \textbf{ controller-Parametric}',...
-       '\boldmath{$h_{\infty}$} \textbf{ controller-Nominal}','\textbf{Reference Signal}',...
-       'interpreter','latex','FontSize',10)
+subplot(3,1,1)
+grid minor
+subplot(3,1,2)
+grid minor
+subplot(3,1,3)
+grid minor
+
+legend([fig1,fig2,fig3,fig5,fig4],'\boldmath{$\mu$} \textbf{-synthesis controller: Perturbed}',...
+       '\boldmath{$h_{\infty}$} \textbf{ controller: Perturbed}',...
+       '\boldmath{$\mu$} \textbf{-synthesis controller: Nominal}',...
+       '\boldmath{$h_{\infty}$} \textbf{ controller: Nominal}','\textbf{Reference Signal}',...
+       'interpreter','latex','Location','best','FontSize',10)
 
 figure
-fig1 = plot_uss_states(t,mu_syn_data.y_p_ref,samples,param.z_n0,0.5,'-.','blue');
-fig2 = plot_uss_states(t,hinf_data.y_p_ref,samples,param.z_n0,0.5,'--','red');
-[~,fig3] = plot_ss_states(t,hinf_data.y_ref,ref,param.z_n0, 1,'--','red','ref');
+fig1 = plot_uss_inputs(t,mu_syn_res.u_p_ref,u_eq,samples,0.5,'--','green');
+fig2 = plot_uss_inputs(t,hinf_res.u_p_ref,u_eq,samples,0.5,'--','#EDB120');
 
-legend([fig1,fig2,fig3],'\boldmath{$\mu$} \textbf{-synthesis}','\boldmath{$h_{\infty}$}',...
-      '\textbf{Reference Signal}','interpreter','latex','FontSize',10)
+fig3 = plot_ss_inputs(t,mu_syn_res.u_ref,u_eq,1,'-','blue');
+fig4 = plot_ss_inputs(t,hinf_res.u_ref,u_eq,1,'-','red');
 
+subplot(3,1,1)
+grid minor
+subplot(3,1,2)
+grid minor
+subplot(3,1,3)
+grid minor
+
+legend([fig1,fig2,fig3,fig4],'\boldmath{$\mu$} \textbf{-synthesis controller: Perturbed}',...
+       '\boldmath{$h_{\infty}$} \textbf{ controller: Perturbed}',...
+       '\boldmath{$\mu$} \textbf{-synthesis controller: Nominal}',...
+       '\boldmath{$h_{\infty}$} \textbf{ controller: Nominal}',...
+       'interpreter','latex','Location','best','FontSize',10)
+
+%%
+figure
+fig1 = plot_uss_states(t,mu_syn_res.y_p_app_ref,samples,param.z_n0,0.5,'-.','blue');
+fig2 = plot_uss_states(t,mu_syn_res.y_p_ref,samples,param.z_n0,1,'--','#77AC30');
+[fig3,fig4] = plot_ss_states(t,mu_syn_res.y_ref,ref,param.z_n0,1,'-','red','ref');
+
+legend([fig1,fig2,fig3,fig4],'Multiplicative Uncertainty','Parametric Uncertainty',...
+       'Nominal','Reference Signal','FontSize',10)
+
+figure
+fig1 = plot_uss_states(t,hinf_res.y_p_app_ref,samples,param.z_n0,0.5,'-.','blue');
+fig2 = plot_uss_states(t,hinf_res.y_p_ref,samples,param.z_n0,1,'--','#77AC30');
+[fig3,fig4] = plot_ss_states(t,hinf_res.y_ref,ref,param.z_n0, 1,'-','red','ref');
+
+legend([fig1,fig2,fig3,fig4],'Multiplicative Uncertainty','Parametric Uncertainty',...
+       'Nominal','Reference Signal','FontSize',10)
+%%
 figure
 subplot(2,1,1)
-plot_uss_inputs(t,mu_syn_data.u_p_ref,u_eq,samples)
+plot_uss_inputs(t,mu_syn_res.u_p_ref,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
 subplot(2,1,2)
-plot_uss_inputs(t,mu_syn_data.u_p_app_ref,u_eq,samples)
+plot_uss_inputs(t,mu_syn_res.u_p_app_ref,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Multiplicative Uncertainty}',...
       'interpreter','latex','FontSize',12)
 
 figure
 subplot(2,1,1)
-plot_uss_inputs(t,hinf_data.u_p_ref,u_eq,samples)
+plot_uss_inputs(t,hinf_res.u_p_ref,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
 subplot(2,1,2)
-plot_uss_inputs(t,hinf_data.u_p_app_ref,u_eq,samples)
+plot_uss_inputs(t,hinf_res.u_p_app_ref,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Multiplicative Uncertainty}',...
       'interpreter','latex','FontSize',12)
 
 figure
 subplot(2,1,1)
-plot_uss_inputs(t,mu_syn_data.u_p_ref,u_eq,samples)
+plot_uss_inputs(t,mu_syn_res.u_p_ref,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
 subplot(2,1,2)
-plot_uss_inputs(t,hinf_data.u_p_ref,u_eq,samples)
+plot_uss_inputs(t,hinf_res.u_p_ref,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
 %% Simulation of the closed loop system with regular waves
@@ -159,16 +188,16 @@ wave_param.beta = pi;      % Encounter angle (beta=0 for following waves) [rad]
 
 %% Nominal system
 % Calculation of the outputs for the nominal system
-mu_syn_data.y_dist = lsim(mu_syn_data.S*Gd,dw,t);
-hinf_data.y_dist = lsim(hinf_data.S*Gd,dw,t);
+mu_syn_res.y_dist = lsim(mu_syn_data.S*Gd,dw,t);
+hinf_res.y_dist = lsim(hinf_data.S*Gd,dw,t);
 
 % Calculation of the control inputs for the nominal system
-mu_syn_data.u_dist = lsim(-mu_syn_data.K*mu_syn_data.S*Gd,dw,t);
-hinf_data.u_dist = lsim(-hinf_data.K*hinf_data.S*Gd,dw,t);
+mu_syn_res.u_dist = lsim(-mu_syn_data.K*mu_syn_data.S*Gd,dw,t);
+hinf_res.u_dist = lsim(-hinf_data.K*hinf_data.S*Gd,dw,t);
 
 figure
-[fig1,~] = plot_ss_states(t,mu_syn_data.y_dist,[],param.z_n0, 1,'-','#D95319','dist');
-[fig2,~] = plot_ss_states(t,hinf_data.y_dist,[],param.z_n0, 1,'-','#0072BD','dist');
+[fig1,~] = plot_ss_states(t,mu_syn_res.y_dist,[],param.z_n0, 1,'-','#D95319','dist');
+[fig2,~] = plot_ss_states(t,hinf_res.y_dist,[],param.z_n0, 1,'-','#0072BD','dist');
 
 subplot(3,1,1)
 grid minor
@@ -182,10 +211,10 @@ legend([fig1,fig2],'\boldmath{$\mu$} \textbf{-synthesis}',...
 
 figure
 subplot(2,1,1)
-plot_ss_inputs(t,mu_syn_data.u_dist,u_eq)
+plot_ss_inputs(t,mu_syn_res.u_dist,u_eq)
 title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis}','interpreter','latex','FontSize',12)
 subplot(2,1,2)
-plot_ss_inputs(t,hinf_data.u_dist,u_eq)
+plot_ss_inputs(t,hinf_res.u_dist,u_eq)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}-synthesis}','interpreter','latex','FontSize',12)
 
 %%
@@ -193,41 +222,41 @@ title('\textbf{Control Inputs - \boldmath{$h_{\infty}$}-synthesis}','interpreter
 samples = 20;
 
 % Calculation of the outputs
-mu_syn_data.y_p_app_dist = lsim_uss(mu_syn_data.Sp_app*Gd_p_app,dw,t,samples);
-mu_syn_data.y_p_dist = lsim_uss(mu_syn_data.Sp*Gd_p,dw,t,samples);
+mu_syn_res.y_p_app_dist = lsim_uss(mu_syn_data.Sp_app*Gd_p_app,dw,t,samples);
+mu_syn_res.y_p_dist = lsim_uss(mu_syn_data.Sp*Gd_p,dw,t,samples);
 
-hinf_data.y_p_app_dist = lsim_uss(hinf_data.Sp_app*Gd_p_app,dw,t,samples);
-hinf_data.y_p_dist = lsim_uss(hinf_data.Sp*Gd_p,dw,t,samples);
+hinf_res.y_p_app_dist = lsim_uss(hinf_data.Sp_app*Gd_p_app,dw,t,samples);
+hinf_res.y_p_dist = lsim_uss(hinf_data.Sp*Gd_p,dw,t,samples);
 
 % Calculation of the control inputs
-mu_syn_data.u_p_app_dist = lsim_uss(-mu_syn_data.K*mu_syn_data.Sp_app*Gd_p_app,dw,t,samples);
-mu_syn_data.u_p_dist = lsim_uss(-mu_syn_data.K*mu_syn_data.Sp*Gd_p,dw,t,samples);
+mu_syn_res.u_p_app_dist = lsim_uss(-mu_syn_data.K*mu_syn_data.Sp_app*Gd_p_app,dw,t,samples);
+mu_syn_res.u_p_dist = lsim_uss(-mu_syn_data.K*mu_syn_data.Sp*Gd_p,dw,t,samples);
 
-hinf_data.u_p_app_dist = lsim_uss(-hinf_data.K*hinf_data.Sp_app*Gd_p_app,dw,t,samples);
-hinf_data.u_p_dist = lsim_uss(-hinf_data.K*hinf_data.Sp*Gd_p,dw,t,samples);
+hinf_res.u_p_app_dist = lsim_uss(-hinf_data.K*hinf_data.Sp_app*Gd_p_app,dw,t,samples);
+hinf_res.u_p_dist = lsim_uss(-hinf_data.K*hinf_data.Sp*Gd_p,dw,t,samples);
 
 
 figure
-fig1 = plot_uss_states(t,mu_syn_data.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
-fig2 = plot_uss_states(t,mu_syn_data.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');
-[fig3,~] = plot_ss_states(t,mu_syn_data.y_dist,[],param.z_n0,1,'--','red','dist');
+fig1 = plot_uss_states(t,mu_syn_res.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
+fig2 = plot_uss_states(t,mu_syn_res.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');
+[fig3,~] = plot_ss_states(t,mu_syn_res.y_dist,[],param.z_n0,1,'--','red','dist');
 
 legend([fig1,fig2,fig3],'\boldmath{$\mu$} \textbf{-synthesis-Multiplicative}',...
        '\boldmath{$\mu$} \textbf{-synthesis-Parametric}',...
        '\boldmath{$\mu$} \textbf{-synthesis-Nominal}','interpreter','latex')
 
 figure
-fig1 = plot_uss_states(t,hinf_data.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
-fig2 = plot_uss_states(t,hinf_data.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');
-fig3 = plot_ss_states(t,hinf_data.y_dist,[],param.z_n0, 1,'--','red','dist');
+fig1 = plot_uss_states(t,hinf_res.y_p_app_dist,samples,param.z_n0,0.5,'-','#0072BD');
+fig2 = plot_uss_states(t,hinf_res.y_p_dist,samples,param.z_n0,0.5,'-','#77AC30');
+fig3 = plot_ss_states(t,hinf_res.y_dist,[],param.z_n0, 1,'--','red','dist');
 
 legend([fig1,fig2,fig3],'\boldmath{$h_{\infty}$} \textbf{ controller-Multiplicative}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller-Parametric}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller-Nominal}','interpreter','latex')
 
 figure
-fig1 = plot_uss_states(t,mu_syn_data.y_p_dist,samples,param.z_n0,0.5,'-','blue');
-fig2 = plot_uss_states(t,hinf_data.y_p_dist,samples,param.z_n0,0.5,'-','red');
+fig1 = plot_uss_states(t,mu_syn_res.y_p_dist,samples,param.z_n0,0.5,'-','blue');
+fig2 = plot_uss_states(t,hinf_res.y_p_dist,samples,param.z_n0,0.5,'-','red');
 
 subplot(3,1,1)
 grid minor
@@ -240,31 +269,31 @@ legend([fig1,fig2],'\boldmath{$\mu$} \textbf{-synthesis}',...
 
 figure
 subplot(2,1,1)
-plot_uss_inputs(t,mu_syn_data.u_p_dist,u_eq,samples)
+plot_uss_inputs(t,mu_syn_res.u_p_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
 subplot(2,1,2)
-plot_uss_inputs(t,mu_syn_data.u_p_app_dist,u_eq,samples)
+plot_uss_inputs(t,mu_syn_res.u_p_app_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Multiplicative Uncertainty}',...
       'interpreter','latex','FontSize',12)
 
 figure
 subplot(2,1,1)
-plot_uss_inputs(t,hinf_data.u_p_dist,u_eq,samples)
+plot_uss_inputs(t,hinf_res.u_p_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
 subplot(2,1,2)
-plot_uss_inputs(t,hinf_data.u_p_app_dist,u_eq,samples)
+plot_uss_inputs(t,hinf_res.u_p_app_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Multiplicative Uncertainty}',...
       'interpreter','latex','FontSize',12)
 
 figure
 subplot(2,1,1)
-plot_uss_inputs(t,mu_syn_data.u_p_dist,u_eq,samples)
+plot_uss_inputs(t,mu_syn_res.u_p_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$\mu$}-synthesis - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
 subplot(2,1,2)
-plot_uss_inputs(t,hinf_data.u_p_dist,u_eq,samples)
+plot_uss_inputs(t,hinf_res.u_p_dist,u_eq,samples)
 title('\textbf{Control Inputs - \boldmath{$h_{\infty}$} - Parametric Uncertainty}',...
       'interpreter','latex','FontSize',12)
 
