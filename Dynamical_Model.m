@@ -7,6 +7,8 @@ clc
 clear all
 close all
 
+addpath('Data Files')
+
 syms u v r w q p                        % Velocities for the 6 DOF model
 syms x_n y_n z_n phi theta psi          % Positions for the 6 DOF model
 syms delta_s delta_s_f delta_s_ap delta_s_as  % Inputs
@@ -15,7 +17,7 @@ syms delta_s0 delta_s_f0 delta_s_ap0 delta_s_as0 % Operating point of inputs
 syms m I_x I_y I_z I_xy I_xz I_yz       % Mass and moment of inertia
 syms g rho                              % Environment parameters
 syms A_h C_L0 C_La C_D0 C_Da            % Hydrofoil parameters
-syms gamma_0 l_b l_s h_h                     % Hydrofoil actuation mechanism parameters
+syms gamma_0 l_c l_s h_h                     % Hydrofoil actuation mechanism parameters
 syms l_xj l_y l_zj l_xj_f l_y_f l_zj_f  % Hydrofoil distances
 syms l_xj_ap l_y_ap l_zj_ap l_xj_as l_y_as l_zj_as % Hydrofoil distances
 syms u_w w_w u_w_f w_w_f u_w_ap w_w_ap u_w_as w_w_as  % Wave disturvances
@@ -90,10 +92,10 @@ g_x = subs(g_x,x,x_eq);
 alpha_s = -l_s/h_h*delta_s;   
 
 % Total x distance between the centre of pressure of each hydrofoil and CG
-l_x = l_xj + sin(gamma_0 + alpha_s )*l_b;
+l_x = l_xj + sin(gamma_0 + alpha_s)*l_c;
 
 % Total x distance between the centre of pressure of each hydrofoil and CG
-l_z = l_zj + cos(gamma_0 + alpha_s )*l_b;
+l_z = l_zj + cos(gamma_0 + alpha_s)*l_c;
 
 % Rotation Matrix from Body Frame to NED Frame
 R_phi = [1    0         0    ;...   % roll (x)

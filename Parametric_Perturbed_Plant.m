@@ -25,7 +25,7 @@ C_Da = param.C_Da;        % Slope of the linear approximation for CL [-]
 l_s = param.l_s; % Moment arm of the servo motor [m] 
 h_h = param.h_h; % z distance between the hinge and the joint of connection
                  % rod of the strut of T-foil [m]
-l_b = param.l_b;     % Distance between the centre of pressure of hydrofoil 
+l_c = param.l_c;     % Distance between the centre of pressure of hydrofoil 
                      % and the hinge [m]              
 gamma_0 = param.gamma_0; % Angle between the joint of connection rod and the z axis
                % of the centre of pressure of hydrofoil [rad]

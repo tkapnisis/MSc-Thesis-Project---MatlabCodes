@@ -27,15 +27,11 @@ samples = 100;
 G_frd = frd(G,omega);
 Gp_samples = usample(Gp,samples);
 Gp_frd = frd(Gp_samples,omega);
-disp('Finish Gp_samples')
-disp('-----------------')
 
 % Disturbance model
 Gd_frd = frd(Gd,omega);
 Gd_p_samples = usample(Gd_p,samples);
 Gd_p_frd = frd(Gd_p_samples,omega);
-disp('Finish Gd_p_samples')
-disp('-----------------')
 
 % Actuator model
 g_sm_frd = frd(g_sm_i,omega);
@@ -55,8 +51,6 @@ for i=1:size(G,1)
         rel_dif_G.y(i) = G.y(i);
     end
 end  
-disp('Finish ucover Gp')
-disp('-----------------')
 
 for i=1:size(Gd,1)
     for j=1:size(Gd,2)
@@ -67,23 +61,17 @@ for i=1:size(Gd,1)
         rel_dif_Gd.y(i) = Gd_frd.y(i);
     end
 end  
-disp('Finish ucover Gd_p')
-disp('-----------------')
 
 order = 1;
 [~,Info] = ucover(g_sm_p_frd,g_sm_i,order,'OutputMult');
 w_I_g_sm = Info.W1;
 rel_dif_g_sm = (g_sm_p_frd - g_sm_frd)/g_sm_frd;
-disp('Finish ucover g_sm_i')
-disp('-----------------')
-%%
+
 figure
 title('Relative error for each channel for the plant model')
 bodeplot(rel_dif_G,'b--',W_I_G,'r',omega,opts_bode);
 legend('\boldmath{$|\frac{g_p^{ij}(j\omega)-g^{ij}(j\omega)}{g^{ij}(j\omega)}|$}','\boldmath{$|w_{I,G^{ij}}(j\omega)|$}',...
        'interpreter','latex','FontSize',15)
-% set(gcf, 'WindowState', 'maximized');
-% saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Relative Differences G.png'])
 
 figure
 title('Relative error for each channel for the disturbance model')
@@ -91,16 +79,12 @@ bodeplot(rel_dif_Gd,'b--',W_I_Gd,'r',omega,opts_bode);
 grid on
 legend('\boldmath{$|\frac{g_{d,p}^{ij}(j\omega)-g_d^{ij}(j\omega)}{g_d^{ij}(j\omega)}|$}','\boldmath{$|w_{I,G_d^{ij}}(j\omega)|$}',...
        'interpreter','latex','FontSize',15)
-% set(gcf, 'WindowState', 'maximized');
-% saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Relative Differences Gd.png'])
 
 figure
 title('Relative error for the actuator model')
 bodeplot(rel_dif_g_sm,'b--',W_I_Gsm(1,1),'r',omega,opts_bode);
 legend('\boldmath{$|\frac{g_{sm,p}^i(j\omega)-g_{sm}^i(j\omega)}{g_{sm}^i(j\omega)}|$}','\boldmath{$|w_{I,g_{sm}^i}(j\omega)|$}',...
        'interpreter','latex','FontSize',18)
-% set(gcf, 'WindowState', 'maximized');
-% saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Relative Differences G.png'])
 
 %% Define the Perturbed Plant and the Disturbance Transfer Matrix
 % Multiplicative Input Uncertainty
@@ -127,9 +111,6 @@ Delta_I_Gsm = blkdiag(ultidyn('delta_I_g_sm_f',[1,1],'Bound',1),...
 Gsm_p_app = Gsm*(eye(3) + Delta_I_Gsm*W_I_Gsm);
 Gsm_p_app = minreal(Gsm_p_app);
 
-
-%%
-%
 % Bode plot
 omega = logspace(-3,3,100);
 figure
@@ -138,8 +119,6 @@ title('Plant Model Bode Plot');
 legend('\boldmath{$G_p$}\textbf{-Parametric Uncertainty}',...
        '\boldmath{$G_{p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
        '\boldmath{$G$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
-% set(gcf, 'WindowState', 'maximized');
-% saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Bode Plot G.png'])
 
 figure
 bodeplot(Gd_p,'r--',Gd_p_app,'g-.',Gd,'b-',omega,opts_bode)
@@ -147,8 +126,6 @@ title('Disturbance Model Bode Plot');
 legend('\boldmath{$G_{d,p}$}\textbf{-Parametric Uncertainty}',...
        '\boldmath{$G_{d,p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
        '\boldmath{$G_d$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
-% set(gcf, 'WindowState', 'maximized');
-% saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Bode Plot Gd.png'])
 
 figure
 bodeplot(Gsm_p,'r--',Gsm_p_app,'g-.',Gsm,'b-',omega,opts_bode)
@@ -157,7 +134,6 @@ legend('\boldmath{$G_{sm,p}$}\textbf{-Parametric Uncertainty}',...
        '\boldmath{$G_{sm,p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
        '\boldmath{$G_d$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
 
-%%
 % Singular Values Plot
 figure
 sigmaplot(Gp,'r--',Gp_app,'g-.',G,'b-',omega,opts_sigma)
@@ -165,8 +141,6 @@ title('Plant Model Singular Values');
 legend('\boldmath{$G_p$}\textbf{-Parametric Uncertainty}',...
        '\boldmath{$G_{p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
        '\boldmath{$G$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
-% set(gcf, 'WindowState', 'maximized');
-% saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Sigma Plot G.png'])
 
 figure
 sigmaplot(Gd_p,'r--',Gd_p_app,'g-.',Gd,'b-',omega,opts_sigma)
@@ -174,9 +148,7 @@ title('Disturbance Model Singular Values');
 legend('\boldmath{$G_{d,p}$}\textbf{-Parametric Uncertainty}',...
        '\boldmath{$G_{d,p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
        '\boldmath{$G_d$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
-% set(gcf, 'WindowState', 'maximized');
-% saveas(gcf,[pwd '/Figures/Parametric to Multiplicative Input/Sigma Plot Gd.png'])
-%%
+
 omega = logspace(-1,3,100);
 figure
 sigmaplot(Gsm_p,'r--',Gsm_p_app,'g-.',Gsm,'b-',omega,opts_sigma)

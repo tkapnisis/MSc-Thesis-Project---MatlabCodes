@@ -5,12 +5,12 @@ figure
 
 if num==1  
     for i=1:samples
-        loglog(wout1,sv1(:,:,i),'Color','red','LineStyle','-.','LineWidth',0.5)
+        loglog(wout1,sv1(:,:,i),'Color','red','LineStyle','--','LineWidth',0.5)
         hold on
         loglog(wout2,sv2(:,:,i),'Color','blue','LineStyle','-.','LineWidth',0.5)
     end    
-    fig1 = loglog(wout1(1,1),sv1(1,1,1),'Color','red','LineStyle','-.','LineWidth',1);
-    fig2 = loglog(wout2(1,1),sv2(1,1,1),'Color','blue','LineStyle','--','LineWidth',1);
+    fig1 = loglog(wout1(1,1),sv1(1,1,1),'Color','red','LineStyle','--','LineWidth',1);
+    fig2 = loglog(wout2(1,1),sv2(1,1,1),'Color','blue','LineStyle','-.','LineWidth',1);
     fig3 = [];
     grid on
     xlim([min(wout1),max(wout1)])
@@ -35,9 +35,9 @@ elseif num==2
     title('Singular Values','FontSize',12)
 elseif num==3
     for i=1:samples
-        loglog(wout1,sv1(:,:,i),'Color','red','LineStyle','--','LineWidth',0.5)
+        loglog(wout1,sv1(:,:,i),'Color','red','LineStyle','-.','LineWidth',0.5)
         hold on
-        loglog(wout2,sv2(:,:,i),'Color','blue','LineStyle','-.','LineWidth',0.5)
+        loglog(wout2,sv2(:,:,i),'Color','blue','LineStyle','--','LineWidth',0.5)
         loglog(wout3,sv3,'Color','black','LineStyle','-','LineWidth',0.75)
     end  
     fig1 = loglog(wout1(1,1),sv1(1,1,1),'Color','red','LineStyle','-.','LineWidth',0.5);

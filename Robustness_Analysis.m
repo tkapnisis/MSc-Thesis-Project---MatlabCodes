@@ -67,25 +67,30 @@ Blkstruct(6).Type = 'ultidyn';
 Blkstruct(6).Occurrences = 1;
 Blkstruct(6).Simplify = 2;
 
+mu_syn_res.F = minreal(lft(P_Delta,mu_syn_data.K));
+hinf_res.F = minreal(lft(P_Delta,hinf_data.K));
+
 mu_syn_res.N = minreal(lft(M,mu_syn_data.K));
 hinf_res.N = minreal(lft(M,hinf_data.K));
-omega=logspace(-4,4,300);
+
+omega=logspace(-6,4,400);
 
 mu_syn_res.N_frd = frd(mu_syn_res.N,omega);
 hinf_res.N_frd = frd(hinf_res.N,omega);
 
 % Nominal stability
-mu_syn_res.max_eig_N = max(real(eig(mu_syn_res.N))); 
-hinf_res.max_eig_N = max(real(eig(hinf_res.N))); 
+mu_syn_res.NS = isstable(mu_syn_res.N);
+hinf_res.NS = isstable(hinf_res.N);
 
+%%
 % Nominal performance
-[mubnds,~] = mussv(mu_syn_res.N_frd(10:15,13:21),Blkstruct(6));
-mu_syn_res.muNP = mubnds(:,1);
-[mu_syn_res.muNPinf, mu_syn_res.muNPw] = norm(mu_syn_res.muNP,inf); 
+[mu_syn_res.muNP,~] = sigma(mu_syn_res.N(10:15,13:21),omega);
+mu_syn_res.muNP_frd = frd(mu_syn_res.N(10:15,13:21),omega);
+[mu_syn_res.muNPinf, mu_syn_res.muNPw] = norm(mu_syn_res.muNP_frd,inf); 
 
-[mubnds,~] = mussv(hinf_res.N_frd(10:15,13:21),Blkstruct(6));
-hinf_res.muNP = mubnds(:,1);
-[hinf_res.muNPinf, hinf_res.muNPw] = norm(hinf_res.muNP,inf);  
+[hinf_res.muNP,~] = sigma(hinf_res.N(10:15,13:21),omega);
+hinf_res.muNP_frd  = frd(hinf_res.N(10:15,13:21),omega);
+[hinf_res.muNPinf, hinf_res.muNPw] = norm(hinf_res.muNP_frd,inf); 
 
 % Robust stability
 [mubnds,~] = mussv(mu_syn_res.N_frd(1:9,1:12),Blkstruct(1:5));
@@ -104,29 +109,28 @@ mu_syn_res.muRP = mubnds(:,1);
 [mubnds,~] = mussv(hinf_res.N_frd(:,:),Blkstruct);
 hinf_res.muRP = mubnds(:,1);
 [hinf_res.muRPinf, hinf_res.muRPw] = norm(hinf_res.muRP,inf);  
-
 %% Frequency response of the structured singular values for NP, RS and RP
 
 figure
-loglog(omega,mu_syn_res.muNP.ResponseData(:),'LineWidth',1.5,'Color','#0072BD','LineStyle','-')
+loglog(omega,mu_syn_res.muNP(1,:),'LineWidth',1.5,'Color','#0072BD','LineStyle','-')
 hold on
 loglog(omega,mu_syn_res.muRS.ResponseData(:),'LineWidth',1.5,'Color','#D95319','LineStyle','-')
 loglog(omega,mu_syn_res.muRP.ResponseData(:),'LineWidth',1.5,'Color','#EDB120','LineStyle','-')
-loglog(omega,hinf_res.muNP.ResponseData(:),'LineWidth',1.5,'Color','#0072BD','LineStyle','--')
+loglog(omega,hinf_res.muNP(1,:),'LineWidth',1.5,'Color','#0072BD','LineStyle','--')
 loglog(omega,hinf_res.muRS.ResponseData(:),'LineWidth',1.5,'Color','#D95319','LineStyle','--')
 loglog(omega,hinf_res.muRP.ResponseData(:),'LineWidth',1.5,'Color','#EDB120','LineStyle','--')
 grid on
-title('Structured singular values μ for NP, RS and RP','FontSize',12)
-ylabel('Margin')
-xlabel('Frequency')
-legend('\boldmath{$\mu_{\Delta_P}(N_{22}(j\omega))$} \textbf{-NP (\boldmath{$\mu$}-synthesis)}',...
+title('NP, RS and RP conditions as function of frequency','FontSize',12)
+ylabel('Magnitude (abs)')
+xlabel('Frequency (rad/s)')
+legend('\boldmath{$\bar{\sigma}(N_{22})$} \textbf{-NP (\boldmath{$\mu$}-synthesis)}',...
        '\boldmath{$\mu_{\Delta}(N_{11}(j\omega))$}\textbf{-RS (\boldmath{$\mu$}-synthesis)}',...
        '\boldmath{$\mu_{\hat{\Delta}}(N(j\omega))$}\textbf{-RP (\boldmath{$\mu$}-synthesis)}',...
-       '\boldmath{$\mu_{\Delta_P}(N_{22}(j\omega))$} \textbf{-NP (\boldmath{$h_{\infty}$})}',...
+       '\boldmath{$\bar{\sigma}(N_{22})$} \textbf{-NP (\boldmath{$h_{\infty}$})}',...
        '\boldmath{$\mu_{\Delta}(N_{11}(j\omega))$}\textbf{-RS (\boldmath{$h_{\infty}$})}',...
        '\boldmath{$\mu_{\hat{\Delta}}(N(j\omega))$}\textbf{-RP (\boldmath{$h_{\infty}$})}',...
        'interpreter','latex','FontSize',12,'Location','best')
-
+% ylim([5e-5,2e1])
 ax=gca;
 ax.XAxis.FontSize = 12;
 ax.YAxis.FontSize = 12;

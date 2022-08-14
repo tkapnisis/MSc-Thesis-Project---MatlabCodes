@@ -28,11 +28,11 @@ C_Da = 0.155;        % Slope of the linear approximation for CL [-]
 l_s = 0.06;         % Moment arm of the servo motor [m] 
 h_h = 0.178;         % z distance between the hinge and the joint of
                      % connection rod of the strut of T-foil [m]
-l_b = 0.484;         % Distance between the centre of pressure of hydrofoil 
+l_c = 0.484;         % Distance between the centre of pressure of hydrofoil 
                      % and the hinge [m]
 l_a0 = 0.473;        % z distance between the centre of pressure of 
                      % hydrofoil and the hinge for alpha_s =0 [m]
-gamma_0 = acos(l_a0/l_b); % Angle between the joint of connection rod and the
+gamma_0 = acos(l_a0/l_c); % Angle between the joint of connection rod and the
                      % z axis of the centre of pressure of hydrofoil
                      % [rad]
 l_xj_f = 0.402;      % x distance between the hinge of fore hydrofoil and 
@@ -86,7 +86,7 @@ param.z_n0 = z_n0; % Operating height of CG with respect to mean water surface [
 param.l_s = l_s; % Moment arm of the servo motor [m] 
 param.h_h = h_h; % z distance between the hinge and the joint of connection
                  % rod of the strut of T-foil [m]
-param.l_b = l_b;     % Distance between the centre of pressure of hydrofoil 
+param.l_c = l_c;     % Distance between the centre of pressure of hydrofoil 
                      % and the hinge [m]              
 param.gamma_0 = gamma_0; % Angle between the joint of connection rod and the z axis
                % of the centre of pressure of hydrofoil [rad]
