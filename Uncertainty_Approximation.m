@@ -12,7 +12,7 @@ addpath('Data Files')
 load('LTI_Perturbed_Plant.mat','Gp','Gd_p','Gsm_p','g_sm_p_i')
 load('LTI_Nominal_Plant.mat','G','Gd','Gsm','g_sm_i','foil_loc')
 
-load('Uncertainty_Weighting_Functions.mat')
+% load('Uncertainty_Weighting_Functions.mat')
 
 run Bode_options.m
 run Sigma_options.m
@@ -134,6 +134,7 @@ legend('\boldmath{$G_{sm,p}$}\textbf{-Parametric Uncertainty}',...
        '\boldmath{$G_{sm,p}^a$}\textbf{-Multiplicative Input Uncertainty}',...
        '\boldmath{$G_d$}\textbf{-Nominal}','interpreter','latex','FontSize',10)
 
+
 % Singular Values Plot
 figure
 sigmaplot(Gp,'r--',Gp_app,'g-.',G,'b-',omega,opts_sigma)
@@ -159,6 +160,4 @@ legend('\boldmath{$G_{sm,p}$}\textbf{-Parametric Uncertainty}',...
        'location','best')
 %}
 %% Save results
-save('Data Files/Uncertainty_Weighting_Functions.mat','W_I_G','W_I_Gd','W_I_Gsm',...
-     'rel_dif_G','rel_dif_Gd','rel_dif_g_sm','omega','samples','Gp_app','Gd_p_app',...
-     'Gsm_p_app')
+save('Data Files/Uncertainty_Weighting_Functions.mat')

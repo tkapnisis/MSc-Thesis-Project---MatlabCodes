@@ -38,7 +38,7 @@ run Sigma_options.m
 % Upper bound of the absolute value for the complex perturbations
 bound_G = 0.5;
 bound_Gd = 0.5;
-[P_Delta,P_aug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
+[P_Delta,P_aug,Gp_app,Gd_p_app,Gsm_p_app] = Generalized_Plant_Perturbed...
                 (G,Gd,Gsm,bound_G,bound_Gd,W_I_G,W_I_Gd,W_I_Gsm,Wp,Wu,Wd,Wr);
 %% mu-synthesis of Hinf Controller - Perturbed Plant
 disp('----------- mu-synthesis controller-Perturbed Plant --------------')
@@ -92,7 +92,7 @@ legend([fig1,fig2],strcat('Reduced-order:', num2str(mu_syn_data.K_size),' states
 % individual sigma plots of the full and the reduced-order controller
 % sigma(mu_syn_data.K-mu_syn_data.K_full,opts_sigma)
 %% Define all the loop transfer matrices for mu-synthesis controller and hinf controller
-hinf_data.loops_p_app = loopsens(Gp_app,hinf_data.K);
+hinf_data.loops_p_app = loopsens(Gp_app*Gsm_p_app,hinf_data.K);
 hinf_data.Lp_app = hinf_data.loops_p_app.Lo;
 hinf_data.Tp_app = hinf_data.loops_p_app.To;
 hinf_data.Sp_app = hinf_data.loops_p_app.So;
@@ -102,7 +102,7 @@ mu_syn_data.L = mu_syn_data.loops.Lo;
 mu_syn_data.T = mu_syn_data.loops.To;
 mu_syn_data.S = mu_syn_data.loops.So;
 
-mu_syn_data.loops_p_app = loopsens(Gp_app,mu_syn_data.K);
+mu_syn_data.loops_p_app = loopsens(Gp_app*Gsm_p_app,mu_syn_data.K);
 mu_syn_data.Lp_app = mu_syn_data.loops_p_app.Lo;
 mu_syn_data.Tp_app = mu_syn_data.loops_p_app.To;
 mu_syn_data.Sp_app = mu_syn_data.loops_p_app.So;
@@ -113,5 +113,6 @@ mu_syn_data.Tp = mu_syn_data.loops_p.To;
 mu_syn_data.Sp = mu_syn_data.loops_p.So;
 
 %% Save data
-save('Data Files/Controller_mu_syn.mat','mu_syn_data','Gp_app','Gd_p_app','P_Delta')
+save('Data Files/Controller_mu_syn.mat','mu_syn_data','Gp_app','Gd_p_app',...
+                                        'Gsm_p_app','P_Delta')
 save('Data Files/Controller_hinf.mat','hinf_data','-append')

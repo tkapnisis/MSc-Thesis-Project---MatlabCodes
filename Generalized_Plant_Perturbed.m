@@ -1,4 +1,4 @@
-function [P_Delta,P_aug,Gp_app,Gd_p_app] = Generalized_Plant_Perturbed...
+function [P_Delta,P_aug,Gp_app,Gd_p_app,Gsm_p_app] = Generalized_Plant_Perturbed...
                 (G,Gd,Gsm,bound_G,bound_Gd,W_I_G,W_I_Gd,W_I_Gsm,...
                  Wp,Wu,Wd,Wr)
 
@@ -15,13 +15,13 @@ Delta_I_Gsm = blkdiag( ultidyn('delta_sm_f',[1,1],'Bound',1),...
                        ultidyn('delta_sm_ap',[1,1],'Bound',1),...
                        ultidyn('delta_sm_as',[1,1],'Bound',1));
 
-Gsm_p_app = (eye(3) + Delta_I_Gsm*W_I_Gsm)*Gsm;
+Gsm_p_app = Gsm*(eye(3) + Delta_I_Gsm*W_I_Gsm);
 
 Delta_I_G = ultidyn('Delta_I_G',[3,3],'Bound',bound_G);
 
 Delta_I_Gd = ultidyn('Delta_I_Gd',[6,3],'Bound',bound_Gd);
 
-Gp_app = G*(eye(3) + Delta_I_G*W_I_G)*Gsm_p_app;
+Gp_app = G*(eye(3) + Delta_I_G*W_I_G);
 Gp_app = minreal(Gp_app);
 
 Gd_p_app = Gd*(eye(6) + Delta_I_Gd*W_I_Gd);
