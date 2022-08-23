@@ -17,6 +17,7 @@ load('Controller_mu_syn.mat')
 load('Controller_hinf.mat')
 load('Uncertainty_Weighting_Functions.mat')
 
+% load('Singular_Value_Plots.mat')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -29,7 +30,7 @@ run Sigma_options.m
 [Wp,Wu,Wd,Wr] = Design_Weights();
 
 %% Open-loop Plant Sigma plots
-%
+%{
 [sv_G,wout_G] = sigma(G);
 [sv_Gd,wout_Gd] = sigma(Gd);
 
@@ -37,10 +38,10 @@ run Sigma_options.m
 
 legend([fig1,fig2],'\boldmath{$\sigma(G)$}','\boldmath{$\sigma(G_d)$}',...
        'interpreter','latex','FontSize',12,'Location','best')
-
+%}
 
 %% Uncertainty Approximation Sigma Plots
-
+%{
 % Plant model
 omega=logspace(-1,3,100);
 samples = 20;
@@ -65,7 +66,6 @@ unc_app.sv_Gd_p_app = sigma_uss(Gd_p_app,omega,samples);
 legend([fig1,fig2,fig3],'\boldmath{$\sigma(G_{d,p})$}','\boldmath{$\sigma(G_{d,p}^a)$}',...
        '\boldmath{$\sigma(G_d)$}','interpreter','latex','FontSize',12,'Location','best')
 
-
 % Actuator model
 omega=logspace(0,3,100);
 samples = 20;
@@ -78,9 +78,10 @@ unc_app.sv_Gsm_p_app = sigma_uss(Gsm_p_app,omega,samples);
 
 legend([fig1,fig2,fig3],'\boldmath{$\sigma(G_{sm,p})$}','\boldmath{$\sigma(G_{sm,p}^a)$}',...
        '\boldmath{$\sigma(G_{sm})$}','interpreter','latex','FontSize',12,'Location','best')
-
+%}
 
 %% Sensitivity Nominal
+%{
 omega = logspace(-5,3,100);
 [weights_res.sv_Wp,~] = sigma(inv(Wp),omega);
 [mu_syn_res.sv_S,~] = sigma(mu_syn_data.S,omega);
@@ -93,8 +94,9 @@ legend([fig1,fig2,fig3],'\boldmath{$\sigma(S):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(S):h_{\infty}$}','\boldmath{$\sigma(W_p^{-1})$}',...
        'interpreter','latex','FontSize',12,'Location','best')
 title('Sensitivity - Nominal Plant')
+%}
 %% Sensitivity - Perturbed Plant with Parametric Uncertainties
-samples = 25;
+samples = 15;
 omega = logspace(-5,2.5,100);
 [weights_res.sv_Wp,~] = sigma(inv(Wp),omega);
 mu_syn_res.sv_Sp = sigma_uss(mu_syn_data.Sp,omega,samples);
@@ -122,7 +124,9 @@ legend([fig1,fig2,fig3],'\boldmath{$\sigma(S):\mu-$}\textbf{synthesis}',...
        'interpreter','latex','FontSize',12,'Location','best')
 % title('Approximated Perturbed Plant with Multiplicative Input Uncertainties')
 ylim([min(mu_syn_res.sv_Sp_app(:)),10])
-%% Complementary Sensitivity (Closed-loop response for reference tracking)
+
+% Complementary Sensitivity (Closed-loop response for reference tracking)
+%{
 omega=logspace(-2,3,100);
 [mu_syn_res.sv_T,~] = sigma(mu_syn_data.T,omega);
 [hinf_res.sv_T,~] = sigma(hinf_data.T,omega);
@@ -133,9 +137,10 @@ legend([fig1,fig2],'\boldmath{$\sigma(T):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(T):h_{\infty}$}','interpreter','latex','FontSize',12,...
        'Location','best')
 title('Complementary Sensitivity - Nominal Plant')
+%}
 
-%% Complementary Sensitivity - Perturbed Plant with Parametric Uncertainties
-samples = 25;
+% Complementary Sensitivity - Perturbed Plant with Parametric Uncertainties
+samples = 15;
 omega=logspace(-2,2.5,100);
 mu_syn_res.sv_Tp = sigma_uss(mu_syn_data.Tp,omega,samples);
 hinf_res.sv_Tp = sigma_uss(hinf_data.Tp,omega,samples);
@@ -147,7 +152,9 @@ legend([fig1,fig2],'\boldmath{$\sigma(T):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(T):h_{\infty}$}','interpreter','latex','FontSize',...
        12,'Location','best')
 % title('Complementary Sensitivity - Perturbed Plant with Parametric Uncertainties')
-%% Complementary Sensitivity - Perturbed Plant with Multiplicative Input Uncertainties
+
+% Complementary Sensitivity - Perturbed Plant with Multiplicative Input Uncertainties
+%{
 samples = 15;
 omega=logspace(-2,3,100);
 mu_syn_res.sv_Tp_app = sigma_uss(mu_syn_data.Tp_app,omega,samples);
@@ -160,8 +167,10 @@ legend([fig1,fig2],'\boldmath{$\sigma(T):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(T):h_{\infty}$}','interpreter','latex','FontSize',...
        12,'Location','best')
 % title('Complementary Sensitivity - Perturbed Plant with Multiplicative Input Uncertainties')
+%}
 
-%% SGd (Contribution of disturbance to the error)
+% SGd (Contribution of disturbance to the error)
+%{
 omega = logspace(-5,3,200);
 [mu_syn_res.sv_SGd,~] = sigma(mu_syn_data.S*Gd,omega);
 [hinf_res.sv_SGd,~] = sigma(hinf_data.S*Gd,omega);
@@ -171,8 +180,10 @@ omega = logspace(-5,3,200);
 legend([fig1,fig2],'\boldmath{$\sigma(SGd):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(SGd):h_{\infty}$}','interpreter','latex','FontSize',12,...
        'Location','best')
-%% SGd - Perturbed Plant with Parametric Uncertainties
-samples = 25;
+%}
+
+% SGd - Perturbed Plant with Parametric Uncertainties
+samples = 15;
 omega=logspace(-3,2,100);
 mu_syn_res.sv_SpGd_p = sigma_uss(mu_syn_data.Sp*Gd_p,omega,samples);
 hinf_res.sv_SpGd_p = sigma_uss(hinf_data.Sp*Gd_p,omega,samples);
@@ -185,7 +196,7 @@ legend([fig1,fig2],'\boldmath{$\sigma(SG_d):\mu-$}\textbf{synthesis}',...
        12,'Location','best')
 % title('SGd - Perturbed Plant with Parametric Uncertainties')
 
-%% KSWr (Contribution of reference signal to the control signal)
+% KSWr (Contribution of reference signal to the control signal)
 samples = 15;
 omega=logspace(-3,3,100);
 [weights_res.sv_Wu,~] = sigma(inv(Wu),omega);
@@ -198,7 +209,7 @@ legend([fig1,fig2,fig3],'\boldmath{$\sigma(KS):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(KS):h_{\infty}$}','\boldmath{$\sigma(W_u^{-1})$}',...
        'interpreter','latex','FontSize',12,'Location','best')
 
-%% KSGd (Contribution of disturbance to the control signal)
+% KSGd (Contribution of disturbance to the control signal)
 samples = 15;
 omega = logspace(-3,3,100);
 [weights_res.sv_Wu,~] = sigma(inv(Wu),omega);
@@ -212,7 +223,7 @@ legend([fig1,fig2,fig3],'\boldmath{$\sigma(KSGd):\mu-$}\textbf{synthesis}',...
        '\boldmath{$\sigma(KSGd):h_{\infty}$}','\boldmath{$\sigma(W_u^{-1})$}','interpreter','latex','FontSize',12,...
        'Location','best')
 
-%% K (Controller)
+% K (Controller)
 omega = logspace(-5,4,200);
 [mu_syn_res.sv_K,~] = sigma(mu_syn_data.K,omega);
 [hinf_res.sv_K,~] = sigma(hinf_data.K,omega);
@@ -262,3 +273,6 @@ legend([fig1,fig2],'\boldmath{$\sigma(L):\mu-$}\textbf{synthesis}',...
        12,'Location','best')
 title('Loop - Perturbed Plant with Multiplicative Input Uncertainties')
 %}
+
+%% Save data
+save('Data Files/Singular_Value_Plots','hinf_res','mu_syn_res')

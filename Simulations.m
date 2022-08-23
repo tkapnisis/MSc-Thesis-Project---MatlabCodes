@@ -16,7 +16,7 @@ load('LTI_Nominal_Plant.mat','G','Gd','Gsm','foil_loc')
 load('Controller_mu_syn.mat')
 load('Controller_hinf.mat')
 
-% load('Simulations_Results.mat')
+load('Simulations_Results.mat')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -26,8 +26,8 @@ load('Controller_hinf.mat')
 u_eq = [param.delta_s_f0,param.delta_s_ap0,param.delta_s_as0];
 %% Simulations for reference tracking with square signal on heave
 % Time duration of simulations
-dt = 0.02; % sampling time
-tend = 4; % duration of simulation in seconds
+dt = 0.05; % sampling time
+tend = 5; % duration of simulation in seconds
 t = 0:dt:tend;
 
 step_z = 0.1;
@@ -72,7 +72,7 @@ subplot(3,1,3)
 grid minor
 %% Perturbed system
 % Number of samples for simulating the uncertain systems
-samples = 20;
+samples = 15;
 
 % Calculation of the outputs for the perturbed system
 mu_syn_res.y_p_app_ref = lsim_uss(mu_syn_data.Tp_app,ref,t,samples);
@@ -87,7 +87,7 @@ hinf_res.u_p_app_ref = lsim_uss(Gsm_p_app*hinf_data.K*hinf_data.Sp_app,ref,t,sam
 
 mu_syn_res.u_p_ref = lsim_uss(Gsm_p*mu_syn_data.K*mu_syn_data.Sp,ref,t,samples);
 hinf_res.u_p_ref = lsim_uss(Gsm_p*hinf_data.K*hinf_data.Sp,ref,t,samples);
-
+%%
 figure
 fig1 = plot_uss_states(t,mu_syn_res.y_p_ref,samples,param.z_n0,0.75,'--','green');
 fig2 = plot_uss_states(t,hinf_res.y_p_ref,samples,param.z_n0,0.75,'--','#EDB120');
@@ -147,16 +147,24 @@ legend([fig1,fig2,fig3,fig4],'Multiplicative Uncertainty','Parametric Uncertaint
 %% Simulation of the closed loop system with regular waves
 
 % Time duration of simulations
-dt = 0.02; % sampling time
-tend = 20; % duration of simulation in seconds
+dt = 0.05; % sampling time
+tend = 15; % duration of simulation in seconds
 t = 0:dt:tend;
 
 %  Calculation of waves velocity profile for each hydrofoil
 
 % Parameters of long-crested regular wave
-wave_param.omega_0 = 1;  % Wave frequency [rad/s]
-wave_param.lambda = 1;   % Wave length [m]
-wave_param.zeta_0 = 0.1;  % Wave amplitude [m]
+lambda = 1:1:5;
+omega = sqrt(2*pi*param.g./lambda);  % Wave frequency [rad/s]
+T = 2*pi./omega;
+zeta_0 = 0.02:0.02:0.1;  % Wave amplitude [m]
+beta = [0,pi];      % Encounter angle (beta=0 for following waves) [rad] 
+
+% Parameters of long-crested regular wave
+i = 3;
+wave_param.omega = omega(i);  % Wave frequency [rad/s]
+wave_param.lambda = lambda(i);   % Wave length [m]
+wave_param.zeta_0 = zeta_0(i);  % Wave amplitude [m]
 wave_param.beta = 0*pi;      % Encounter angle (beta=0 for following waves) [rad] 
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
@@ -200,7 +208,7 @@ grid minor
 
 %%
 % Number of samples for simulating the uncertain systems
-samples = 20;
+samples = 15;
 
 % Calculation of the outputs
 mu_syn_res.y_p_app_dist = lsim_uss(mu_syn_data.Sp_app*Gd_p_app,dw,t,samples);
@@ -234,7 +242,7 @@ legend([fig1,fig2,fig3,fig5,fig4],'\boldmath{$\mu$} \textbf{-synthesis controlle
        '\boldmath{$\mu$} \textbf{-synthesis controller: Nominal}',...
        '\boldmath{$h_{\infty}$} \textbf{ controller: Nominal}',...
        'interpreter','latex','Location','best','FontSize',10)
-%%
+
 figure
 fig1 = plot_uss_inputs(t,mu_syn_res.u_p_dist,u_eq,samples,0.5,'--','green');
 fig2 = plot_uss_inputs(t,hinf_res.u_p_dist,u_eq,samples,0.5,'--','#EDB120');
@@ -256,4 +264,4 @@ legend([fig1,fig2,fig3,fig4],'\boldmath{$\mu$} \textbf{-synthesis controller: Pe
        'interpreter','latex','Location','best','FontSize',10)
 
 %% Save data
-% save('Data Files/Simulations_Results','hinf_res','mu_syn_res','wave_param','ref')
+save('Data Files/Simulations_Results','hinf_res','mu_syn_res','wave_param','ref')

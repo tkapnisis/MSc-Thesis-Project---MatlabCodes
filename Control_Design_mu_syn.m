@@ -51,6 +51,7 @@ mu_syn_data.timerun = toc;
 % Balance realization of the high-order mu-synthesis controller
 [mu_syn_data.K_bal,mu_syn_data.K_g] = balreal(mu_syn_data.K_full);
 % Hankel Singular Values
+figure
 hankelsv(mu_syn_data.K_bal,'add','log')
 grid minor
 title('Hankel Singular Values','FontSize',12)

@@ -13,6 +13,7 @@ addpath('Data Files')
 load('Controller_mu_syn.mat')
 load('Controller_hinf.mat')
 
+load('Robustness_Analysis_Results.mat')
 % Nominal plant G(s)
 % Disturbances transfer matrix Gd(s)
 % Perturbed plant with uncertain parameters Gp(s)
@@ -134,3 +135,6 @@ legend('\boldmath{$\bar{\sigma}(N_{22})$} \textbf{-NP (\boldmath{$\mu$}-synthesi
 ax=gca;
 ax.XAxis.FontSize = 12;
 ax.YAxis.FontSize = 12;
+
+%% Save data
+save('Data Files/Robustness_Analysis_Results','hinf_res','mu_syn_res')

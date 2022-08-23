@@ -143,20 +143,36 @@ plot_ss_states(t,y,ref,param.z_n0,1,'-','blue','ref');
 u_in = lsim(hinf_data.K*hinf_data.S,ref,t);
 
 figure
-plot_ss_inputs(t,u_in,u_eq)
+plot_ss_inputs(t,u_in,u_eq,1,'-','blue');
 
 %% Simulation of the closed loop system with the Hinf controller and regular waves
 
 %  Calculation of waves velocity profile for each hydrofoil
+% Time duration of simulations
+dt = 0.05; % sampling time
+tend = 20; % duration of simulation in seconds
+t = 0:dt:tend;
+
+%  Calculation of waves velocity profile for each hydrofoil
+
 % Parameters of long-crested regular wave
-wave_param.omega_0 = 1.5;   % Wave frequency [rad/s]
-wave_param.lambda = 2;    % Wave length [m]
-wave_param.zeta_0 = 0.1;  % Wave amplitude [m]
-wave_param.beta = pi;     % Encounter angle (beta=0 for following waves) [rad] 
+lambda = 1:1:5;
+omega = sqrt(2*pi*param.g./lambda);  % Wave frequency [rad/s]
+T = 2*pi./omega;
+zeta_0 = 0.02:0.02:0.1;  % Wave amplitude [m]
+beta = [0,pi];      % Encounter angle (beta=0 for following waves) [rad] 
+
+% Parameters of long-crested regular wave
+i = 3;
+wave_param.omega = omega(i);  % Wave frequency [rad/s]
+wave_param.lambda = lambda(i);   % Wave length [m]
+wave_param.zeta_0 = zeta_0(i);  % Wave amplitude [m]
+wave_param.beta = pi;      % Encounter angle (beta=0 for following waves) [rad] 
+
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
-select = 2;
+select = 1;
 
 switch select
     case 1
@@ -166,7 +182,7 @@ switch select
     figure
     plot_ss_states(t,y,[],param.z_n0,1.5,'-','#0072BD','dist');
     figure
-    plot_ss_inputs(t,u_in,u_eq)
+    plot_ss_inputs(t,u_in,u_eq,1,'-','blue');
     
     case 2
         [yd,~,x] = lsim(hinf_data.S*Gd,dw,t);
@@ -181,7 +197,7 @@ switch select
         u_in_d = lsim(-hinf_data.K*hinf_data.S*Gd,dw,t);
         u_in = u_in_r + u_in_d;
         figure
-        plot_ss_inputs(t,u_in,u_eq)
+        plot_ss_inputs(t,u_in,u_eq,1,'-','blue');
 end
 %% Save data
 save('Data Files/Controller_hinf','hinf_data')

@@ -6,7 +6,7 @@ s = zpk('s');
 Ms1 = 1.5;
 Ms2 = 1.5;
 Ms3 = 1.5;
-omega_b1 = 1;
+omega_b1 = 2;
 omega_b2 = 2;
 omega_b3 = 2;
 A_1 = 1e-4;
@@ -22,9 +22,9 @@ Wp = blkdiag(Wp11, Wp22 , Wp33);
 Mu1 = 1e3;
 Mu2 = 1e3;
 Mu3 = 1e3;
-omega_bc1 = 30;
-omega_bc2 = 30;
-omega_bc3 = 30;
+omega_bc1 = 50;
+omega_bc2 = 50;
+omega_bc3 = 50;
 Ac_1 = 1e-3;
 Ac_2 = 1e-3;
 Ac_3 = 1e-3;
@@ -48,21 +48,21 @@ Wu = blkdiag(Wu11, Wu22 , Wu33);
 % HPF_w = s/(s + omega_w_high);
 % BPF_w = k_waves*LPF_w*HPF_w;
 
-omega_L = 0.33;
-omega_H = 3.63;
+omega_L = 1.52;
+omega_H = 32.98;
 omega_0 = sqrt(omega_H*omega_L);
-Q = omega_0/(omega_H-omega_L);
-H0 = 3;
+Q = omega_0/(omega_H-omega_L);  
+H0 = 2;
 BPF_w = (H0*(omega_0/Q)*s)/(s^2 + omega_0/Q*s + omega_0^2);
 
 Wd = blkdiag(BPF_w,BPF_w,BPF_w,BPF_w,BPF_w,BPF_w);
 
 % Design low-pass filters for the frequency content of the reference
 % signals
-tau_r1 = 1;
-tau_r2 = 1;
-tau_r3 = 1;
-mag_r1 = 0.1;
+tau_r1 = 2;
+tau_r2 = 2;
+tau_r3 = 2;
+mag_r1 = 0.5;
 mag_r2 = 0.1;
 mag_r3 = 0.1;
 Wr11 = mag_r1/(tau_r1*s + 1);
