@@ -74,7 +74,7 @@ hinf_res.F = minreal(lft(P_Delta,hinf_data.K));
 mu_syn_res.N = minreal(lft(M,mu_syn_data.K));
 hinf_res.N = minreal(lft(M,hinf_data.K));
 
-omega=logspace(-6,4,400);
+omega=logspace(-6,5,400);
 
 mu_syn_res.N_frd = frd(mu_syn_res.N,omega);
 hinf_res.N_frd = frd(hinf_res.N,omega);
@@ -131,7 +131,7 @@ legend('\boldmath{$\bar{\sigma}(N_{22})$} \textbf{-NP (\boldmath{$\mu$}-synthesi
        '\boldmath{$\mu_{\Delta}(N_{11}(j\omega))$}\textbf{-RS (\boldmath{$h_{\infty}$})}',...
        '\boldmath{$\mu_{\hat{\Delta}}(N(j\omega))$}\textbf{-RP (\boldmath{$h_{\infty}$})}',...
        'interpreter','latex','FontSize',12,'Location','best')
-% ylim([5e-5,2e1])
+xlim([min(omega),max(omega)])
 ax=gca;
 ax.XAxis.FontSize = 12;
 ax.YAxis.FontSize = 12;

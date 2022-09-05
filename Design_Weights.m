@@ -6,9 +6,9 @@ s = zpk('s');
 Ms1 = 1.5;
 Ms2 = 1.5;
 Ms3 = 1.5;
-omega_b1 = 2;
-omega_b2 = 2;
-omega_b3 = 2;
+omega_b1 = 5;
+omega_b2 = 5;
+omega_b3 = 5;
 A_1 = 1e-4;
 A_2 = 1e-4;
 A_3 = 1e-4;
@@ -33,7 +33,6 @@ Wu11 = (s + omega_bc1/Mu1)/(Ac_1*s + omega_bc1);
 Wu22 = (s + omega_bc2/Mu2)/(Ac_2*s + omega_bc2);
 Wu33 = (s + omega_bc3/Mu3)/(Ac_3*s + omega_bc3);
 Wu = blkdiag(Wu11, Wu22 , Wu33);
-% Wu = ss(blkdiag(2,2,2));
 
 % Design band-pass filters for the frequency content of the wave
 % disturbances.
@@ -41,28 +40,21 @@ Wu = blkdiag(Wu11, Wu22 , Wu33);
 % filter (see Ogata p.493)
 % https://www.analog.com/en/analog-dialogue/articles/band-pass-response-in-active-filters.html
 
-% omega_w_low = 0.33; 
-% omega_w_high = 3.63;
-% k_waves = 2e1; % gain that is used to increase the magnitude of the filter
-% LPF_w = omega_w_low/(s + omega_w_low);
-% HPF_w = s/(s + omega_w_high);
-% BPF_w = k_waves*LPF_w*HPF_w;
-
 omega_L = 1.52;
 omega_H = 32.98;
 omega_0 = sqrt(omega_H*omega_L);
 Q = omega_0/(omega_H-omega_L);  
-H0 = 2;
+H0 = 1.5;
 BPF_w = (H0*(omega_0/Q)*s)/(s^2 + omega_0/Q*s + omega_0^2);
 
 Wd = blkdiag(BPF_w,BPF_w,BPF_w,BPF_w,BPF_w,BPF_w);
 
 % Design low-pass filters for the frequency content of the reference
 % signals
-tau_r1 = 2;
-tau_r2 = 2;
-tau_r3 = 2;
-mag_r1 = 0.5;
+tau_r1 = 4;
+tau_r2 = 4;
+tau_r3 = 4;
+mag_r1 = 0.2;
 mag_r2 = 0.1;
 mag_r3 = 0.1;
 Wr11 = mag_r1/(tau_r1*s + 1);

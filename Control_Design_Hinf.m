@@ -31,7 +31,7 @@ t = 0:dt:tend;
 
 % Equilibrium input
 u_eq = [param.delta_s_f0,param.delta_s_ap0,param.delta_s_as0];
-%% Pole-zero map of the open-loops of nominal and perturbed plant
+%% Pole-zero map of the open-loop of nominal and perturbed plant
 %{
 % Pole-zero map of the open-loop G(s)
 figure
@@ -46,7 +46,7 @@ ps = pole(Gp);
 zs = tzero(Gp);
 
 %}
-%% Bodeplot of the open-loops of nominal and perturbed plant
+%% Bodeplot of the open-loop of nominal and perturbed plant
 %{
 figure
 bodeplot(Gp,G,opts_bode)
@@ -132,7 +132,6 @@ step(hinf_data.T,5)
 title('Step Response with Hinf Controller')
 grid minor
 
-%%
 ref = [-0.05*square(2*pi/10*t);0*ones(size(t));0*ones(size(t))];
 % ref = [0*ones(size(t));0*ones(size(t));-0.2*sin(2*pi/4*t)];
 [y,~,~] = lsim(hinf_data.T,ref,t);
@@ -163,42 +162,21 @@ zeta_0 = 0.02:0.02:0.1;  % Wave amplitude [m]
 beta = [0,pi];      % Encounter angle (beta=0 for following waves) [rad] 
 
 % Parameters of long-crested regular wave
-i = 3;
+i = 2;
 wave_param.omega = omega(i);  % Wave frequency [rad/s]
 wave_param.lambda = lambda(i);   % Wave length [m]
 wave_param.zeta_0 = zeta_0(i);  % Wave amplitude [m]
-wave_param.beta = pi;      % Encounter angle (beta=0 for following waves) [rad] 
-
+wave_param.beta = 0*pi;      % Encounter angle (beta=0 for following waves) [rad] 
 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
-select = 1;
+[y,~,x] = lsim(hinf_data.S*Gd,dw,t);
+u_in = lsim(-hinf_data.K*hinf_data.S*Gd,dw,t);
 
-switch select
-    case 1
-    [y,~,x] = lsim(hinf_data.S*Gd,dw,t);
-    u_in = lsim(-hinf_data.K*hinf_data.S*Gd,dw,t);
-
-    figure
-    plot_ss_states(t,y,[],param.z_n0,1.5,'-','#0072BD','dist');
-    figure
-    plot_ss_inputs(t,u_in,u_eq,1,'-','blue');
-    
-    case 2
-        [yd,~,x] = lsim(hinf_data.S*Gd,dw,t);
-        ref = [wave_param.zeta_0*sin(wave_param.omega_e*t);0*ones(size(t));0*ones(size(t))];
-        [yr,~,~] = lsim(hinf_data.T,ref,t);
-        y = yd + yr;
-
-        figure
-        [fig1,fig2] = plot_ss_states(t,y,ref,param.z_n0,1,'-','#0072BD','dist_ref');
-        legend([fig1,fig2],'Response','Reference','Location','best','FontSize',10)
-        u_in_r = lsim(hinf_data.K*hinf_data.S,ref,t);
-        u_in_d = lsim(-hinf_data.K*hinf_data.S*Gd,dw,t);
-        u_in = u_in_r + u_in_d;
-        figure
-        plot_ss_inputs(t,u_in,u_eq,1,'-','blue');
-end
+figure
+plot_ss_states(t,y,[],param.z_n0,1.5,'-','#0072BD','dist');
+figure
+plot_ss_inputs(t,u_in,u_eq,1,'-','blue');
 %% Save data
 save('Data Files/Controller_hinf','hinf_data')
 %% Discretization of the controller time step response

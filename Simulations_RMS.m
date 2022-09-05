@@ -37,11 +37,12 @@ T = 2*pi./omega;
 zeta_0 = 0.02:0.02:0.1;  % Wave amplitude [m]
 beta = [0,pi];      % Encounter angle (beta=0 for following waves) [rad] 
 
+i = 3;
 % Parameters of long-crested regular wave
-wave_param.omega = omega(3);  % Wave frequency [rad/s]
-wave_param.lambda = lambda(3);   % Wave length [m]
-wave_param.zeta_0 = zeta_0(3);  % Wave amplitude [m]
-wave_param.beta = 0*pi;      % Encounter angle (beta=0 for following waves) [rad] 
+wave_param.omega = omega(i);  % Wave frequency [rad/s]
+wave_param.lambda = lambda(i);   % Wave length [m]
+wave_param.zeta_0 = zeta_0(i);  % Wave amplitude [m]
+wave_param.beta = pi;      % Encounter angle (beta=0 for following waves) [rad] 
 [dw,wave_param] = Wave_Model(t,wave_param,foil_loc,param);
 
 %%
@@ -187,7 +188,7 @@ for i=1:samples
 end    
 grid minor
 xlabel('Wave frequency (rad/s)','FontSize',12)
-ylabel('\textbf{RMS } \boldmath{$\phi$}\textbf{ (m)}','interpreter','latex','FontSize',10')
+ylabel('\textbf{RMS } \boldmath{$\phi$}\textbf{ (deg)}','interpreter','latex','FontSize',10')
 title('Roll','FontSize',12)
 
 subplot(3,1,3)
@@ -202,7 +203,7 @@ grid minor
 ax = gca;
 ax.FontSize = 10;
 xlabel('Wave frequency (rad/s)','FontSize',12)
-ylabel('\textbf{RMS } \boldmath{$\theta$}\textbf{ (m)}','interpreter','latex','FontSize',10')
+ylabel('\textbf{RMS } \boldmath{$\theta$}\textbf{ (deg)}','interpreter','latex','FontSize',10')
 title('Pitch','FontSize',12)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% zeta_0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -238,7 +239,7 @@ for i=1:samples
 end    
 grid minor
 xlabel('Wave amplitude (m)','FontSize',12)
-ylabel('\textbf{RMS } \boldmath{$\phi$}\textbf{ (m)}','interpreter','latex','FontSize',10')
+ylabel('\textbf{RMS } \boldmath{$\phi$}\textbf{ (deg)}','interpreter','latex','FontSize',10')
 title('Roll','FontSize',12)
 
 subplot(3,1,3)
@@ -253,8 +254,8 @@ grid minor
 ax = gca;
 ax.FontSize = 10;
 xlabel('Wave amplitude (m)','FontSize',12)
-ylabel('\textbf{RMS } \boldmath{$\theta$}\textbf{ (m)}','interpreter','latex','FontSize',10')
+ylabel('\textbf{RMS } \boldmath{$\theta$}\textbf{ (deg)}','interpreter','latex','FontSize',10')
 title('Pitch','FontSize',12)
 %% Save data
 save('Data Files/Simulations_Results_RMS','hinf_res','mu_syn_res','omega',...
-     'lambda', 'zeta_0', 'beta')
+     'lambda', 'zeta_0', 'beta','time_elaps')
